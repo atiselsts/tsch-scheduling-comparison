@@ -1,0 +1,20 @@
+CONTIKI=../../..
+
+# Default to SPHERE SPES-2
+#BOARD=spes-2/cc2650
+
+#INSTANT_NETWORK_PREFIX = fd00::ff:fe00:1/64
+
+# set prefix from command line
+#DEFINES += CONF_INSTANT_NETWORK_PREFIX=0x$(subst ::ff:fe00:1/64,,$(INSTANT_NETWORK_PREFIX))
+
+#ifneq ($(CONF_NUM_WEARABLES),)
+#DEFINES += CONF_NUM_WEARABLES=$(CONF_NUM_WEARABLES)
+#endif
+
+MAKE_MAC = MAKE_MAC_TSCH
+
+CONTIKI_PROJECT = node
+all: $(CONTIKI_PROJECT)
+
+include $(CONTIKI)/Makefile.include

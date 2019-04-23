@@ -1,0 +1,45 @@
+CONTIKI=../../../../../../..
+
+# Default to SPHERE SPES-2
+BOARD=spes-2/cc2650
+
+INSTANT_NETWORK_PREFIX = fd00::ff:fe00:1/64
+
+# set prefix from command line
+DEFINES += CONF_INSTANT_NETWORK_PREFIX=0x$(subst ::ff:fe00:1/64,,$(INSTANT_NETWORK_PREFIX))
+
+ifneq ($(CONF_NUM_WEARABLES),)
+DEFINES += "CONF_NUM_WEARABLES=$(CONF_NUM_WEARABLES)"
+endif
+
+# Set switching inertia to average
+DEFINES += INSTANT_CONF_INERTIA=@INERTIA@
+
+# Do not restart sending after finished
+DEFINES += INSTANT_CONF_RESTART=0
+
+# Connection mode?
+DEFINES += INSTANT_CONF_IS_CONNECTION_MODE=@CONNECTIONS@
+
+# Emulate Orchestra?
+DEFINES += INSTANT_CONF_EMULATE_ORCHESTRA=@ORCHESTRA@
+
+# Orchestra greedy mode?
+DEFINES += INSTANT_CONF_ORCHESTRA_GREEDY=@ORCHESTRA_GREEDY@
+
+# Orchestra fairer / randomized mode?
+DEFINES += INSTANT_CONF_ORCHESTRA_RANDOMIZE=@ORCHESTRA_RANDOMIZE@
+
+# Whethe to use RPL (if emulated Orchestra is used) or NULLROUTING (if Instant is used)
+MAKE_ROUTING = MAKE_ROUTING_@ROUTING@
+
+DEFINES += RPL_CONF_DIO_INTERVAL_DOUBLINGS=@RPL_DIO_DOUBLINGS@
+
+DEFINES += RPL_CONF_PROBING_INTERVAL_MULTIPLIER=@RPL_PROBING_INTERVAL@
+
+MAKE_MAC = MAKE_MAC_TSCH
+
+CONTIKI_PROJECT = node
+all: $(CONTIKI_PROJECT)
+
+include $(CONTIKI)/Makefile.include

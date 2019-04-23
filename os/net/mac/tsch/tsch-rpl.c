@@ -130,7 +130,7 @@ tsch_rpl_callback_parent_switch(rpl_parent_t *old, rpl_parent_t *new)
 {
   /* Map the TSCH time source on the RPL preferred parent (but stick to the
    * current time source if there is no preferred aarent) */
-  if(tsch_is_associated == 1 && new != NULL) {
+  if(tsch_is_associated == 1) {
     tsch_queue_update_time_source(
       (const linkaddr_t *)uip_ds6_nbr_lladdr_from_ipaddr(
         rpl_parent_get_ipaddr(new)));
