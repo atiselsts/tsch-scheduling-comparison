@@ -45,6 +45,7 @@
 #include "net/routing/rpl-lite/rpl.h"
 #elif ROUTING_CONF_RPL_CLASSIC
 #include "net/routing/rpl-classic/rpl.h"
+#include "net/routing/rpl-classic/rpl-private.h"
 #endif
 
 #define DEBUG DEBUG_PRINT
@@ -114,7 +115,7 @@ orchestra_callback_packet_ready(void)
 {
   int i;
   /* By default, use any slotframe, any timeslot */
-  uint16_t slotframe = 9;
+  uint16_t slotframe = 0xffff;
   uint16_t timeslot = 0xffff;
 
   /* Loop over all rules until finding one able to handle the packet */
@@ -161,8 +162,8 @@ orchestra_init(void)
   linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
   /* Initialize all Orchestra rules */
   for(i = 0; i < NUM_RULES; i++) {
+    PRINTF("Orchestra: initializing rule %s (%u)\n", all_rules[i]->name, i);
     if(all_rules[i]->init != NULL) {
-      PRINTF("Orchestra: initializing rule %u\n", i);
       all_rules[i]->init(i);
     }
   }
