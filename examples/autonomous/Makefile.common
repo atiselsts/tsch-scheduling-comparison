@@ -1,18 +1,50 @@
+# -*- makefile -*-
+
+############################
+###### Firmware types ######
+############################
+
+# Orchestra firmwares
+
+# sender based, storing
+FIRMWARE_TYPE_ORCHESTRA_SB=1
+# receiver based, storing
+FIRMWARE_TYPE_ORCHESTRA_RB_S=2
+# receiver based, nonstoring (this is the default in contiki ng)
+FIRMWARE_TYPE_ORCHESTRA_RB_NS=3
+# in the future - when implemented
+FIRMWARE_TYPE_ALICE=4
+# in the future - when implemented
+FIRMWARE_TYPE_MSF=5
+
+# Other things that can be turned on or off for the experiments:
+# - the burst bit
+# - the root rule in the orchestra rules
+# - multiple TSCH links per single timeslot (to avoid problems when there are collisions in the Orchestra schedule)
+# - whether to add node-based links to alt parents (to enable probing) 
+# - "ideal rule" - performance when there's an oracle that tells the nodes when to allocate / deallocate cells. need to think how to implement this (perhaps always listen, but hack the energest module somehow?). or estimate this via the number of empty cells or similarly (e.g. collisions based on logs that include the ASN)
+
+ifndef FIRMWARE_TYPE
+  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ORCHESTRA_SB)
+endif
+CFLAGS += -DFIRMWARE_TYPE=$(FIRMWARE_TYPE)
+
+############################
+####### Other config #######
+############################
+
 CONTIKI=../../..
 
-# Default to SPHERE SPES-2
-#BOARD=spes-2/cc2650
-
-#INSTANT_NETWORK_PREFIX = fd00::ff:fe00:1/64
-
-# set prefix from command line
-#DEFINES += CONF_INSTANT_NETWORK_PREFIX=0x$(subst ::ff:fe00:1/64,,$(INSTANT_NETWORK_PREFIX))
-
-#ifneq ($(CONF_NUM_WEARABLES),)
-#DEFINES += CONF_NUM_WEARABLES=$(CONF_NUM_WEARABLES)
-#endif
-
 MAKE_MAC = MAKE_MAC_TSCH
+MAKE_ROUTING = MAKE_ROUTING_RPL_CLASSIC
+
+# Orchestra? (Always enabled)
+MAKE_WITH_ORCHESTRA ?= 1
+ifeq ($(MAKE_WITH_ORCHESTRA),1)
+MODULES += os/services/orchestra
+endif
+
+MODULES += os/services/simple-energest
 
 CONTIKI_PROJECT = node
 all: $(CONTIKI_PROJECT)

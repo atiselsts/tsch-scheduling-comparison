@@ -16,15 +16,26 @@
 #endif
 
 /*******************************************************/
+/************* Other system configuration **************/
+/*******************************************************/
+
+/* Logging */
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_ERR
+#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_ERR
+#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_ERR
+#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_ERR
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_ERR
+#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_ERR
+#define TSCH_LOG_CONF_PER_SLOT                     0
+
+
+/*******************************************************/
 /******************* Configure TSCH ********************/
 /*******************************************************/
 
 /* TSCH and RPL callbacks */
 #define RPL_CALLBACK_PARENT_SWITCH tsch_rpl_callback_parent_switch
 #define RPL_CALLBACK_NEW_DIO_INTERVAL tsch_rpl_callback_new_dio_interval
-
-/* Custom schedule, not 6TiSCH minimal */
-#define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL 1
 
 /* TSCH slotframe size */
 #ifndef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
@@ -49,15 +60,34 @@
 /* Disable security */
 #define USE_TSCH_SECURITY 0
 
+/* sender based, storing */
+#define FIRMWARE_TYPE_ORCHESTRA_SB 1
+/* receiver based, storing */
+#define FIRMWARE_TYPE_ORCHESTRA_RB_S 2
+/* receiver based, nonstoring (this is the default in contiki ng) */
+#define FIRMWARE_TYPE_ORCHESTRA_RB_NS 3
+/* in the future - when implemented */
+#define FIRMWARE_TYPE_ALICE 4
+/* in the future - when implemented */
+#define FIRMWARE_TYPE_MSF 5
+
 /*******************************************************/
-/************* Other system configuration **************/
+/******************* Configure Orchestra ***************/
 /*******************************************************/
 
-/* Logging */
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_WARN
-#define TSCH_LOG_CONF_PER_SLOT                     0
+#define ORCHESTRA_CONF_UNICAST_PERIOD             17
+
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED       (FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB)
+
+/* Select Orchestra rules depending on the schedule type */
+#if FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_S
+/* include the storing rule */
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_storing, &default_common }
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS
+/* include the non-storing rule */
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
+#  error "Implement me!"
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
+#  error "Implement me!"
+#endif

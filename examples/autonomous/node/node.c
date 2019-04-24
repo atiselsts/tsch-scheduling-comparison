@@ -12,8 +12,7 @@
 #define LOG_MODULE "Node"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#define UDP_CLIENT_PORT	8765
-#define UDP_SERVER_PORT	5678
+#define UDP_PORT	8765
 
 #define SEND_INTERVAL   (60 * CLOCK_SECOND)
 
@@ -95,17 +94,10 @@ PROCESS_THREAD(node_process, ev, data)
 
   PROCESS_BEGIN();
 
-  /* Initialize UDP connection */
-  simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
-                      UDP_SERVER_PORT, udp_rx_callback);
-
-  /* uip_ip6addr(&ipaddr, INSTANT_NETWORK_PREFIX, 0, 0, 0, 0, 0, 0, 0); */
-  /* uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr); */
-  /* uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF); */
-
-  /* instant_init(); */
-
   uip_ip6addr(&anycast_address, UIP_DS6_DEFAULT_PREFIX, 0x0, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4);
+
+  simple_udp_register(&udp_conn, UDP_PORT, NULL,
+                      UDP_PORT, udp_rx_callback);
 
   if(node_id == MAIN_GW_ID) {
     uip_ds6_addr_t *addr;
@@ -130,8 +122,10 @@ PROCESS_THREAD(node_process, ev, data)
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
-    seqnum++;
-    simple_udp_sendto(&udp_conn, &seqnum, sizeof(seqnum), &anycast_address);
+    if(node_id != MAIN_GW_ID) {
+      seqnum++;
+      simple_udp_sendto(&udp_conn, &seqnum, sizeof(seqnum), &anycast_address);
+    }
 
     etimer_set(&periodic_timer, SEND_INTERVAL);
   }
