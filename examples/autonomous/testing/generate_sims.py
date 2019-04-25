@@ -3,11 +3,12 @@
 import sys, os, copy
 import subprocess
 
-OUT_DIRECTORY="../simulations"
+SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SIMULATION_FILE_WILDCARDS = ["*grid*.csc", "*random*.csc"]
+OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 
-SIMULATION_FILE_DIR = "/home/atis/sphere/write/mobility/simulator/lib/"
+SIMULATION_FILE_DIR = SELF_PATH
+SIMULATION_FILE_WILDCARDS = ["sparse.csc", "dense.csc"]
 
 ########################################
 
@@ -20,14 +21,7 @@ def create_out_dir(name):
 ########################################
 
 env = {
-    "INERTIA" : "1",
-    "CONNECTIONS" : "0",
-    "ORCHESTRA" : "0",
-    "ORCHESTRA_GREEDY" : "0",
-    "ORCHESTRA_RANDOMIZE" : "0",
-    "RPL_DIO_DOUBLINGS" : "2", # corresponds to 8 seconds
-    "RPL_PROBING_INTERVAL" : "20",
-    "ROUTING" : "NULLROUTING",
+    "FIRMWARE_TYPE" : "1",
 }
 
 all_directories = []
@@ -44,7 +38,7 @@ def generate_simulations(name, env, wildcards=SIMULATION_FILE_WILDCARDS):
 
     filenames = []
     for fs in wildcards:
-        fs = SIMULATION_FILE_DIR + fs
+        fs = os.path.join(SIMULATION_FILE_DIR, fs)
         try:
             filenames += subprocess.check_output("ls " + fs, shell=True).split()
         except Exception as ex:
@@ -58,20 +52,14 @@ def generate_simulations(name, env, wildcards=SIMULATION_FILE_WILDCARDS):
         all_directories.append(sim_dirname)
 
         subprocess.call("cp " + filename + " " + sim_dirname + "/sim.csc", shell=True)
-        subprocess.call("cp " + filename.replace(".csc", ".dat") + " " + sim_dirname, shell=True)
         subprocess.call("cp ../common-conf.h " + sim_dirname, shell=True)
         with open(sim_dirname + "/Makefile.common", "w") as f:
             f.write(makefile)
 
-        create_out_dir(sim_dirname + "/gw")
-        subprocess.call("cp ../gw/project-conf.h " + sim_dirname + "/gw", shell=True)
-        subprocess.call("cp ../gw/Makefile " + sim_dirname + "/gw", shell=True)
-        subprocess.call("cp ../gw/node.c " + sim_dirname + "/gw", shell=True)
-
-        create_out_dir(sim_dirname + "/wearable")
-        subprocess.call("cp ../wearable/project-conf.h " + sim_dirname + "/wearable", shell=True)
-        subprocess.call("cp ../wearable/Makefile " + sim_dirname + "/wearable", shell=True)
-        subprocess.call("cp ../wearable/node.c " + sim_dirname + "/wearable", shell=True)
+        create_out_dir(sim_dirname + "/node")
+        subprocess.call("cp ../node/project-conf.h " + sim_dirname + "/node", shell=True)
+        subprocess.call("cp ../node/Makefile " + sim_dirname + "/node", shell=True)
+        subprocess.call("cp ../node/node.c " + sim_dirname + "/node", shell=True)
 
 ########################################
 
@@ -92,30 +80,25 @@ def main():
     create_out_dir(OUT_DIRECTORY)
 
     cenv = copy.copy(env)
-    generate_simulations("instant", cenv)
+    cenv["FIRMWARE_TYPE"] = "1"
+    generate_simulations("orchestra_sb", cenv)
 
     cenv = copy.copy(env)
-    cenv["CONNECTIONS"] = "1"
-    generate_simulations("connections", cenv)
+    cenv["FIRMWARE_TYPE"] = "2"
+    generate_simulations("orchestra_rb_s", cenv)
 
     cenv = copy.copy(env)
-    cenv["ORCHESTRA"] = "1"
-    cenv["ROUTING"] = "RPL_CLASSIC"
-    generate_simulations("orchestra", cenv)
+    cenv["FIRMWARE_TYPE"] = "3"
+    generate_simulations("orchestra_rb_ns", cenv)
 
-    cenv["ORCHESTRA_GREEDY"] = "1"
-    generate_simulations("orchestra-greedy", cenv)
+    if 0:
+        cenv = copy.copy(env)
+        cenv["FIRMWARE_TYPE"] = "4"
+        generate_simulations("alice", cenv)
 
-    # for the RPL optimization experiment
-    cenv["ROUTING"] = "RPL_CLASSIC"
-    for dbl in [0, 1, 2, 3, 4]: # 0=2^1=2 seconds; 4=2^5=32 seconds
-        cenv["RPL_DIO_DOUBLINGS"] = str(dbl)
-        generate_simulations("rpl-dio-optimization-{}".format(dbl), cenv, wildcards=["random-m3w-*.csc"])
-
-    cenv["RPL_DIO_DOUBLINGS"] = "1"
-    for interval in [5, 10, 15, 20, 25]:
-        cenv["RPL_PROBING_INTERVAL"] = str(interval)
-        generate_simulations("rpl-probing-optimization-{}".format(interval), cenv, wildcards=["random-m3w-*.csc"])
+        cenv = copy.copy(env)
+        cenv["FIRMWARE_TYPE"] = "5"
+        generate_simulations("msf", cenv)
 
     generate_runner()
 

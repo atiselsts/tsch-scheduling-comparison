@@ -15,6 +15,17 @@
 #define MAIN_GW_ID 1
 #endif
 
+/* Queue size */
+#define QUEUEBUF_CONF_NUM                   8
+
+/* Number of neighbors */
+#undef NBR_TABLE_CONF_MAX_NEIGHBORS
+#define NBR_TABLE_CONF_MAX_NEIGHBORS        50
+
+/* Number of routes */
+#undef UIP_CONF_MAX_ROUTES
+#define UIP_CONF_MAX_ROUTES                 50
+
 /*******************************************************/
 /************* Other system configuration **************/
 /*******************************************************/

@@ -4,8 +4,6 @@
 ###### Firmware types ######
 ############################
 
-# Orchestra firmwares
-
 # sender based, storing
 FIRMWARE_TYPE_ORCHESTRA_SB=1
 # receiver based, storing

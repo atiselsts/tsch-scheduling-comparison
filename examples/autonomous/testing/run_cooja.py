@@ -4,7 +4,7 @@ import sys, os, re, random, math
 import numpy as np
 from subprocess import Popen, PIPE, STDOUT
 
-cooja = 'java -jar /home/atis/sphere/sphere-cng/tools/cooja/dist/cooja.jar'
+cooja = 'java -jar /home/atis/work/scheduling-comparison-contiki/tools/cooja/dist/cooja.jar'
 cooja_input = './sim.csc'
 cooja_output = 'COOJA.testlog'
 
