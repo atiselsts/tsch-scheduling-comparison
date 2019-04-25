@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-import sys, os, re, random, math
-import numpy as np
+import sys
+import os
 from subprocess import Popen, PIPE, STDOUT
 
-cooja = 'java -jar /home/atis/work/scheduling-comparison-contiki/tools/cooja/dist/cooja.jar'
+SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+cooja = 'java -jar ' + os.path.normpath(os.path.join(SELF_PATH, '../../tools/cooja/dist/cooja.jar'))
 cooja_input = './sim.csc'
 cooja_output = 'COOJA.testlog'
 
@@ -41,9 +43,9 @@ def execute_test(directory, cooja_file):
     except:
         pass
 
-    args = " ".join([cooja, "-nogui=" + cooja_file])
-    sys.stdout.write("  Running Cooja on {}\n".format(
-        os.path.join(directory, cooja_file)))
+    f = os.path.join(directory, cooja_file)
+    args = " ".join([cooja, "-nogui=" + f, "-contiki=/home/user/contiki-ng"])
+    sys.stdout.write("  Running Cooja, args={}\n".format(args))
 
     (retcode, output) = run_subprocess(args, '')
     if retcode != 0:

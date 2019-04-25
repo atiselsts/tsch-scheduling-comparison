@@ -26,6 +26,9 @@
 #undef UIP_CONF_MAX_ROUTES
 #define UIP_CONF_MAX_ROUTES                 50
 
+/* Enable printing of packet counters */
+#define LINK_STATS_CONF_PACKET_COUNTERS          1
+
 /*******************************************************/
 /************* Other system configuration **************/
 /*******************************************************/

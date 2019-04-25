@@ -5,6 +5,7 @@ import subprocess
 
 SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+#OUT_DIRECTORY = os.path.join("..", "simulations")
 OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 
 SIMULATION_FILE_DIR = SELF_PATH
@@ -35,6 +36,7 @@ def generate_simulations(name, env, wildcards=SIMULATION_FILE_WILDCARDS):
 
     dirname = os.path.join(OUT_DIRECTORY, name)
     create_out_dir(dirname)
+    print("dirname=", dirname)
 
     filenames = []
     for fs in wildcards:

@@ -28,7 +28,7 @@
       org.contikios.cooja.contikimote.ContikiMoteType
       <identifier>mtype609</identifier>
       <description>Node</description>
-      <source>[CONTIKI_DIR]/examples/autonomous/node/node.c</source>
+      <source>[CONFIG_DIR]/node/node.c</source>
       <commands>make node.cooja -j TARGET=cooja</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
@@ -775,5 +775,16 @@
     <location_x>245</location_x>
     <location_y>4</location_y>
   </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.ScriptRunner
+    <plugin_config>
+      <scriptfile>[CONTIKI_DIR]/examples/autonomous/coojalogger.js</scriptfile>
+      <active>true</active>
+    </plugin_config>
+    <width>457</width>
+    <z>4</z>
+    <height>427</height>
+    <location_x>3</location_x>
+    <location_y>404</location_y>
+  </plugin>
 </simconf>
-

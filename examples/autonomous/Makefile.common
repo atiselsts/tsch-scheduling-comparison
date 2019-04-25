@@ -42,7 +42,8 @@ ifeq ($(MAKE_WITH_ORCHESTRA),1)
 MODULES += os/services/orchestra
 endif
 
-MODULES += os/services/simple-energest
+# enable energest (for tests only, not for simulations)
+#MODULES += os/services/simple-energest
 
 CONTIKI_PROJECT = node
 all: $(CONTIKI_PROJECT)
