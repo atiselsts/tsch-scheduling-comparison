@@ -40,7 +40,7 @@
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "Link Stats"
-#define LOG_LEVEL LOG_LEVEL_MAC
+#define LOG_LEVEL LOG_LEVEL_INFO /* LOG_LEVEL_MAC */
 
 /* Maximum value for the Tx count counter */
 #define TX_COUNT_MAX                    32
@@ -71,6 +71,8 @@ NBR_TABLE(struct link_stats, link_stats);
 
 /* Called at a period of FRESHNESS_HALF_LIFE */
 struct ctimer periodic_timer;
+
+struct ctimer print_timer;
 
 /*---------------------------------------------------------------------------*/
 /* Returns the neighbor's link stats */
@@ -274,10 +276,16 @@ periodic(void *ptr)
   for(stats = nbr_table_head(link_stats); stats != NULL; stats = nbr_table_next(link_stats, stats)) {
     stats->freshness >>= 1;
   }
-
+}
+/*---------------------------------------------------------------------------*/
+/* Periodic timer called at a period of FRESHNESS_HALF_LIFE */
+static void
+periodic_print(void *ptr)
+{
 #if LINK_STATS_PACKET_COUNTERS
   print_and_update_counters();
 #endif
+  ctimer_reset(&periodic_timer);
 }
 /*---------------------------------------------------------------------------*/
 /* Resets link-stats module */
@@ -298,4 +306,5 @@ link_stats_init(void)
 {
   nbr_table_register(link_stats, NULL);
   ctimer_set(&periodic_timer, FRESHNESS_HALF_LIFE, periodic, NULL);
+  ctimer_set(&print_timer, 60 * CLOCK_SECOND, periodic_print, NULL);
 }
