@@ -129,6 +129,8 @@ radio_LQI(void)
 static int
 radio_on(void)
 {
+  /* for calculating the radio duty cycle via logs */
+  /* puts("radio on"); */
   simRadioHWOn = 1;
   return 1;
 }
@@ -136,6 +138,8 @@ radio_on(void)
 static int
 radio_off(void)
 {
+  /* for calculating the radio duty cycle via logs */
+  /* puts("radio off"); */
   simRadioHWOn = 0;
   return 1;
 }

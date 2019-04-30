@@ -17,12 +17,17 @@ timeout_function = function () {
     log.testOK();
 }
 
-if (msg) {
-    log.log("> " + time + ":" + id + ":" + msg + "\n");
-}
+/* after 300 seconds or 5 minutes */
+GENERATE_MSG(300000, "initial phase complete");
 
 while (true) {
-    YIELD();
+    if (msg) {
+        if(msg.equals("initial phase complete")) {
+            /* all nodes should be joined by now */
+            stats.reset();
+        }
+        log.log("> " + time + ":" + id + ":" + msg + "\n");
+    }
 
-    log.log("> " + time + ":" + id + ":" + msg + "\n");
+    YIELD();
 }

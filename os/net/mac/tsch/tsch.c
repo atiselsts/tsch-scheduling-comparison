@@ -693,7 +693,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 #endif
 
       tsch_association_count++;
-      LOG_INFO("association done (%u), sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
+      LOG_ERR("association done (%u), sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
              tsch_association_count,
              tsch_is_pan_secured,
              frame.src_pid,
@@ -702,8 +702,8 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
              ies.ie_channel_hopping_sequence_id,
              ies.ie_tsch_slotframe_and_link.slotframe_size,
              ies.ie_tsch_slotframe_and_link.num_links);
-      LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
-      LOG_INFO_("\n");
+      LOG_ERR_LLADDR((const linkaddr_t *)&frame.src_addr);
+      LOG_ERR_("\n");
 
       return 1;
     }
@@ -827,7 +827,7 @@ PROCESS_THREAD(tsch_process, ev, data)
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
 
-    LOG_WARN("leaving the network, stats: tx %lu, rx %lu, sync %lu\n",
+    LOG_ERR("leaving the network, stats: tx %lu, rx %lu, sync %lu\n",
       tx_count, rx_count, sync_count);
 
     /* Will need to re-synchronize */
