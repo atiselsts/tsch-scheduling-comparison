@@ -285,7 +285,7 @@ periodic_print(void *ptr)
 #if LINK_STATS_PACKET_COUNTERS
   print_and_update_counters();
 #endif
-  ctimer_reset(&periodic_timer);
+  ctimer_reset(&print_timer);
 }
 /*---------------------------------------------------------------------------*/
 /* Resets link-stats module */
