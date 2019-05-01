@@ -5,7 +5,6 @@ import subprocess
 
 SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-#OUT_DIRECTORY = os.path.join("..", "simulations")
 OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 
 SIMULATION_FILE_DIR = SELF_PATH

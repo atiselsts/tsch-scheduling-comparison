@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import subprocess
-import energymodel
+#import energymodel
 
 import pylab as pl
 import matplotlib
@@ -20,43 +20,20 @@ OUT_DIR = "../plots"
 
 DATA_DIRECTORY="../simulations"
 
-ALGOS = ["instant",
-         "connections",
-         "orchestra-greedy",
-         "orchestra",
+ALGOS = ["orchestra_sb",
+         "orchestra_rb_s",
+         "orchestra_rb_ns",
 ]
 
 ALGONAMES = [
-    #"Instant (fast switching)",
-    "Instant (regular mode)",
-    #"Instant (slow switching)",
-    "Instant (connection mode)",
-    "RPL + Greedy Orchestra",
-    "RPL + Orchestra",
+    "Orchestra SB",
+    "Orchestra RB / Storing",
+    "Orchestra RB / Non-Storing",
 ]
-
-BASIC_ALGOS = ["instant",
-               "connections",
-               "orchestra-greedy",
-               "orchestra",
-]
-
-BASIC_ALGONAMES = ["Instant (regular mode)",
-                   "Instant (connection mode)",
-                   "RPL + Greedy Orchestra",
-                   "RPL + Orchestra",
-]
-
-MAX_DIO_INTERVALS = [2, 4, 8, 16, 32]
-MAX_DIO_INTERVALS_LOG = [0, 1, 2, 3, 4]
-
-PROBING_INTERVALS = [5, 10, 15, 20, 25]
-
-MAX_WEARABLES = 10
-
-CI = 0.9
 
 SLOTS_PER_SECOND = 100
+
+CI = 0.9
 
 ###########################################
 
@@ -96,30 +73,16 @@ def graph_ci(data, ylabel, filename):
         print(to_plot)
 
     pl.ylim(ymin=0)
-    pl.xlabel("Number of wearables")
+    pl.xlabel("Experiment type")
     pl.ylabel(ylabel)
 
-    pl.xticks([1, 2, 3, 4], ["1", "2", "4", "8"])
+    pl.xticks([1, 2, 3, 4], ["sparse", "dense"])
 
-    if "energy" in filename:
-        bbox = (0.0, 0.0)
-        loc = "lower left"
-        pl.ylim([0, 700])
-    elif "makespan" in filename:
-        if "_s" in filename:
-            bbox = (1.0, 1.0)
-            loc = "upper right"
-        else:
-            bbox = (0.0, 1.0)
-            loc = "upper left"
-        pl.ylim([0, 300])
-    else:
-        # fairness
-        bbox = (0.0, 1.0)
-        loc = "upper left"
-        pl.ylim([0, 50])
+    bbox = (1.0, 1.0)
+    loc = "upper right"
+#    pl.ylim([0, 700])
 
-    if "makespan" in filename:
+    if "pdr" in filename:
         legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=1,
                            prop={"size":11},
                            handler_map={lh.Line2D: lh.HandlerLine2D(numpoints=1)})
@@ -133,210 +96,90 @@ def graph_ci(data, ylabel, filename):
 
 
 ###########################################
-def graph_ci_grid(data, ylabel, filename):
-    pl.figure(figsize=(3.5, 2.5))
 
-    for i, a in enumerate(BASIC_ALGOS):
-        algo_data = data[i]
+FIRST_SEQNUM = 5
+LAST_SEQNUM = 10
 
-        to_plot = []
-        yerr = []
+class MoteStats:
+    def __init__(self, id):
+        self.id = id
+        self.seqnums = set()
+        self.packets_tx = 0
+        self.packets_ack = 0
+        self.radio_on = 0
+        self.radio_total = 0
 
-        for d in algo_data:
-            mean, sigma = np.mean(d), np.std(d)
-            stderr = 1.0 * sigma / (len(d) ** 0.5)
-            ci = stats.norm.interval(CI, loc=mean, scale=stderr) - mean
-
-            to_plot.append(mean)
-            yerr.append(ci[0])
-
-        x = np.arange(len(to_plot)) + 1.0
-        marker = BASIC_MARKERS[i]
-        color = BASIC_COLORS[i]
-        if a == "connections":
-            pl.errorbar(x, to_plot, yerr=yerr, marker=marker, color=color, label=BASIC_ALGONAMES[i], markerfacecolor="None")
+    def calc(self):
+        if self.packets_tx:
+            self.prr = 100.0 * self.packets_ack / self.packets_tx
         else:
-            pl.errorbar(x, to_plot, yerr=yerr, marker=marker, color=color, label=BASIC_ALGONAMES[i])
+            self.prr = 0.0
+        expected = LAST_SEQNUM - FIRST_SEQNUM + 1
+        actual = len(self.seqnums)
+        self.pdr = actual / expected
+        if self.radio_total:
+            self.rdc = self.radio_on / self.radio_total
+        else:
+            print("warning: no radio duty cycle for {}".format(self.id))
+            self.rdc = 0.0
 
-    pl.ylim(ymin=0)
-    pl.ylabel(ylabel)
-
-    if "density" in filename:
-        bbox = (0.0, 1.2)
-        loc = "upper left"
-        x = range(1, 11)
-        pl.xticks(x, [str(el) for el in x])
-        pl.xlabel("Number of wearables")
-    else:
-        bbox = (0.0, 1.2)
-        loc = "upper left"
-        x = range(1, 11)
-        pl.xticks(x, [str(el*el) for el in x])
-        pl.xlabel("Number of access points")
-
-
-    if "energy" in filename:
-        pl.ylim([0, 700])
-    elif "makespan" in filename:
-        pl.ylim([0, 300]) # XXX: 500 in order to fit the legend in?
-    else:
-        # fairness
-        pl.ylim([0, 50])
-
-    if "makespan" in filename:
-        legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=1,
-                           prop={"size":9},
-                           handler_map={lh.Line2D: lh.HandlerLine2D(numpoints=1)})
-
-        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
-                   bbox_extra_artists=(legend,),
-                   bbox_inches='tight')
-    else:
-        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
-                   bbox_inches='tight')
-
-###########################################
-
-def graph_ci_optimization(data, intervals, xlabel, ylabel, filename):
-    pl.figure(figsize=(5, 2.5))
-
-    to_plot = []
-    yerr = []
-    all_x = []
-    all_y = []
-
-    for i, d in enumerate(data):
-        mean, sigma = np.mean(d), np.std(d)
-        stderr = 1.0 * sigma / (len(d) ** 0.5)
-        ci = stats.norm.interval(CI, loc=mean, scale=stderr) - mean
-
-        for v in d:
-          all_x.append(i)
-          all_y.append(v)
-        to_plot.append(mean)
-        yerr.append(ci[0])
-
-    x = np.arange(len(to_plot))
-    pl.errorbar(x, to_plot, yerr=yerr, marker="o")
-
-    c = pearsonr(all_x, all_y)
-    print(filename, "Correlation: ", c)
-
-    pl.ylim(ymin=0)
-    pl.xlabel(xlabel)
-    pl.ylabel(ylabel)
-
-    if "dio" in filename:
-        pl.xticks(x, [str(1 << (el + 1)) for el in intervals])
-    else:
-        pl.xticks(x, [str(el) for el in intervals])
-
-    if "energy" in filename:
-#        bbox = (0.0, 0.0)
-#        loc = "lower left"
-        pl.ylim([0, 700])
-    elif "makespan" in filename:
-#        bbox = (0.0, 1.0)
-#        loc = "upper left"
-        pl.ylim([0, 300])
-    else:
-#        # fairness
-#        bbox = (0.0, 1.0)
-#        loc = "upper left"
-        pl.ylim([0, 50])
-
-    pl.savefig(OUT_DIR + "/" + filename, format='pdf',
-               bbox_inches='tight')
-
-###########################################
-
-def get_wearable_id_asn(line):
-    #128043856:194:12803
-    fields = line.split(":")
-    wearble_id = int(fields[1]) - 192
-    asn = int(fields[2])
-    return wearble_id, asn
-
-###########################################
 def process_file(filename):
-    r = []
-    print("  " + filename)
-
-    wearable_stats = [{} for _ in range(MAX_WEARABLES)]
-    for i in range(MAX_WEARABLES):
-        wearable_stats[i]["started"] = False
-        wearable_stats[i]["start_slot"] = None
-        wearable_stats[i]["missed_slotframes_in_row"] = 0
-        wearable_stats[i]["skip_periods"] = []
+    motes = {}
+    print(filename)
 
     with open(filename, "r") as f:
         for line in f:
-            if "BUG" in line:
-                print(line)
+            line = line.strip()
+
+            fields = line.split()
+            try:
+                # in milliseconds
+                ts = int(fields[0]) // 1000
+                node = int(fields[1]) 
+            except:
+                # failed to extract timestamp
+                continue
+            if node not in motes:
+                motes[node] = MoteStats(node)
+
+            # 314937392 1 [INFO: Node      ] seqnum=6 from=fd00::205:5:5:5
+            if "seqnum=" in line:
+                sn = int(fields[5].split("=")[1])
+                if not (FIRST_SEQNUM <= sn <= LAST_SEQNUM):
+                    continue
+                fromaddr = fields[6].split("=")[1]
+                fromnode = int(fromaddr.split(":")[-1], 16)
+                if fromnode not in motes:
+                    motes[fromnode] = MoteStats(fromnode)
+                motes[fromnode].seqnums.add(sn)
                 continue
 
-            if "start send" in line:
-                fields = line.split(" ")
-                wid, asn = get_wearable_id_asn(fields[1])
-
-                if not wearable_stats[wid]["started"]:
-                    wearable_stats[wid]["started"] = True
-                    wearable_stats[wid]["start_slot"] = asn
-                else:
-                    print("Error! started multiple times?")
-
-            if "no gw" in line:
-                #> 128043856:194:12803 no gw
-                fields = line.split(" ")
-                wid, asn = get_wearable_id_asn(fields[1])
-
-                wearable_stats[wid]["missed_slotframes_in_row"] += 1
-
+            # 600142000 28 [INFO: Link Stats] num packets: tx=0 ack=0 rx=0 to=0014.0014.0014.0014
+            if "num packets" in line:
+                tx = int(fields[7].split("=")[1])
+                ack = int(fields[8].split("=")[1])
+                rx = int(fields[9].split("=")[1])
+                motes[node].packets_tx += tx
+                motes[node].packets_ack += ack
                 continue
 
-            if "sel gw" in line:
-                #> 128526504:192:12852 sel gw 3
-                fields = line.split(" ")
-                wid, asn = get_wearable_id_asn(fields[1])
-
-                if wearable_stats[wid]["missed_slotframes_in_row"]:
-                    wearable_stats[wid]["skip_periods"].append(wearable_stats[wid]["missed_slotframes_in_row"])
-                    wearable_stats[wid]["missed_slotframes_in_row"] = 0
-
+            # 600073000:8 [INFO: Energest  ] Radio total :    1669748/  60000000 (27 permil)
+            if "Radio total" in line:
+                on = int(fields[8][:-1])
+                total = int(fields[9])
+                motes[node].radio_on += on
+                motes[node].radio_total += total
                 continue
 
-            if "finished sending" in line:
-                #> 210298240:192:21029 finished sending: 1503 data 37 probing 37 lost
-                fields = line.split(" ")
-                wid, asn = get_wearable_id_asn(fields[1])
-
-                if wearable_stats[wid]["start_slot"]:
-                  slots = asn - wearable_stats[wid]["start_slot"]
-                  #> 152918240:193:15291 finished sending: 1092 d 0 pr 30 rxi 2 rxuc 17 rxbc 34 txuc 0 txbc 0 >_8_tx
-                  sent = int(fields[4])
-                  probing_sent = int(fields[6])
-                  rxi = int(fields[8])
-                  rxuc = int(fields[10])
-                  rxbc = int(fields[12])
-                  txuc = int(fields[14])
-                  txbc = int(fields[16])
-
-                  # convert packets to mJ and account per single wearable
-                  energy = energymodel.account_ex(sent, probing_sent, rxi, rxuc, rxbc, txuc, txbc)
-
-                  if len(wearable_stats[wid]["skip_periods"]):
-                     avg_skip_period_len = np.mean(wearable_stats[wid]["skip_periods"])
-                  else:
-                     avg_skip_period_len = 0
-
-                  r.append((slots, energy, avg_skip_period_len))
-
-                wearable_stats[wid]["started"] = False
-                wearable_stats[i]["start_slot"] = None
-                wearable_stats[wid]["skip_periods"] = []
-                wearable_stats[wid]["missed_slotframes_in_row"] = 0
+            if "add packet failed" in line:
+                # TODO: accnt for queue drops!
                 continue
 
+    r = []
+    for k in motes:
+        m = motes[k]
+        m.calc()
+        r.append((m.pdr, m.prr, m.rdc))
     return r
 
 ###########################################
@@ -344,17 +187,16 @@ def process_file(filename):
 def test_groups(filenames, outfilename, description):
     print(description)
 
-    makespan_results = [[] for _ in ALGOS]
-    energy_results = [[] for _ in ALGOS]
-    skip_period_results = [[] for _ in ALGOS]
+    pdr_results = [[] for _ in ALGOS]
+    prr_results = [[] for _ in ALGOS]
+    rdc_results = [[] for _ in ALGOS]
 
     for i, a in enumerate(ALGOS):
         print("Algorithm " + ALGONAMES[i])
-        for nw, fs in enumerate(filenames):
-            print("{} wearables".format(nw + 1))
-            t_makespan_results = []
-            t_energy_results = []
-            t_skip_period_results = []
+        for j, fs in enumerate(filenames):
+            t_pdr_results = []
+            t_prr_results = []
+            t_rdc_results = []
 
             path = os.path.join(DATA_DIRECTORY, a, fs)
 
@@ -365,127 +207,21 @@ def test_groups(filenames, outfilename, description):
                     continue
 
                 r = process_file(resultsfile)
-                for slots, energy, avg_skip_period_len in r:
-                    # convert slots to seconds here
-                    t_makespan_results.append(1.0 * slots / SLOTS_PER_SECOND)
-                    t_energy_results.append(energy)
-                    # fairness
-                    t_skip_period_results.append(avg_skip_period_len)
+                for pdr, prr, rdc in r:
+                    t_pdr_results.append(pdr)
+                    t_prr_results.append(prr)
+                    t_rdc_results.append(rdc)
 
-            makespan_results[i].append(t_makespan_results)
-            energy_results[i].append(t_energy_results)
-            skip_period_results[i].append(t_skip_period_results)
+            pdr_results[i].append(t_pdr_results)
+            prr_results[i].append(t_prr_results)
+            rdc_results[i].append(t_rdc_results)
 
     # plot the results
-    graph_ci(makespan_results, "Time, sec", "sim_makespan_" + outfilename)
-    graph_ci(energy_results, "Energy per wearable, mJ", "sim_energy_" + outfilename)
-    graph_ci(skip_period_results, "Avg. delay between\nactive slotframes,\nnumber of slotframes", "sim_fairness_" + outfilename)
+    graph_ci(pdr_results, "End-to-end PDR, %", "sim_pdr_" + outfilename)
+    graph_ci(prr_results, "Link-layer PRR, %", "sim_prr_" + outfilename)
+    graph_ci(rdc_results, "Radio duty cycle, %", "sim_rdc_" + outfilename)
 
     print("")
-
-###########################################
-
-def test_grid(filenames, outfilename, description, change_grid_size):
-    print(description)
-
-    makespan_results = [[] for _ in BASIC_ALGOS]
-    energy_results = [[] for _ in BASIC_ALGOS]
-    skip_period_results = [[] for _ in BASIC_ALGOS]
-
-    grid_edge = 3
-    nw = 4
-
-    for j, a in enumerate(BASIC_ALGOS):
-        print(BASIC_ALGONAMES[j])
-
-        for i, fs in enumerate(filenames):
-            if change_grid_size:
-                grid_edge = i + 1
-                print("{} grid edge".format(grid_edge))
-            else:
-                nw = i + 1
-                print("{} num wear".format(nw))
-
-            t_makespan_results = []
-            t_energy_results = []
-            t_skip_period_results = []
-
-            path = os.path.join(DATA_DIRECTORY, a, fs)
-            for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
-
-                resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
-                if not os.access(resultsfile, os.R_OK):
-                    continue
-
-                r = process_file(resultsfile)
-                for slots, energy, avg_skip_period_len in r:
-                    # convert slots to seconds here
-                    t_makespan_results.append(1.0 * slots / SLOTS_PER_SECOND)
-                    t_energy_results.append(energy)
-                    # fairness
-                    t_skip_period_results.append(avg_skip_period_len)
-
-            makespan_results[j].append(t_makespan_results)
-            energy_results[j].append(t_energy_results)
-            skip_period_results[j].append(t_skip_period_results)
-
-    # plot the results
-    graph_ci_grid(makespan_results, "Time, sec", "sim_makespan_" + outfilename)
-    graph_ci_grid(energy_results, "Energy per wearable, mJ", "sim_energy_" + outfilename)
-    graph_ci_grid(skip_period_results, "Avg. delay between\nactive slotframes,\nnumber of slotframes",
-                  "sim_fairness_" + outfilename)
-
-    print("")
-
-###########################################
-
-def test_rpl_optimization(rpltype, outfilename, xlabel, intervals):
-    print("RPL optimization")
-
-    makespan_results = [[] for _ in intervals]
-    energy_results = [[] for _ in intervals]
-    skip_period_results = [[] for _ in intervals]
-
-    grid_edge = 3
-    nw = 4
-
-    filenames = ["random-m3w-*"]
-
-    for j, interval in enumerate(intervals):
-        print("interval=", interval)
-
-        t_makespan_results = []
-        t_energy_results = []
-        t_skip_period_results = []
-
-        for i, fs in enumerate(filenames):
-
-            path = os.path.join(DATA_DIRECTORY, rpltype + "-optimization-" + str(interval), fs)
-            print("path=", path)
-            for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
-
-                resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
-                r = process_file(resultsfile)
-
-                for slots, energy, avg_skip_period_len in r:
-                    # convert slots to seconds here
-                    t_makespan_results.append(1.0 * slots / SLOTS_PER_SECOND)
-                    t_energy_results.append(energy)
-                    # fairness
-                    t_skip_period_results.append(avg_skip_period_len)
-
-        energy_results[j] = t_energy_results
-        skip_period_results[j] = t_skip_period_results
-        makespan_results[j] = t_makespan_results
-
-    # plot the results
-    graph_ci_optimization(makespan_results, intervals, xlabel, "Time, sec", "sim_makespan_" + outfilename)
-    graph_ci_optimization(energy_results, intervals, xlabel, "Energy per wearable, mJ", "sim_energy_" + outfilename)
-    graph_ci_optimization(skip_period_results, intervals, xlabel, "Avg. delay between\nactive slotframes,\nnumber of slotframes",
-                  "sim_fairness_" + outfilename)
-
-    print("")
-
 
 ###########################################
 
@@ -495,19 +231,7 @@ def main():
     except:
         pass
 
-    test_groups(["random-s1w-*", "random-s2w-*", "random-s3w-*", "random-s4w-*"], "s.pdf", "Static")
-    time.sleep(1)
-    test_groups(["random-m1w-*", "random-m2w-*", "random-m3w-*", "random-m4w-*"], "m.pdf", "Mobile")
-    time.sleep(1)
-
-    filenames = ["grid-m4w-s{}-*".format(grid_size) for grid_size in range(1, 11)]
-    test_grid(filenames, "grid.pdf", "Mobile on grid", True)
-
-    filenames = ["wgrid-m{}w-s2-*".format(nw) for nw in range(1, 11)]
-    test_grid(filenames, "density_grid.pdf", "Mobile on grid", False)
-
-    test_rpl_optimization("rpl-dio", "rpl-dio.pdf", "Max RPL DIO interval, sec",  MAX_DIO_INTERVALS_LOG)
-    test_rpl_optimization("rpl-probing", "rpl-probing.pdf", "RPL probing interval, sec", PROBING_INTERVALS)
+    test_groups(["sparse", "dense"], "collection.pdf", "Collection")
 
 
 ###########################################

@@ -27,6 +27,9 @@ FIRMWARE_TYPE_MSF=5
 ifndef FIRMWARE_TYPE
   FIRMWARE_TYPE := $(FIRMWARE_TYPE_ORCHESTRA_SB)
 endif
+ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ORCHESTRA_RB_NS))
+  CFLAGS += -DRPL_CONF_MOP=RPL_MOP_NON_STORING
+endif
 CFLAGS += -DFIRMWARE_TYPE=$(FIRMWARE_TYPE)
 
 ############################
@@ -45,7 +48,7 @@ MODULES += os/services/orchestra
 endif
 
 # enable energest (for tests only, not for simulations)
-#MODULES += os/services/simple-energest
+MODULES += os/services/simple-energest
 
 CONTIKI_PROJECT = node
 all: $(CONTIKI_PROJECT)

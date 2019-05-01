@@ -94,6 +94,8 @@ PROCESS_THREAD(node_process, ev, data)
 
   PROCESS_BEGIN();
 
+  printf("FIRMWARE_TYPE=%u\n", FIRMWARE_TYPE);
+
   uip_ip6addr(&anycast_address, UIP_DS6_DEFAULT_PREFIX, 0x0, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4);
 
   simple_udp_register(&udp_conn, UDP_PORT, NULL,

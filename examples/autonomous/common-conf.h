@@ -53,7 +53,7 @@
 
 /* TSCH slotframe size */
 #ifndef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
-#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH 11
+#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH 17
 #endif
 
 /* Do not start TSCH at init, wait for NETSTACK_MAC.on() */
