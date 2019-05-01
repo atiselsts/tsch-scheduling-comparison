@@ -8,7 +8,7 @@ SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 
 SIMULATION_FILE_DIR = SELF_PATH
-SIMULATION_FILE_WILDCARDS = ["sparse.csc", "dense.csc"]
+SIMULATION_FILE_WILDCARDS = ["sparse-*.csc", "e-sparse-*.csc", "dense-*.csc", "e-dense-*.csc"]
 
 ########################################
 
@@ -70,7 +70,7 @@ def generate_runner():
 
         for i, dirname in enumerate(all_directories):
             f.write("./run_cooja.py " + dirname + " &\n")
-            if i % 8 == 7:
+            if i % 4 == 3:
                 f.write("wait\n\n")
         f.write("wait\n")
 

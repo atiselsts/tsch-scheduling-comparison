@@ -4,7 +4,6 @@ import os
 import sys
 import time
 import subprocess
-#import energymodel
 
 import pylab as pl
 import matplotlib
@@ -76,7 +75,7 @@ def graph_ci(data, ylabel, filename):
     pl.xlabel("Experiment type")
     pl.ylabel(ylabel)
 
-    pl.xticks([1, 2, 3, 4], ["sparse", "dense"])
+    pl.xticks([1, 2, 3, 4], ["sparse", "e. sparse", "dense", "e. dense"])
 
     bbox = (1.0, 1.0)
     loc = "upper right"
@@ -206,8 +205,11 @@ def test_groups(filenames, outfilename, description):
                 if not os.access(resultsfile, os.R_OK):
                     continue
 
+                print(resultsfile)
+
                 r = process_file(resultsfile)
                 for pdr, prr, rdc in r:
+                    print(prr)
                     t_pdr_results.append(pdr)
                     t_prr_results.append(prr)
                     t_rdc_results.append(rdc)
@@ -231,7 +233,7 @@ def main():
     except:
         pass
 
-    test_groups(["sparse", "dense"], "collection.pdf", "Collection")
+    test_groups(["sparse-*", "e-sparse-*", "dense-*", "e-dense-*"], "collection.pdf", "Collection")
 
 
 ###########################################

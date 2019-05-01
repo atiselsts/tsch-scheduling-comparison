@@ -40,6 +40,7 @@
 
 #include "net/mac/tsch/tsch.h"
 #include "orchestra-conf.h"
+#include <stdio.h>
 
 /* The structure of an Orchestra rule */
 struct orchestra_rule {

@@ -7,7 +7,7 @@
   <project EXPORT="discard">[APPS_DIR]/powertracker</project>
   <simulation>
     <title>Example</title>
-    <randomseed>123456</randomseed>
+    <randomseed>1</randomseed>
     <motedelay_us>1000000</motedelay_us>
     <radiomedium>
       org.contikios.cooja.radiomediums.LogisticLoss
@@ -17,7 +17,7 @@
       <rssi_inflection_point>-92.0</rssi_inflection_point>
       <path_loss_exponent>3.0</path_loss_exponent>
       <awgn_sigma>0.0</awgn_sigma>
-      <enable_time_variation>true</enable_time_variation>
+      <enable_time_variation>false</enable_time_variation>
       <time_variation_min_pl_db>-10.0</time_variation_min_pl_db>
       <time_variation_max_pl_db>10.0</time_variation_max_pl_db>
     </radiomedium>
