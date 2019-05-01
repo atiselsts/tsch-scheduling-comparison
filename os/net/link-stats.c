@@ -252,10 +252,12 @@ print_and_update_counters(void)
 
     struct link_packet_counter *c = &stats->cnt_current;
 
-    LOG_INFO("num packets: tx=%u ack=%u rx=%u to=",
-             c->num_packets_tx, c->num_packets_acked, c->num_packets_rx);
-    LOG_INFO_LLADDR(link_stats_get_lladdr(stats));
-    LOG_INFO_("\n");
+    if(c->num_packets_tx || c->num_packets_rx) {
+      LOG_INFO("num packets: tx=%u ack=%u rx=%u to=",
+               c->num_packets_tx, c->num_packets_acked, c->num_packets_rx);
+      LOG_INFO_LLADDR(link_stats_get_lladdr(stats));
+      LOG_INFO_("\n");
+    }
 
     stats->cnt_total.num_packets_tx += stats->cnt_current.num_packets_tx;
     stats->cnt_total.num_packets_acked += stats->cnt_current.num_packets_acked;
