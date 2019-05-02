@@ -1,11 +1,13 @@
 /* A simple log file generator script */
 
-TIMEOUT(660000); /* 660 seconds or 11 minutes */
+TIMEOUT(1860000); /* 1860 seconds or 30+ minutes */
+//TIMEOUT(1000000); /* 1000 seconds or 15+ minutes */
+//TIMEOUT(10000);
 
 plugin = mote.getSimulation().getCooja().getStartedPlugin("PowerTracker");
 if (plugin === null) {
-  log.log("No PowerTracker plugin\n");
-  log.testFailed();
+    log.log("No PowerTracker plugin\n");
+    log.testFailed();
 }
 
 timeout_function = function () {
@@ -13,8 +15,8 @@ timeout_function = function () {
     log.testOK();
 }
 
-/* after 300 seconds or 5 minutes (increase in the future?) */
-GENERATE_MSG(300000, "initial phase complete");
+/* after 600 seconds or 10 minutes (increase in the future?) */
+GENERATE_MSG(600000, "initial phase complete");
 
 while (true) {
     if (msg) {

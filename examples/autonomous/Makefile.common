@@ -4,16 +4,24 @@
 ###### Firmware types ######
 ############################
 
-# sender based, storing
+# Note: the default in contiki-ng is the nonstoring Orchestra rule,
+# but with RPL lite routing (non-storing mode).
+# We use RPL classic, for which the storing mode is the default.
+# According to Orchestra comments and code, the non-storing rule
+# can be used with RPL storing mode!
+
+# sender based, storing Orchestra + RPL
 FIRMWARE_TYPE_ORCHESTRA_SB=1
-# receiver based, storing
+# receiver based, storing Orchestra + RPL
 FIRMWARE_TYPE_ORCHESTRA_RB_S=2
-# receiver based, nonstoring (this is the default in contiki ng)
+# receiver based, nonstoring Orchestra, nonstoring RPL
 FIRMWARE_TYPE_ORCHESTRA_RB_NS=3
+# receiver based, nonstoring Orchestra, storing RPL
+FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR=4
 # in the future - when implemented
-FIRMWARE_TYPE_ALICE=4
+FIRMWARE_TYPE_ALICE=5
 # in the future - when implemented
-FIRMWARE_TYPE_MSF=5
+FIRMWARE_TYPE_MSF=6
 
 # Other things that can be turned on or off for the experiments:
 # - the burst bit
@@ -25,6 +33,15 @@ FIRMWARE_TYPE_MSF=5
 ifndef FIRMWARE_TYPE
   FIRMWARE_TYPE := $(FIRMWARE_TYPE_ORCHESTRA_SB)
 endif
+
+ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ORCHESTRA_RB_NS))
+  # turn OFF the storing mode
+  CFLAGS += -DRPL_CONF_MOP=RPL_MOP_NON_STORING
+else
+  # by default, turn ON the storing mode
+  CFLAGS += -DRPL_CONF_MOP=RPL_MOP_STORING_NO_MULTICAST
+endif
+
 CFLAGS += -DFIRMWARE_TYPE=$(FIRMWARE_TYPE)
 
 ############################

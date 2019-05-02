@@ -4,7 +4,10 @@ import sys
 import os
 from subprocess import Popen, PIPE, STDOUT
 
+# of the "autonomous" example
 SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# move two levels up
+CONTIKI_PATH = os.path.dirname(os.path.dirname(SELF_PATH))
 
 cooja = 'java -jar ' + os.path.normpath(os.path.join(SELF_PATH, '../../tools/cooja/dist/cooja.jar'))
 cooja_input = './sim.csc'
@@ -44,7 +47,7 @@ def execute_test(directory, cooja_file):
         pass
 
     f = os.path.join(directory, cooja_file)
-    args = " ".join([cooja, "-nogui=" + f, "-contiki=/home/user/contiki-ng"])
+    args = " ".join([cooja, "-nogui=" + f, "-contiki=" + CONTIKI_PATH])
     sys.stdout.write("  Running Cooja, args={}\n".format(args))
 
     (retcode, output) = run_subprocess(args, '')

@@ -9,6 +9,10 @@ OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 
 SIMULATION_FILE_DIR = SELF_PATH
 SIMULATION_FILE_WILDCARDS = ["sparse-*.csc", "e-sparse-*.csc", "dense-*.csc", "e-dense-*.csc"]
+#SIMULATION_FILE_WILDCARDS = ["sparse-1.csc", "e-sparse-1.csc", "dense-1.csc", "e-dense-1.csc"]
+#SIMULATION_FILE_WILDCARDS = ["sparse-2.csc", "e-sparse-2.csc", "dense-2.csc", "e-dense-2.csc"]
+#SIMULATION_FILE_WILDCARDS = ["sparse-3.csc", "e-sparse-3.csc", "dense-3.csc", "e-dense-3.csc"]
+
 
 ########################################
 
@@ -92,13 +96,17 @@ def main():
     cenv["FIRMWARE_TYPE"] = "3"
     generate_simulations("orchestra_rb_ns", cenv)
 
+#    cenv = copy.copy(env)
+#    cenv["FIRMWARE_TYPE"] = "4"
+#    generate_simulations("orchestra_rb_ns_sr", cenv)
+
     if 0:
         cenv = copy.copy(env)
-        cenv["FIRMWARE_TYPE"] = "4"
+        cenv["FIRMWARE_TYPE"] = "5"
         generate_simulations("alice", cenv)
 
         cenv = copy.copy(env)
-        cenv["FIRMWARE_TYPE"] = "5"
+        cenv["FIRMWARE_TYPE"] = "6"
         generate_simulations("msf", cenv)
 
     generate_runner()

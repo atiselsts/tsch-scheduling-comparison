@@ -74,16 +74,18 @@
 /* Disable security */
 #define USE_TSCH_SECURITY 0
 
-/* sender based, storing */
+/* sender based, storing Orchestra + RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_SB 1
-/* receiver based, storing */
+/* receiver based, storing Orchestra + RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_RB_S 2
-/* receiver based, nonstoring (this is the default in contiki ng) */
+/* receiver based, nonstoring Orchestra, nonstoring RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_RB_NS 3
+/* receiver based, nonstoring Orchestra, storing RPL */
+#define FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR 4
 /* in the future - when implemented */
-#define FIRMWARE_TYPE_ALICE 4
+#define FIRMWARE_TYPE_ALICE 5
 /* in the future - when implemented */
-#define FIRMWARE_TYPE_MSF 5
+#define FIRMWARE_TYPE_MSF 6
 
 /*******************************************************/
 /******************* Configure Orchestra ***************/
@@ -97,7 +99,7 @@
 #if FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_S
 /* include the storing rule */
 #  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_storing, &default_common }
-#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR
 /* include the non-storing rule */
 #  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
