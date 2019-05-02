@@ -97,7 +97,8 @@ def graph_ci(data, ylabel, filename):
     pl.xlabel("Experiment type")
     pl.ylabel(ylabel)
 
-    pl.xticks([1, 2, 3, 4], ["sparse", "e. sparse", "dense", "e. dense"])
+#    pl.xticks([1, 2, 3, 4], ["sparse", "e. sparse", "dense", "e. dense"])
+    pl.xticks([1, 2], ["sparse", "dense"])
 
     bbox = (1.0, 1.4)
     loc = "upper right"
@@ -242,12 +243,14 @@ def process_file(filename):
 
 ###########################################
 
-def test_groups(filenames, outfilename, description):
+def test_groups(filenames, experiment, description):
     print(description)
 
     pdr_results = [[] for _ in ALGOS]
     prr_results = [[] for _ in ALGOS]
     rdc_results = [[] for _ in ALGOS]
+
+    outfilename = experiment + ".pdf"
 
     for i, a in enumerate(ALGOS):
         print("Algorithm " + ALGONAMES[i])
@@ -256,7 +259,7 @@ def test_groups(filenames, outfilename, description):
             t_prr_results = []
             t_rdc_results = []
 
-            path = os.path.join(DATA_DIRECTORY, a, fs)
+            path = os.path.join(DATA_DIRECTORY, experiment, a, fs)
 
             for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
                 resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
@@ -289,9 +292,9 @@ def main():
     except:
         pass
 
-    test_groups(["sparse-*", "e-sparse-*", "dense-*", "e-dense-*"], "collection.pdf", "Collection")
-    #test_groups(["sparse-*", "e-sparse-*", "dense-*", "e-dense-*"], "query.pdf", "Data query")
-    #test_groups(["sparse-*", "e-sparse-*", "dense-*", "e-dense-*"], "local.pdf", "Local traffic")
+    test_groups(["e-sparse-*", "e-dense-*"], "collection", "Collection")
+    #test_groups(["e-sparse-*", "e-dense-*"], "query", "Data query")
+    #test_groups(["e-sparse-*", "e-dense-*"], "local", "Local traffic")
 
 ###########################################
 

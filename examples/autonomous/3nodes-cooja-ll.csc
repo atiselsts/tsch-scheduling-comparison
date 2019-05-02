@@ -150,5 +150,22 @@
     <location_x>245</location_x>
     <location_y>4</location_y>
   </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.ScriptRunner
+    <plugin_config>
+      <script>TIMEOUT(1000, log.testOK());
+
+while(true) {
+    YIELD();
+    log.log(time + " " + "node-" + id + " "+ msg + "\n");
+}</script>
+      <active>true</active>
+    </plugin_config>
+    <width>600</width>
+    <z>2</z>
+    <height>700</height>
+    <location_x>710</location_x>
+    <location_y>30</location_y>
+  </plugin>
 </simconf>
 

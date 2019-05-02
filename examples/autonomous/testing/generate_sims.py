@@ -4,19 +4,24 @@ import sys, os, copy, errno
 import multiprocessing
 import subprocess
 
+# the path of "examples/autonomous"
 SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 
-SIMULATION_FILE_DIR = SELF_PATH
-SIMULATION_FILE_WILDCARDS = ["sparse-*.csc", "e-sparse-*.csc", "dense-*.csc", "e-dense-*.csc"]
-#SIMULATION_FILE_WILDCARDS = ["sparse-1.csc", "e-sparse-1.csc", "dense-1.csc", "e-dense-1.csc"]
-#SIMULATION_FILE_WILDCARDS = ["sparse-2.csc", "e-sparse-2.csc", "dense-2.csc", "e-dense-2.csc"]
-#SIMULATION_FILE_WILDCARDS = ["sparse-3.csc", "e-sparse-3.csc", "dense-3.csc", "e-dense-3.csc"]
-
 # tailor the workload depending on the number of cores;
 # but leave some cores free for other things
 NUM_CORES = multiprocessing.cpu_count() * 7 // 8
+
+env = {
+    "FIRMWARE_TYPE" : "1",
+}
+
+EXPERIMENTS = [
+  "exp-collection",
+  "exp-query",
+  "exp-local"
+]
 
 ########################################
 
@@ -34,13 +39,7 @@ def create_out_dir(name):
 
 ########################################
 
-env = {
-    "FIRMWARE_TYPE" : "1",
-}
-
-all_directories = []
-
-def generate_simulations(name, env, wildcards=SIMULATION_FILE_WILDCARDS):
+def generate_simulations(name, env, wildcards, experiments):
     makefile = open("Makefile.tmpl", "r").read()
 
     # replace the template symbols with their values
@@ -53,33 +52,40 @@ def generate_simulations(name, env, wildcards=SIMULATION_FILE_WILDCARDS):
 
     filenames = []
     for fs in wildcards:
-        fs = os.path.join(SIMULATION_FILE_DIR, fs)
+        fs = os.path.join(SELF_PATH, fs)
         try:
             filenames += subprocess.check_output("ls " + fs, shell=True).split()
         except Exception as ex:
             print(ex)
 
-    for filename in filenames:
-        sim_name = os.path.basename(os.path.splitext(filename)[0])
-        sim_dirname = os.path.join(dirname, sim_name)
-        create_out_dir(sim_dirname)
+    all_directories = []
+    for exp in experiments:
+        exp_dirname = os.path.join(dirname, exp)
+        create_out_dir(exp_dirname)
 
-        all_directories.append(sim_dirname)
+        for filename in filenames:
+            sim_name = os.path.basename(os.path.splitext(filename)[0])
+            sim_dirname = os.path.join(exp_dirname, sim_name)
+            create_out_dir(sim_dirname)
 
-        subprocess.call("cp " + filename + " " + sim_dirname + "/sim.csc", shell=True)
-        subprocess.call("cp ../common-conf.h " + sim_dirname, shell=True)
-        with open(sim_dirname + "/Makefile.common", "w") as f:
-            f.write(makefile)
+            all_directories.append(sim_dirname)
 
-        create_out_dir(sim_dirname + "/node")
-        subprocess.call("cp ../node/project-conf.h " + sim_dirname + "/node", shell=True)
-        subprocess.call("cp ../node/Makefile " + sim_dirname + "/node", shell=True)
-        subprocess.call("cp ../node/node.c " + sim_dirname + "/node", shell=True)
+            subprocess.call("cp " + filename + " " + sim_dirname + "/sim.csc", shell=True)
+            subprocess.call("cp ../common-conf.h " + sim_dirname, shell=True)
+            with open(sim_dirname + "/Makefile.common", "w") as f:
+                f.write(makefile)
+
+            # all files go into "node"
+            create_out_dir(sim_dirname + "/node")
+            subprocess.call("cp ../" + exp + "/project-conf.h " + sim_dirname + "/node", shell=True)
+            subprocess.call("cp ../" + exp + "/Makefile " + sim_dirname + "/node", shell=True)
+            subprocess.call("cp ../" + exp + "/node.c " + sim_dirname + "/node", shell=True)
+    return all_directories
 
 ########################################
 
-def generate_runner():
-    with open("run.sh", "w") as f:
+def generate_runner(description, all_directories):
+    with open("run-" + description + ".sh", "w") as f:
         f.write("#!/bin/bash\n")
 
         for i, dirname in enumerate(all_directories):
@@ -88,39 +94,48 @@ def generate_runner():
                 f.write("wait\n\n")
         f.write("wait\n")
 
-    os.chmod("run.sh", 0o755)
+    os.chmod("run-" + description + ".sh", 0o755)
 
 ########################################
-def main():
-    create_out_dir(OUT_DIRECTORY)
+def generate_sims(wildcards, description, experiments=EXPERIMENTS):
+#    create_out_dir(OUT_DIRECTORY)
+
+    all_directories = []
 
     cenv = copy.copy(env)
     cenv["FIRMWARE_TYPE"] = "1"
-    generate_simulations("orchestra_sb", cenv)
+    all_directories += generate_simulations("orchestra_sb", cenv, wildcards, experiments)
 
     cenv = copy.copy(env)
     cenv["FIRMWARE_TYPE"] = "2"
-    generate_simulations("orchestra_rb_s", cenv)
+    all_directories += generate_simulations("orchestra_rb_s", cenv, wildcards, experiments)
 
     cenv = copy.copy(env)
     cenv["FIRMWARE_TYPE"] = "3"
-    generate_simulations("orchestra_rb_ns", cenv)
+    all_directories += generate_simulations("orchestra_rb_ns", cenv, wildcards, experiments)
 
 #    cenv = copy.copy(env)
 #    cenv["FIRMWARE_TYPE"] = "4"
-#    generate_simulations("orchestra_rb_ns_sr", cenv)
+#    generate_simulations("orchestra_rb_ns_sr", cenv, wildcards, experiments)
 
     if 0:
         cenv = copy.copy(env)
         cenv["FIRMWARE_TYPE"] = "5"
-        generate_simulations("alice", cenv)
+        all_directories += generate_simulations("alice", cenv, wildcards, experiments)
 
         cenv = copy.copy(env)
         cenv["FIRMWARE_TYPE"] = "6"
-        generate_simulations("msf", cenv)
+        all_directories += generate_simulations("msf", cenv, wildcards, experiments)
 
-    generate_runner()
+    generate_runner(description, all_directories)
 
+########################################
+def main():
+    create_out_dir(OUT_DIRECTORY)
+    # full simulations
+    generate_sims(["e-sparse-*.csc", "e-dense-*.csc"], "all")
+    # lite version, usefull for running quick check to make sure all the configs compile and linkl
+    generate_sims(["3nodes-cooja-ll.csc"], "lite")
 
 ########################################
 if __name__ == '__main__':

@@ -1,12 +1,13 @@
+/*
+ * Data collection test.
+ * Nodes periodically generate traffic, the root collects it.
+ */
 #include "contiki.h"
 #include "node-id.h"
-#include "sys/log.h"
-#include "tsch.h"
 #include "random.h"
 #include "net/ipv6/uip-ds6.h"
-#include "net/ipv6/uip-ds6-route.h"
-#include "net/routing/routing.h"
 #include "net/ipv6/simple-udp.h"
+#include "net/routing/routing.h"
 
 #include "sys/log.h"
 #define LOG_MODULE "Node"
@@ -34,54 +35,6 @@ udp_rx_callback(struct simple_udp_connection *c,
   LOG_INFO("seqnum=%" PRIu32 " from=", seqnum);
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
-}
-/*---------------------------------------------------------------------------*/
-void
-print_network_status(void)
-{
-  int i;
-  uint8_t state;
-  uip_ds6_defrt_t *default_route;
-  uip_ds6_route_t *route;
-
-  LOG_INFO("--- Network status ---\n");
-
-  /* Our IPv6 addresses */
-  LOG_INFO("-- Server IPv6 addresses:\n");
-  for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
-    state = uip_ds6_if.addr_list[i].state;
-    if(uip_ds6_if.addr_list[i].isused &&
-       (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
-      LOG_INFO("-- ");
-      LOG_INFO_6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
-      LOG_INFO_("\n");
-    }
-  }
-
-  /* Our default route */
-  LOG_INFO("-- Default route:\n");
-  default_route = uip_ds6_defrt_lookup(uip_ds6_defrt_choose());
-  if(default_route != NULL) {
-    LOG_INFO("-- ");
-    LOG_INFO_6ADDR(&default_route->ipaddr);
-    LOG_INFO(" (lifetime: %lu seconds)\n", (unsigned long)default_route->lifetime.interval);
-  } else {
-    LOG_INFO("-- None\n");
-  }
-
-  /* Our routing entries */
-  LOG_INFO("-- Routing entries (%u in total):\n", uip_ds6_route_num_routes());
-  route = uip_ds6_route_head();
-  while(route != NULL) {
-    LOG_INFO("-- ");
-    LOG_INFO_6ADDR(&route->ipaddr);
-    LOG_INFO_(" via ");
-    LOG_INFO_6ADDR(uip_ds6_route_nexthop(route));
-    LOG_INFO_(" (lifetime: %lu seconds)\n", (unsigned long)route->state.lifetime);
-    route = uip_ds6_route_next(route);
-  }
-
-  LOG_INFO("----------------------\n");
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(node_process, "Node");
@@ -118,7 +71,7 @@ PROCESS_THREAD(node_process, ev, data)
   /* start TSCH */
   NETSTACK_MAC.on();
 
-  LOG_INFO("node started\n");
+  LOG_INFO("collection-exp node started\n");
 
   etimer_set(&periodic_timer, random_rand() % SEND_INTERVAL);
   while(1) {
