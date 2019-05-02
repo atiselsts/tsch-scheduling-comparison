@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import sys, os, copy
+import sys, os, copy, errno
+import multiprocessing
 import subprocess
 
 SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -13,14 +14,23 @@ SIMULATION_FILE_WILDCARDS = ["sparse-*.csc", "e-sparse-*.csc", "dense-*.csc", "e
 #SIMULATION_FILE_WILDCARDS = ["sparse-2.csc", "e-sparse-2.csc", "dense-2.csc", "e-dense-2.csc"]
 #SIMULATION_FILE_WILDCARDS = ["sparse-3.csc", "e-sparse-3.csc", "dense-3.csc", "e-dense-3.csc"]
 
+# tailor the workload depending on the number of cores;
+# but leave some cores free for other things
+NUM_CORES = multiprocessing.cpu_count() * 7 // 8
 
 ########################################
 
 def create_out_dir(name):
     try:
         os.mkdir(name)
-    except:
+    except IOError as e:
+        if e.errno != errno.EEXIST:
+           print("Failed to create " + name)
+           print(e)
         pass
+    except Exception as ex:
+        pass
+
 
 ########################################
 
@@ -74,7 +84,7 @@ def generate_runner():
 
         for i, dirname in enumerate(all_directories):
             f.write("./run_cooja.py " + dirname + " &\n")
-            if i % 4 == 3:
+            if i % NUM_CORES == NUM_CORES - 1:
                 f.write("wait\n\n")
         f.write("wait\n")
 
