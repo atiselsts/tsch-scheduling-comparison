@@ -102,6 +102,11 @@ MEMB(defaultroutermemb, uip_ds6_defrt_t, UIP_DS6_DEFRT_NB);
 LIST(notificationlist);
 #endif
 
+/* Hack: keep the information about registered nodes here */
+#define MAX_NETWORK_NODES 60
+uip_ipaddr_t network_nodes_with_routes[MAX_NETWORK_NODES];
+unsigned num_network_nodes_with_routes;
+
 /*---------------------------------------------------------------------------*/
 static void
 assert_nbr_routes_list_sane(void)
@@ -324,6 +329,24 @@ uip_ds6_route_t *
 uip_ds6_route_add(const uip_ipaddr_t *ipaddr, uint8_t length,
                   const uip_ipaddr_t *nexthop)
 {
+  {
+    /* Hack: remember this address locally, for later queries */
+    int i;
+    for(i = 0; i < num_network_nodes_with_routes; ++i) {
+      if(memcmp(&network_nodes_with_routes[i], ipaddr, sizeof(uip_ipaddr_t)) == 0) {
+        /* found */
+        break;
+      }
+    }
+    if(i >= num_network_nodes_with_routes) {
+      /* not found, add */
+      if(num_network_nodes_with_routes < MAX_NETWORK_NODES) {
+        memcpy(&network_nodes_with_routes[num_network_nodes_with_routes], ipaddr, sizeof(uip_ipaddr_t));
+        num_network_nodes_with_routes++;
+      }
+    }
+  }
+
 #if (UIP_MAX_ROUTES != 0)
   uip_ds6_route_t *r;
   struct uip_ds6_route_neighbor_route *nbrr;
