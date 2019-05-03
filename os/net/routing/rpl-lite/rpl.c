@@ -250,6 +250,7 @@ const struct routing_driver rpl_lite_driver = {
   rpl_dag_root_start,
   rpl_dag_root_is_root,
   rpl_dag_get_root_ipaddr,
+  rpl_dag_get_parent_ipaddr,
   get_sr_node_ipaddr,
   rpl_dag_poison_and_leave,
   rpl_has_joined,

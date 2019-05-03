@@ -19,7 +19,6 @@
 
 /*---------------------------------------------------------------------------*/
 static struct simple_udp_connection udp_conn;
-static uip_ipaddr_t anycast_address;
 /*---------------------------------------------------------------------------*/
 static void
 udp_rx_callback(struct simple_udp_connection *c,
@@ -32,9 +31,16 @@ udp_rx_callback(struct simple_udp_connection *c,
 {
   uint32_t seqnum;
   memcpy(&seqnum, data, sizeof(seqnum));
-  LOG_INFO("seqnum=%" PRIu32 " from=", seqnum);
+  LOG_INFO("seqnum=%" PRIu32 " from=", (seqnum & ~(1 << 31u)));
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
+
+  if((seqnum & (1 << 31u)) == 0) {
+    /* modify the seqnum to signal it's a reply */
+    seqnum |= 1 << 31u;
+    /* simply send back to the sender */
+    simple_udp_sendto(&udp_conn, &seqnum, sizeof(seqnum), sender_addr);
+  }
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(node_process, "Node");
@@ -44,25 +50,16 @@ PROCESS_THREAD(node_process, ev, data)
 {
   static struct etimer periodic_timer;
   static uint32_t seqnum;
+  uip_ipaddr_t parent_ipaddr;
 
   PROCESS_BEGIN();
 
   printf("FIRMWARE_TYPE=%u\n", FIRMWARE_TYPE);
 
-  uip_ip6addr(&anycast_address, UIP_DS6_DEFAULT_PREFIX, 0x0, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4);
-
   simple_udp_register(&udp_conn, UDP_PORT, NULL,
                       UDP_PORT, udp_rx_callback);
 
   if(node_id == MAIN_GW_ID) {
-    uip_ds6_addr_t *addr;
-
-    /* Add the local anycast address */
-    addr = uip_ds6_addr_add(&anycast_address, 0, ADDR_MANUAL);
-    if(addr == NULL) {
-      LOG_ERR("***  initialization: failed to add local anycast address!\n");
-    }
-
     /* RPL root automatically becomes coordinator */  
     LOG_INFO("set as root\n");
     NETSTACK_ROUTING.root_start();
@@ -73,16 +70,26 @@ PROCESS_THREAD(node_process, ev, data)
 
   LOG_INFO("exp-local node started\n");
 
-  etimer_set(&periodic_timer, random_rand() % SEND_INTERVAL);
-  while(1) {
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+  if(node_id != MAIN_GW_ID) {
 
-    if(node_id != MAIN_GW_ID) {
+    etimer_set(&periodic_timer, random_rand() % SEND_INTERVAL);
+
+    while(1) {
+      PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+
       seqnum++;
-      simple_udp_sendto(&udp_conn, &seqnum, sizeof(seqnum), &anycast_address);
-    }
+      if(NETSTACK_ROUTING.node_is_reachable()
+          && NETSTACK_ROUTING.get_parent_ipaddr(&parent_ipaddr)) {
+        simple_udp_sendto(&udp_conn, &seqnum, sizeof(seqnum), &parent_ipaddr);
+        LOG_INFO("seqnum=%" PRIu32 " to=", seqnum);
+        LOG_INFO_6ADDR(&parent_ipaddr);
+        LOG_INFO_("\n");
+      } else {
+        LOG_INFO("seqnum=%" PRIu32 " skipped: no parent\n", seqnum);
+      }
 
-    etimer_set(&periodic_timer, SEND_INTERVAL);
+      etimer_set(&periodic_timer, SEND_INTERVAL);
+    }
   }
 
   PROCESS_END();

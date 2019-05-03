@@ -65,6 +65,8 @@ const char *rpl_dag_state_to_str(enum rpl_dag_state state);
  * \return 1 if the root address was copied, 0 otherwise
 */
 int rpl_dag_get_root_ipaddr(uip_ipaddr_t *ipaddr);
+
+int rpl_dag_get_parent_ipaddr(uip_ipaddr_t *ipaddr);
 /**
  * Start poisoning and leave the DAG after a delay
  *

@@ -81,6 +81,14 @@ struct routing_driver {
   */
   int (* get_root_ipaddr)(uip_ipaddr_t *ipaddr);
   /**
+   * Returns the IPv6 address of the preferred parent, if any
+   *
+   * \param ipaddr A pointer where to copy the IP address of the root
+   * \return 1 if the parent address was copied, 0 otherwise
+  */
+  int (* get_parent_ipaddr)(uip_ipaddr_t *ipaddr);
+
+  /**
    * Returns the global IPv6 address of a source routing node
    *
    * \param ipaddr A pointer where to copy the IP address of the node

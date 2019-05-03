@@ -423,6 +423,22 @@ get_root_ipaddr(uip_ipaddr_t *ipaddr)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
+static int
+get_parent_ipaddr(uip_ipaddr_t *ipaddr)
+{
+  rpl_dag_t *dag;
+  /* Use the DAG id as server address if no other has been specified */
+  dag = rpl_get_any_dag();
+  if(dag != NULL && ipaddr != NULL) {
+    uip_ipaddr_t *parent_ipaddr = rpl_parent_get_ipaddr(dag->preferred_parent);
+    if(parent_ipaddr != NULL) {
+      uip_ipaddr_copy(ipaddr, parent_ipaddr);
+      return 1;
+    }
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
 const struct routing_driver rpl_classic_driver = {
   "RPL Classic",
   init,
@@ -430,6 +446,7 @@ const struct routing_driver rpl_classic_driver = {
   rpl_dag_root_start,
   rpl_dag_root_is_root,
   get_root_ipaddr,
+  get_parent_ipaddr,
   get_sr_node_ipaddr,
   leave_network,
   rpl_has_joined,

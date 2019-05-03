@@ -95,6 +95,19 @@ rpl_dag_get_root_ipaddr(uip_ipaddr_t *ipaddr)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
+int
+rpl_dag_get_parent_ipaddr(uip_ipaddr_t *ipaddr)
+{
+  if(curr_instance.used && curr_instance.dag.preferred_parent != NULL && ipaddr != NULL) {
+    uip_ipaddr_t *parent_ipaddr = rpl_neighbor_get_ipaddr(curr_instance.dag.preferred_parent);
+    if(parent_ipaddr != NULL) {
+      uip_ipaddr_copy(ipaddr, parent_ipaddr);
+      return 1;
+    }
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
 void
 rpl_dag_leave(void)
 {
