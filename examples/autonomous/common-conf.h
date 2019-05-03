@@ -91,7 +91,7 @@
 /******************* Configure Orchestra ***************/
 /*******************************************************/
 
-#define ORCHESTRA_CONF_UNICAST_PERIOD             17
+#define ORCHESTRA_CONF_UNICAST_PERIOD             11
 
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED       (FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB)
 

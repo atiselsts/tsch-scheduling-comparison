@@ -5,7 +5,6 @@ import sys
 import time
 import subprocess
 
-#import pylab as pl
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as pl
@@ -48,7 +47,7 @@ ALGONAMES = [
 
 # The nodes generate 1 packet per minute; allow first 10 mins for the network tree building
 FIRST_SEQNUM = 11
-LAST_SEQNUM =  15
+LAST_SEQNUM =  29
 
 # The root node is ignored in the calculations (XXX: maybe should not ignore its PRR?)
 ROOT_ID = 1
@@ -69,15 +68,16 @@ def graph_ci(data, ylabel, filename):
 
     width = 0.15
 
-#    print(filename)
+#   print(filename)
     for i, a in enumerate(ALGOS):
         algo_data = data[i]
-#        print(ALGONAMES[i])
+#       print(ALGONAMES[i])
 
         to_plot = []
         yerr = []
         for d in algo_data:
-            #print("d=", d)
+#           if "pdr" in filename:
+#               print("d=", d)
             mean, sigma = np.mean(d), np.std(d)
             stderr = 1.0 * sigma / (len(d) ** 0.5)
             ci = stats.norm.interval(CI, loc=mean, scale=stderr) - mean
@@ -156,7 +156,7 @@ class MoteStats:
             print("warning: no radio duty cycle for {}".format(self.id))
             self.rdc = 0.0
 
-def process_file(filename):
+def process_file(filename, experiment):
     motes = {}
     has_assoc = set()
     print(filename)
@@ -190,24 +190,27 @@ def process_file(filename):
                 else:
                     continue
 
-            if node == ROOT_ID:
+            if node == ROOT_ID or "local" in experiment:
                 # 314937392 1 [INFO: Node      ] seqnum=6 from=fd00::205:5:5:5
                 if "seqnum=" in line:
+                    #print(line)
                     sn = int(fields[5].split("=")[1])
                     if not (FIRST_SEQNUM <= sn <= LAST_SEQNUM):
                         continue
-                    fromaddr = fields[6].split("=")[1]
-                    fromnode = int(fromaddr.split(":")[-1], 16)
-                    if fromnode not in motes:
-                        motes[fromnode] = MoteStats(fromnode)
+                    if "=" not in fields[6]:
+                        continue
+                    fromtext, fromaddr = fields[6].split("=")
+                    # this is needed to distinguish between "from" and "to" in the query example
+                    if fromtext == "from":
+                        fromnode = int(fromaddr.split(":")[-1], 16)
+                        if fromnode in has_assoc \
+                           and motes[fromnode].associated_at_minutes < sn:
+                            # account for the seqnum
+                            motes[fromnode].seqnums.add(sn)
 
-                    if fromnode in has_assoc \
-                       and motes[fromnode].associated_at_minutes < sn:
-                        # account for the seqnum
-                        motes[fromnode].seqnums.add(sn)
-
-                # ignore the root, except for PDR
-                continue
+                if "local" not in experiment:
+                    # ignore the root, except for PDR
+                    continue
 
             if node not in has_assoc:
                 continue
@@ -259,7 +262,7 @@ def test_groups(filenames, experiment, description):
             t_prr_results = []
             t_rdc_results = []
 
-            path = os.path.join(DATA_DIRECTORY, experiment, a, fs)
+            path = os.path.join(DATA_DIRECTORY, a, "exp-" + experiment, fs)
 
             for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
                 resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
@@ -267,7 +270,7 @@ def test_groups(filenames, experiment, description):
                 if not os.access(resultsfile, os.R_OK):
                     continue
 
-                r = process_file(resultsfile)
+                r = process_file(resultsfile, experiment)
                 for pdr, prr, rdc in r:
                     t_pdr_results.append(pdr)
                     t_prr_results.append(prr)
@@ -293,8 +296,8 @@ def main():
         pass
 
     test_groups(["e-sparse-*", "e-dense-*"], "collection", "Collection")
-    #test_groups(["e-sparse-*", "e-dense-*"], "query", "Data query")
-    #test_groups(["e-sparse-*", "e-dense-*"], "local", "Local traffic")
+    test_groups(["e-sparse-*", "e-dense-*"], "query", "Data query")
+    test_groups(["e-sparse-*", "e-dense-*"], "local", "Local traffic")
 
 ###########################################
 
