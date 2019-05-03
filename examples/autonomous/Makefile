@@ -7,7 +7,11 @@ all:
 	@echo "Recursive make not supported"
 
 clean:
-	$(MAKE) -C node clean
+	$(MAKE) -C exp-local clean
+	$(MAKE) -C exp-query clean
+	$(MAKE) -C exp-collection clean
 
 distclean:
-	$(MAKE) -C node distclean
+	$(MAKE) -C exp-local distclean
+	$(MAKE) -C exp-query distclean
+	$(MAKE) -C exp-collection distclean
