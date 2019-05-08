@@ -126,6 +126,24 @@ uip_sr_update_node(void *graph, const uip_ipaddr_t *child, const uip_ipaddr_t *p
   uip_sr_node_t *parent_node = uip_sr_get_node(graph, parent);
   uip_sr_node_t *old_parent_node;
 
+  {
+    /* Hack: remember this address locally, for later queries */
+    int i;
+    for(i = 0; i < uip_num_network_nodes_with_routes; ++i) {
+      if(memcmp(&uip_network_nodes_with_routes[i], child, sizeof(uip_ipaddr_t)) == 0) {
+        /* found */
+        break;
+      }
+    }
+    if(i >= uip_num_network_nodes_with_routes) {
+      /* not found, add */
+      if(uip_num_network_nodes_with_routes < UIP_MAX_NETWORK_NODES) {
+        memcpy(&uip_network_nodes_with_routes[uip_num_network_nodes_with_routes], child, sizeof(uip_ipaddr_t));
+        uip_num_network_nodes_with_routes++;
+      }
+    }
+  }
+
   if(parent != NULL) {
     /* No node for the parent, add one with infinite lifetime */
     if(parent_node == NULL) {

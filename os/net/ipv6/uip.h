@@ -2147,6 +2147,11 @@ uint16_t uip_icmp6chksum(void);
  */
 bool uip_remove_ext_hdr(void);
 
+/* Hack: keep the information about registered nodes here */
+#define UIP_MAX_NETWORK_NODES 60
+extern uip_ipaddr_t uip_network_nodes_with_routes[];
+extern unsigned uip_num_network_nodes_with_routes;
+
 #endif /* UIP_H_ */
 
 

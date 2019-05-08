@@ -24,9 +24,6 @@
 
 /*---------------------------------------------------------------------------*/
 static struct simple_udp_connection udp_conn;
-
-extern uip_ipaddr_t network_nodes_with_routes[];
-extern unsigned num_network_nodes_with_routes;
 /*---------------------------------------------------------------------------*/
 static void
 udp_rx_callback(struct simple_udp_connection *c,
@@ -96,8 +93,8 @@ PROCESS_THREAD(node_process, ev, data)
       if(etimer_expired(&query_timer)) {
         /* find the first / next route */
         last_queried_id++;
-        if(last_queried_id < num_network_nodes_with_routes) {
-          uip_ipaddr_t *addr = &network_nodes_with_routes[last_queried_id];
+        if(last_queried_id < uip_num_network_nodes_with_routes) {
+          uip_ipaddr_t *addr = &uip_network_nodes_with_routes[last_queried_id];
           simple_udp_sendto(&udp_conn, &seqnum, sizeof(seqnum), addr);
           LOG_INFO("seqnum=%" PRIu32 " to=", seqnum);
           LOG_INFO_6ADDR(addr);

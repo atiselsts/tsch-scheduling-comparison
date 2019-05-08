@@ -103,9 +103,8 @@ LIST(notificationlist);
 #endif
 
 /* Hack: keep the information about registered nodes here */
-#define MAX_NETWORK_NODES 60
-uip_ipaddr_t network_nodes_with_routes[MAX_NETWORK_NODES];
-unsigned num_network_nodes_with_routes;
+uip_ipaddr_t uip_network_nodes_with_routes[UIP_MAX_NETWORK_NODES];
+unsigned uip_num_network_nodes_with_routes;
 
 /*---------------------------------------------------------------------------*/
 static void
@@ -332,17 +331,17 @@ uip_ds6_route_add(const uip_ipaddr_t *ipaddr, uint8_t length,
   {
     /* Hack: remember this address locally, for later queries */
     int i;
-    for(i = 0; i < num_network_nodes_with_routes; ++i) {
-      if(memcmp(&network_nodes_with_routes[i], ipaddr, sizeof(uip_ipaddr_t)) == 0) {
+    for(i = 0; i < uip_num_network_nodes_with_routes; ++i) {
+      if(memcmp(&uip_network_nodes_with_routes[i], ipaddr, sizeof(uip_ipaddr_t)) == 0) {
         /* found */
         break;
       }
     }
-    if(i >= num_network_nodes_with_routes) {
+    if(i >= uip_num_network_nodes_with_routes) {
       /* not found, add */
-      if(num_network_nodes_with_routes < MAX_NETWORK_NODES) {
-        memcpy(&network_nodes_with_routes[num_network_nodes_with_routes], ipaddr, sizeof(uip_ipaddr_t));
-        num_network_nodes_with_routes++;
+      if(uip_num_network_nodes_with_routes < UIP_MAX_NETWORK_NODES) {
+        memcpy(&uip_network_nodes_with_routes[uip_num_network_nodes_with_routes], ipaddr, sizeof(uip_ipaddr_t));
+        uip_num_network_nodes_with_routes++;
       }
     }
   }
