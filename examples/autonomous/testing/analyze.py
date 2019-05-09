@@ -32,10 +32,11 @@ OUT_DIR = "../plots"
 
 DATA_DIRECTORY="../simulations"
 
-ALGOS = ["orchestra_sb",
-         "orchestra_rb_s",
-         "orchestra_rb_ns",
-#         "orchestra_rb_ns_sr",
+ALGOS = [
+    "orchestra_sb",
+    "orchestra_rb_s",
+    "orchestra_rb_ns",
+#    "orchestra_rb_ns_sr",
 ]
 
 ALGONAMES = [
@@ -148,7 +149,6 @@ class MoteStats:
             self.prr = 0.0
         expected = LAST_SEQNUM - first_seqnum + 1
         actual = len(self.seqnums)
-        #print("seqnums=", self.seqnums, self.associated_at_minutes)
         self.pdr = 100.0 * actual / expected
         if self.radio_total:
             self.rdc = 100.0 * self.radio_on / self.radio_total
@@ -180,6 +180,7 @@ def process_file(filename, experiment):
             if "association done" in line:
                 #print(line)
                 has_assoc.add(node)
+                motes[node].seqnums = set()
                 motes[node].associated_at_minutes = (ts // 1000 + 59) // 60
                 continue
 
@@ -207,6 +208,7 @@ def process_file(filename, experiment):
                            and motes[fromnode].associated_at_minutes < sn:
                             # account for the seqnum
                             motes[fromnode].seqnums.add(sn)
+                            # print("add sn={} fromnode={}".format(sn, fromnode))
 
                 if "local" not in experiment:
                     # ignore the root, except for PDR
