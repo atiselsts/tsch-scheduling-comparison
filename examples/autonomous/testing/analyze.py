@@ -14,14 +14,14 @@ from scipy.stats.stats import pearsonr
 import numpy as np
 
 #
-# This calculates and plot these metrics:
+# This calculates and plots these metrics:
 # - End-to-end PDR
 # - Link-layer PRR (between a node and all of its neighbors)
 # - Radio Duty Cycle
 #
 # The radio duty cycle is based on Energest results.
-# For Cooja motes, those are approximate, as e.g.
-# the packet transmission time is only modeled with millisecond accuracy.
+# For Cooja motes, those are quite approximate
+# (as e.g. clock drift is not simulated, SPI communication time is not simulated).
 #
 
 matplotlib.style.use('seaborn')
@@ -34,7 +34,7 @@ DATA_DIRECTORY="../simulations"
 
 ALGOS = [
     "orchestra_sb",
-    "orchestra_rb_s",
+#    "orchestra_rb_s",
     "orchestra_rb_ns",
 #    "orchestra_rb_ns_sr",
 ]
@@ -50,6 +50,16 @@ ALGONAMES = [
 FIRST_SEQNUM = 11
 LAST_SEQNUM =  29
 
+SLOTFRAME_SIZES =[
+    7,
+    11,
+    15,
+    19,
+    23,
+    27,
+    31
+]
+
 # The root node is ignored in the calculations (XXX: maybe should not ignore its PRR?)
 ROOT_ID = 1
 
@@ -63,6 +73,8 @@ BASIC_MARKERS = ["o", "s", "X", "X", "X"]
 
 COLORS = ["green", "slateblue", "orange", "red"]
 BASIC_COLORS = ["green", "slateblue", "orange", "red"]
+
+###########################################
 
 def graph_ci(data, ylabel, filename):
     pl.figure(figsize=(6, 3.5))
@@ -104,6 +116,42 @@ def graph_ci(data, ylabel, filename):
     bbox = (1.0, 1.4)
     loc = "upper right"
     # pl.ylim([0, 700])
+
+    if "pdr" in filename:
+        legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=1,
+                           prop={"size":11},
+                           handler_map={lh.Line2D: lh.HandlerLine2D(numpoints=1)})
+
+        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
+                   bbox_extra_artists=(legend,),
+                   bbox_inches='tight')
+    else:
+        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
+                   bbox_inches='tight')
+
+###########################################
+
+def graph_line(xdata, ydata, xlabel, ylabel, filename):
+    pl.figure(figsize=(6, 3.5))
+
+    width = 0.15
+
+    for i, a in enumerate(ALGOS):
+        algo_xdata = xdata[i]
+        algo_ydata = ydata[i]
+
+        to_plot_x = algo_xdata #[np.mean(d) for d in algo_xdata]
+        to_plot_y = algo_ydata #[np.mean(d) for d in algo_ydata]
+
+        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[i], color=COLORS[i])
+
+    pl.ylim(ymin=0, ymax=105)
+    pl.xlabel(xlabel)
+    pl.ylabel(ylabel)
+    pl.xlim([0, 20])
+
+    bbox = (1.0, 1.4)
+    loc = "upper right"
 
     if "pdr" in filename:
         legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=1,
@@ -248,7 +296,7 @@ def process_file(filename, experiment):
 
 ###########################################
 
-def test_groups(filenames, experiment, description):
+def compare_basic_metrics(filenames, experiment, description, ss):
     print(description)
 
     pdr_results = [[] for _ in ALGOS]
@@ -258,13 +306,13 @@ def test_groups(filenames, experiment, description):
     outfilename = experiment + ".pdf"
 
     for i, a in enumerate(ALGOS):
-        print("Algorithm " + ALGONAMES[i])
+        print("Algorithm {}_{}".format(ALGONAMES[i], ss))
         for j, fs in enumerate(filenames):
             t_pdr_results = []
             t_prr_results = []
             t_rdc_results = []
 
-            path = os.path.join(DATA_DIRECTORY, a, "exp-" + experiment, fs)
+            path = os.path.join(DATA_DIRECTORY, "{}_{}".format(a, ss), "exp-" + experiment, fs)
 
             for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
                 resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
@@ -288,6 +336,60 @@ def test_groups(filenames, experiment, description):
     graph_ci(rdc_results, "Radio duty cycle, %", "sim_rdc_" + outfilename)
 
     print("")
+
+###########################################
+
+def compare_per_duty_cycle(filenames, experiment, description):
+    print("per duty cycle", description)
+
+    outfilename = experiment + ".pdf"
+
+    for j, fs in enumerate(filenames):
+#        t_pdr_results = []
+#        t_prr_results = []
+#        t_rdc_results = []
+
+        pdr_results = [[] for _ in ALGOS]
+        rdc_results = [[] for _ in ALGOS]
+
+        for i, a in enumerate(ALGOS):
+
+            print("Algorithm {}".format(ALGONAMES[i]))
+
+            for ss in SLOTFRAME_SIZES:
+
+                t_pdr_results = []
+                t_rdc_results = []
+
+                path = os.path.join(DATA_DIRECTORY, "{}_{}".format(a, ss), "exp-" + experiment, fs)
+
+                for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
+                    resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
+
+                    if not os.access(resultsfile, os.R_OK):
+                        continue
+
+                    r = process_file(resultsfile, experiment)
+                    for pdr, _, rdc in r:
+                        t_pdr_results.append(pdr)
+                        t_rdc_results.append(rdc)
+
+                pdr_results[i].append(np.mean(t_pdr_results))
+                rdc_results[i].append(np.mean(t_rdc_results))
+
+        # plot the results
+        pdffile = "sim_pdr_per_duty_cycle_" + fs.replace("*", "").replace("-", "") + "_" + outfilename
+        graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %",
+                   pdffile)
+
+###########################################
+
+def test_groups(filenames, experiment, description):
+    print(description)
+
+#    compare_basic_metrics(filenames, experiment, description, ss=11)
+
+    compare_per_duty_cycle(filenames, experiment, description)
 
 ###########################################
 
