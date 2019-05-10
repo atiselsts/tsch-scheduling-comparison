@@ -95,9 +95,11 @@ def generate_simulations(name, env, wildcards, experiments):
 
 ########################################
 
-def generate_runner(description, all_directories):
-    with open("run-" + description + ".sh", "w") as f:
-        f.write("#!/bin/bash\n")
+def generate_runner(description, all_directories, do_append):
+    open_as = "a+" if do_append else "w"
+    with open("run-" + description + ".sh", open_as) as f:
+        if not do_append:
+            f.write("#!/bin/bash\n")
 
         for i, dirname in enumerate(all_directories):
             f.write("./run_cooja.py " + dirname + " &\n")
@@ -108,7 +110,7 @@ def generate_runner(description, all_directories):
     os.chmod("run-" + description + ".sh", 0o755)
 
 ########################################
-def generate_sims(wildcards, description, ss, experiments=EXPERIMENTS):
+def generate_sims(wildcards, description, ss, do_append_runner, experiments=EXPERIMENTS):
     all_directories = []
 
     ENV["ORCHESTRA_CONF_UNICAST_PERIOD"] = ss
@@ -138,16 +140,16 @@ def generate_sims(wildcards, description, ss, experiments=EXPERIMENTS):
         cenv["FIRMWARE_TYPE"] = "6"
         all_directories += generate_simulations("msf_{}".format(ss), cenv, wildcards, experiments)
 
-    generate_runner(description, all_directories)
+    generate_runner(description, all_directories, do_append_runner)
 
 ########################################
 def main():
     create_out_dir(OUT_DIRECTORY)
     # full simulations
-    for ss in SLOTFRAME_SIZES:
-        generate_sims(["e-sparse-*.csc", "e-dense-*.csc"], "all", ss)
+    for i, ss in enumerate(SLOTFRAME_SIZES):
+        generate_sims(["e-sparse-*.csc", "e-dense-*.csc"], "all", ss, do_append_runner=(i!=0))
     # lite version, usefull for running quick check to make sure all the configs compile and linkl
-    generate_sims(["3nodes-cooja-ll.csc"], "lite", 7)
+    generate_sims(["3nodes-cooja-ll.csc"], "lite", 7, do_append_runner=False)
 
 ########################################
 if __name__ == '__main__':
