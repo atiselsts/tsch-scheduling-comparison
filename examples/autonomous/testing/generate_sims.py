@@ -13,14 +13,25 @@ OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 # but leave some cores free for other things
 NUM_CORES = multiprocessing.cpu_count() * 7 // 8
 
-env = {
+ENV = {
     "FIRMWARE_TYPE" : "1",
+    "ORCHESTRA_CONF_UNICAST_PERIOD" : "11"
 }
 
 EXPERIMENTS = [
   "exp-collection",
   "exp-query",
   "exp-local"
+]
+
+SLOTFRAME_SIZES =[
+    7,
+    11,
+    15,
+    19,
+    23,
+    27,
+    31
 ]
 
 ########################################
@@ -97,35 +108,35 @@ def generate_runner(description, all_directories):
     os.chmod("run-" + description + ".sh", 0o755)
 
 ########################################
-def generate_sims(wildcards, description, experiments=EXPERIMENTS):
-#    create_out_dir(OUT_DIRECTORY)
-
+def generate_sims(wildcards, description, ss, experiments=EXPERIMENTS):
     all_directories = []
 
-    cenv = copy.copy(env)
+    ENV["ORCHESTRA_CONF_UNICAST_PERIOD"] = ss
+
+    cenv = copy.copy(ENV)
     cenv["FIRMWARE_TYPE"] = "1"
-    all_directories += generate_simulations("orchestra_sb", cenv, wildcards, experiments)
+    all_directories += generate_simulations("orchestra_sb_{}".format(ss), cenv, wildcards, experiments)
 
-    cenv = copy.copy(env)
+    cenv = copy.copy(ENV)
     cenv["FIRMWARE_TYPE"] = "2"
-    all_directories += generate_simulations("orchestra_rb_s", cenv, wildcards, experiments)
+    all_directories += generate_simulations("orchestra_rb_s_{}".format(ss), cenv, wildcards, experiments)
 
-    cenv = copy.copy(env)
+    cenv = copy.copy(ENV)
     cenv["FIRMWARE_TYPE"] = "3"
-    all_directories += generate_simulations("orchestra_rb_ns", cenv, wildcards, experiments)
+    all_directories += generate_simulations("orchestra_rb_ns_{}".format(ss), cenv, wildcards, experiments)
 
-#    cenv = copy.copy(env)
+#    cenv = copy.copy(ENV)
 #    cenv["FIRMWARE_TYPE"] = "4"
-#    generate_simulations("orchestra_rb_ns_sr", cenv, wildcards, experiments)
+#    generate_simulations("orchestra_rb_ns_sr_{}".format(ss), cenv, wildcards, experiments)
 
     if 0:
-        cenv = copy.copy(env)
+        cenv = copy.copy(ENV)
         cenv["FIRMWARE_TYPE"] = "5"
-        all_directories += generate_simulations("alice", cenv, wildcards, experiments)
+        all_directories += generate_simulations("alice_{}".format(ss), cenv, wildcards, experiments)
 
-        cenv = copy.copy(env)
+        cenv = copy.copy(ENV)
         cenv["FIRMWARE_TYPE"] = "6"
-        all_directories += generate_simulations("msf", cenv, wildcards, experiments)
+        all_directories += generate_simulations("msf_{}".format(ss), cenv, wildcards, experiments)
 
     generate_runner(description, all_directories)
 
@@ -133,9 +144,10 @@ def generate_sims(wildcards, description, experiments=EXPERIMENTS):
 def main():
     create_out_dir(OUT_DIRECTORY)
     # full simulations
-    generate_sims(["e-sparse-*.csc", "e-dense-*.csc"], "all")
+    for ss in SLOTFRAME_SIZES:
+        generate_sims(["e-sparse-*.csc", "e-dense-*.csc"], "all", ss)
     # lite version, usefull for running quick check to make sure all the configs compile and linkl
-    generate_sims(["3nodes-cooja-ll.csc"], "lite")
+    generate_sims(["3nodes-cooja-ll.csc"], "lite", 7)
 
 ########################################
 if __name__ == '__main__':

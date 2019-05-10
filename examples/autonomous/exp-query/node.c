@@ -59,6 +59,7 @@ PROCESS_THREAD(node_process, ev, data)
   PROCESS_BEGIN();
 
   printf("FIRMWARE_TYPE=%u\n", FIRMWARE_TYPE);
+  printf("ORCHESTRA_CONF_UNICAST_PERIOD=%u\n", ORCHESTRA_CONF_UNICAST_PERIOD);
 
   simple_udp_register(&udp_conn, UDP_PORT, NULL,
                       UDP_PORT, udp_rx_callback);

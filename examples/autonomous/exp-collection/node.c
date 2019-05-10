@@ -48,6 +48,7 @@ PROCESS_THREAD(node_process, ev, data)
   PROCESS_BEGIN();
 
   printf("FIRMWARE_TYPE=%u\n", FIRMWARE_TYPE);
+  printf("ORCHESTRA_CONF_UNICAST_PERIOD=%u\n", ORCHESTRA_CONF_UNICAST_PERIOD);
 
   uip_ip6addr(&anycast_address, UIP_DS6_DEFAULT_PREFIX, 0x0, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4);
 
