@@ -126,7 +126,8 @@ def generate_runner(description, all_directories, do_overwrite):
 
 ########################################
 def main():
-    wildcards = ["sim-2-neigh.csc", "sim-4-neigh.csc"]
+    # sparse, medium, and dense networks - depending on the neighbor count
+    wildcards = ["sim-3-neigh*.csc", "sim-7-neigh*.csc", "sim-11-neigh*.csc"]
 
     all_directories = []
     dirname1 = OUT_DIRECTORY
