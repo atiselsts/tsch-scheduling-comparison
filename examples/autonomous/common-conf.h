@@ -29,6 +29,8 @@
 /* Enable printing of packet counters */
 #define LINK_STATS_CONF_PACKET_COUNTERS          1
 
+#define UDP_PORT	8765
+
 /*******************************************************/
 /************* Other system configuration **************/
 /*******************************************************/
@@ -58,8 +60,6 @@
 
 /* Do not start TSCH at init, wait for NETSTACK_MAC.on() */
 #define TSCH_CONF_AUTOSTART 0
-
-//#define TSCH_CONF_INIT_SCHEDULE_FROM_EB 0
 
 #define TSCH_CONF_ADAPTIVE_TIMESYNC 0
 
@@ -108,4 +108,12 @@
 #  error "Implement me!"
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
 #  error "Implement me!"
+#endif
+
+/*******************************************************/
+/*************** Configure other settings **************/
+/*******************************************************/
+
+#ifndef SEND_INTERVAL_SEC
+#define SEND_INTERVAL_SEC 60
 #endif

@@ -13,10 +13,6 @@
 #define LOG_MODULE "Node"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#define UDP_PORT	8765
-
-#define SEND_INTERVAL   (60 * CLOCK_SECOND)
-
 /*---------------------------------------------------------------------------*/
 static struct simple_udp_connection udp_conn;
 static uip_ipaddr_t anycast_address;
@@ -49,6 +45,7 @@ PROCESS_THREAD(node_process, ev, data)
 
   printf("FIRMWARE_TYPE=%u\n", FIRMWARE_TYPE);
   printf("ORCHESTRA_CONF_UNICAST_PERIOD=%u\n", ORCHESTRA_CONF_UNICAST_PERIOD);
+  printf("SEND_INTERVAL_SEC=%u\n", SEND_INTERVAL_SEC);
 
   uip_ip6addr(&anycast_address, UIP_DS6_DEFAULT_PREFIX, 0x0, 0x0, 0x0, 0x1, 0x2, 0x3, 0x4);
 
@@ -74,7 +71,7 @@ PROCESS_THREAD(node_process, ev, data)
 
   LOG_INFO("collection-exp node started\n");
 
-  etimer_set(&periodic_timer, random_rand() % SEND_INTERVAL);
+  etimer_set(&periodic_timer, 10 * CLOCK_SECOND + random_rand() % (SEND_INTERVAL_SEC * CLOCK_SECOND));
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
@@ -83,7 +80,7 @@ PROCESS_THREAD(node_process, ev, data)
       simple_udp_sendto(&udp_conn, &seqnum, sizeof(seqnum), &anycast_address);
     }
 
-    etimer_set(&periodic_timer, SEND_INTERVAL);
+    etimer_set(&periodic_timer, SEND_INTERVAL_SEC * CLOCK_SECOND);
   }
 
   PROCESS_END();

@@ -13,10 +13,6 @@
 #define LOG_MODULE "Node"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#define UDP_PORT	8765
-
-#define SEND_INTERVAL   (60 * CLOCK_SECOND)
-
 /*---------------------------------------------------------------------------*/
 static struct simple_udp_connection udp_conn;
 /*---------------------------------------------------------------------------*/
@@ -73,7 +69,7 @@ PROCESS_THREAD(node_process, ev, data)
 
   if(node_id != MAIN_GW_ID) {
 
-    etimer_set(&periodic_timer, random_rand() % SEND_INTERVAL);
+    etimer_set(&periodic_timer, 10 * CLOCK_SECOND + random_rand() % (SEND_INTERVAL_SEC * CLOCK_SECOND));
 
     while(1) {
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
@@ -89,7 +85,7 @@ PROCESS_THREAD(node_process, ev, data)
         LOG_INFO("seqnum=%" PRIu32 " skipped: no parent\n", seqnum);
       }
 
-      etimer_set(&periodic_timer, SEND_INTERVAL);
+      etimer_set(&periodic_timer, SEND_INTERVAL_SEC * CLOCK_SECOND);
     }
   }
 

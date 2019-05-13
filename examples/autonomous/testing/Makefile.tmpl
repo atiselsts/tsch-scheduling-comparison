@@ -47,12 +47,13 @@ endif
 CFLAGS += -DFIRMWARE_TYPE=$(FIRMWARE_TYPE)
 
 CFLAGS += -DORCHESTRA_CONF_UNICAST_PERIOD=@ORCHESTRA_CONF_UNICAST_PERIOD@
+CFLAGS += -DSEND_INTERVAL_SEC=@SEND_INTERVAL_SEC@
 
 ############################
 ####### Other config #######
 ############################
 
-CONTIKI=../../../../../../..
+CONTIKI=../../../../../../../../..
 
 MAKE_MAC = MAKE_MAC_TSCH
 MAKE_ROUTING = MAKE_ROUTING_RPL_CLASSIC

@@ -18,6 +18,15 @@ ENV = {
     "ORCHESTRA_CONF_UNICAST_PERIOD" : "11"
 }
 
+ALGORITHMS = [
+    "orchestra_sb", # 1
+    "orchestra_rb_s", # 2
+    "orchestra_rb_ns", # 3 
+    #"orchestra_rb_ns_sr", # 4
+    #"alice", # 5
+    #"msf", # 6
+]
+
 EXPERIMENTS = [
   "exp-collection",
   "exp-query",
@@ -32,6 +41,14 @@ SLOTFRAME_SIZES =[
     23,
     27,
     31
+]
+
+SEND_INTERVALS = [
+    8,  # ~8 packets per second
+    15, # 4
+    30, # 2
+    60, # 1
+    120 # 0.5
 ]
 
 ########################################
@@ -50,15 +67,13 @@ def create_out_dir(name):
 
 ########################################
 
-def generate_simulations(name, env, wildcards, experiments):
+def generate_simulations(dirname, env, wildcards, experiments):
     makefile = open("Makefile.tmpl", "r").read()
 
     # replace the template symbols with their values
     for key in env:
         makefile = makefile.replace("@" + key + "@", str(env[key]))
 
-    dirname = os.path.join(OUT_DIRECTORY, name)
-    create_out_dir(dirname)
     print("dirname=", dirname)
 
     filenames = []
@@ -95,10 +110,10 @@ def generate_simulations(name, env, wildcards, experiments):
 
 ########################################
 
-def generate_runner(description, all_directories, do_append):
-    open_as = "a+" if do_append else "w"
+def generate_runner(description, all_directories, do_overwrite):
+    open_as = "w" if do_overwrite else "a+"
     with open("run-" + description + ".sh", open_as) as f:
-        if not do_append:
+        if do_overwrite:
             f.write("#!/bin/bash\n")
 
         for i, dirname in enumerate(all_directories):
@@ -110,46 +125,34 @@ def generate_runner(description, all_directories, do_append):
     os.chmod("run-" + description + ".sh", 0o755)
 
 ########################################
-def generate_sims(wildcards, description, ss, do_append_runner, experiments=EXPERIMENTS):
-    all_directories = []
-
-    ENV["ORCHESTRA_CONF_UNICAST_PERIOD"] = ss
-
-    cenv = copy.copy(ENV)
-    cenv["FIRMWARE_TYPE"] = "1"
-    all_directories += generate_simulations("orchestra_sb_{}".format(ss), cenv, wildcards, experiments)
-
-    cenv = copy.copy(ENV)
-    cenv["FIRMWARE_TYPE"] = "2"
-    all_directories += generate_simulations("orchestra_rb_s_{}".format(ss), cenv, wildcards, experiments)
-
-    cenv = copy.copy(ENV)
-    cenv["FIRMWARE_TYPE"] = "3"
-    all_directories += generate_simulations("orchestra_rb_ns_{}".format(ss), cenv, wildcards, experiments)
-
-#    cenv = copy.copy(ENV)
-#    cenv["FIRMWARE_TYPE"] = "4"
-#    generate_simulations("orchestra_rb_ns_sr_{}".format(ss), cenv, wildcards, experiments)
-
-    if 0:
-        cenv = copy.copy(ENV)
-        cenv["FIRMWARE_TYPE"] = "5"
-        all_directories += generate_simulations("alice_{}".format(ss), cenv, wildcards, experiments)
-
-        cenv = copy.copy(ENV)
-        cenv["FIRMWARE_TYPE"] = "6"
-        all_directories += generate_simulations("msf_{}".format(ss), cenv, wildcards, experiments)
-
-    generate_runner(description, all_directories, do_append_runner)
-
-########################################
 def main():
-    create_out_dir(OUT_DIRECTORY)
-    # full simulations
-    for i, ss in enumerate(SLOTFRAME_SIZES):
-        generate_sims(["e-sparse-*.csc", "e-dense-*.csc"], "all", ss, do_append_runner=(i!=0))
-    # lite version, usefull for running quick check to make sure all the configs compile and linkl
-    generate_sims(["3nodes-cooja-ll.csc"], "lite", 7, do_append_runner=False)
+    wildcards = ["sim-2-neigh.csc", "sim-4-neigh.csc"]
+
+    all_directories = []
+    dirname1 = OUT_DIRECTORY
+    create_out_dir(dirname1)
+    for i, a in enumerate(ALGORITHMS):
+        firmware_type = i + 1
+        dirname2 = os.path.join(dirname1, a)
+        create_out_dir(dirname2)
+        for si in SEND_INTERVALS:
+            dirname3 = os.path.join(dirname2, "si_{}".format(si))
+            create_out_dir(dirname3)
+            for ss in SLOTFRAME_SIZES:
+                dirname4 = os.path.join(dirname3, "sf_{}".format(ss))
+                create_out_dir(dirname4)
+                cenv = copy.copy(ENV)
+                cenv["FIRMWARE_TYPE"] = str(firmware_type)
+                cenv["SEND_INTERVAL_SEC"] = str(si)
+                cenv["ORCHESTRA_CONF_UNICAST_PERIOD"] = str(ss)
+                all_directories += generate_simulations(dirname4, cenv, wildcards, EXPERIMENTS)
+    generate_runner("all", all_directories, True)
+
+
+    wildcards = ["3nodes-cooja-ll.csc"]
+    all_directories = generate_simulations(dirname4, cenv, wildcards, EXPERIMENTS)
+    generate_runner("lite", all_directories, True)
+
 
 ########################################
 if __name__ == '__main__':
