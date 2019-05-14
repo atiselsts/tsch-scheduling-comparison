@@ -259,6 +259,7 @@ resynchronize(const linkaddr_t *original_time_source_addr)
     LOG_INFO_("\n");
     return 0;
   }
+#if 0
   /* Switch time source to the last neighbor we received an EB from */
   if(linkaddr_cmp(&last_eb_nbr_addr, &linkaddr_null)) {
     LOG_WARN("not able to re-synchronize, received no EB from other neighbors\n");
@@ -278,6 +279,8 @@ resynchronize(const linkaddr_t *original_time_source_addr)
     tsch_schedule_keepalive_immediately();
     return 1;
   }
+#endif
+  return 0;
 }
 
 /*---------------------------------------------------------------------------*/
