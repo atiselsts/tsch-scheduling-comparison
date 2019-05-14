@@ -117,3 +117,6 @@
 #ifndef SEND_INTERVAL_SEC
 #define SEND_INTERVAL_SEC 60
 #endif
+
+/* disable packet bursts! */
+#define TSCH_CONF_BURST_MAX_LEN 1
