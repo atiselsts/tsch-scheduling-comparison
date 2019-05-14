@@ -13,6 +13,8 @@ from scipy import stats
 from scipy.stats.stats import pearsonr
 import numpy as np
 
+from parameters import *
+
 #
 # This calculates and plots these metrics:
 # - End-to-end PDR
@@ -32,33 +34,9 @@ OUT_DIR = "../plots"
 
 DATA_DIRECTORY="../simulations"
 
-ALGOS = [
-    "orchestra_sb",
-#    "orchestra_rb_s",
-    "orchestra_rb_ns",
-#    "orchestra_rb_ns_sr",
-]
-
-ALGONAMES = [
-    "Orchestra SB",
-    "Orchestra RB / Storing",
-    "Orchestra RB / Non-Storing",
-#    "Orchestra RB / Non-Storing (SR)", # with RPL storing rule
-]
-
 # The nodes generate 1 packet per minute; allow first 10 mins for the network tree building
 FIRST_SEQNUM = 11
 LAST_SEQNUM =  29
-
-SLOTFRAME_SIZES =[
-    7,
-    11,
-    15,
-    19,
-    23,
-    27,
-    31
-]
 
 # The root node is ignored in the calculations (XXX: maybe should not ignore its PRR?)
 ROOT_ID = 1
@@ -82,7 +60,7 @@ def graph_ci(data, ylabel, filename):
     width = 0.15
 
 #   print(filename)
-    for i, a in enumerate(ALGOS):
+    for i, a in enumerate(ALGORITHMS):
         algo_data = data[i]
 #       print(ALGONAMES[i])
 
@@ -131,12 +109,12 @@ def graph_ci(data, ylabel, filename):
 
 ###########################################
 
-def graph_line(xdata, ydata, xlabel, ylabel, filename):
+def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.figure(figsize=(6, 3.5))
 
     width = 0.15
 
-    for i, a in enumerate(ALGOS):
+    for i, a in enumerate(ALGORITHMS):
         algo_xdata = xdata[i]
         algo_ydata = ydata[i]
 
@@ -145,7 +123,11 @@ def graph_line(xdata, ydata, xlabel, ylabel, filename):
 
         pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[i], color=COLORS[i])
 
-    pl.ylim(ymin=0, ymax=105)
+        if pointlabels is not None:
+            for j, sf in enumerate(pointlabels[i]):
+                pl.gca().annotate("sf={}".format(sf), (to_plot_x[j] + 0.3, to_plot_y[j] + 3))
+
+    pl.ylim(bottom=0, top=105)
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
     pl.xlim([0, 20])
@@ -283,7 +265,7 @@ def process_file(filename, experiment):
                 continue
 
             if "add packet failed" in line:
-                # TODO: accnt for queue drops!
+                # TODO: account for queue drops!
                 continue
 
     r = []
@@ -299,13 +281,13 @@ def process_file(filename, experiment):
 def compare_basic_metrics(filenames, experiment, description, ss):
     print(description)
 
-    pdr_results = [[] for _ in ALGOS]
-    prr_results = [[] for _ in ALGOS]
-    rdc_results = [[] for _ in ALGOS]
+    pdr_results = [[] for _ in ALGORITHMS]
+    prr_results = [[] for _ in ALGORITHMS]
+    rdc_results = [[] for _ in ALGORITHMS]
 
     outfilename = experiment + ".pdf"
 
-    for i, a in enumerate(ALGOS):
+    for i, a in enumerate(ALGORITHMS):
         print("Algorithm {}_{}".format(ALGONAMES[i], ss))
         for j, fs in enumerate(filenames):
             t_pdr_results = []
@@ -349,10 +331,10 @@ def compare_per_duty_cycle(filenames, experiment, description):
 #        t_prr_results = []
 #        t_rdc_results = []
 
-        pdr_results = [[] for _ in ALGOS]
-        rdc_results = [[] for _ in ALGOS]
+        pdr_results = [[] for _ in ALGORITHMS]
+        rdc_results = [[] for _ in ALGORITHMS]
 
-        for i, a in enumerate(ALGOS):
+        for i, a in enumerate(ALGORITHMS):
 
             print("Algorithm {}".format(ALGONAMES[i]))
 
@@ -393,16 +375,80 @@ def test_groups(filenames, experiment, description):
 
 ###########################################
 
+def load_all():
+    data = {}
+    for a in ALGORITHMS:
+        data[a] = {}
+        for si in SEND_INTERVALS:
+            data[a][si] = {}
+            for sf in SLOTFRAME_SIZES:
+                data[a][si][sf] = {}
+                for exp in EXPERIMENTS:
+                    data[a][si][sf][exp] = {}
+                    for nn in NUM_NEIGHBORS:
+                        data[a][si][sf][exp][nn] = {}
+
+                        t_pdr_results = []
+                        t_prr_results = []
+                        t_rdc_results = []
+
+                        path = os.path.join(DATA_DIRECTORY,
+                                            a,
+                                            "si_{}".format(si),
+                                            "sf_{}".format(sf),
+                                            exp,
+                                            "sim-{}-neigh-2".format(nn))
+
+                        for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
+                            resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
+
+                            if not os.access(resultsfile, os.R_OK):
+                                continue
+
+                            r = process_file(resultsfile, exp)
+                            for pdr, prr, rdc in r:
+                                t_pdr_results.append(pdr)
+                                t_prr_results.append(pdr)
+                                t_rdc_results.append(rdc)
+
+                        data[a][si][sf][exp][nn]["pdr"] = np.mean(t_pdr_results)
+                        data[a][si][sf][exp][nn]["prr"] = np.mean(t_prr_results)
+                        data[a][si][sf][exp][nn]["rdc"] = np.mean(t_rdc_results)
+    return data
+
+###########################################
+
+def aggregate(data, a, si, sf, exp, nn, metric):
+    return data[a][si][sf][exp][nn][metric]
+
+###########################################
+
 def main():
     try:
         os.mkdir(OUT_DIR)
     except:
         pass
 
-    test_groups(["e-sparse-*", "e-dense-*"], "collection", "Collection")
-    test_groups(["e-sparse-*", "e-dense-*"], "query", "Data query")
-    test_groups(["e-sparse-*", "e-dense-*"], "local", "Local traffic")
+    data = load_all()
 
+    nn = 7
+    si = 60
+    exp = "exp-collection"
+    pdr_results = [[] for _ in ALGORITHMS]
+    rdc_results = [[] for _ in ALGORITHMS]
+    pointlabels = [[] for _ in ALGORITHMS]    
+    for sf in SLOTFRAME_SIZES:
+        print("sf={}".format(sf))
+        for i, a in enumerate(ALGORITHMS):
+            print("Algorithm {}".format(ALGONAMES[i]))
+            rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
+            pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
+            pointlabels[i].append(sf)
+
+    filename = "sim_pdr_per_duty_cycle_allsf_nn{}_si{}_{}.pdf".format(nn, si, exp)
+    graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+               filename)
+        
 ###########################################
 
 if __name__ == '__main__':
