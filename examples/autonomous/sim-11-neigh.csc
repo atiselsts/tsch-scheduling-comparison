@@ -28,7 +28,7 @@
       org.contikios.cooja.contikimote.ContikiMoteType
       <identifier>mtype59</identifier>
       <description>Node</description>
-      <source>[CONTIKI_DIR]/examples/autonomous/exp-query/node.c</source>
+      <source>[CONFIG_DIR]/node/node.c</source>
       <commands>make node.cooja -j TARGET=cooja</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
@@ -786,14 +786,6 @@
     <height>427</height>
     <location_x>3</location_x>
     <location_y>404</location_y>
-  </plugin>
-  <plugin>
-    PowerTracker
-    <width>400</width>
-    <z>2</z>
-    <height>400</height>
-    <location_x>1387</location_x>
-    <location_y>-2</location_y>
   </plugin>
 </simconf>
 
