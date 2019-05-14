@@ -5,8 +5,8 @@ SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ALGORITHMS = [
     "orchestra_sb", # 1
-#    "orchestra_rb_s", # 2
-#    "orchestra_rb_ns", # 3 
+    "orchestra_rb_s", # 2
+    "orchestra_rb_ns", # 3
     #"orchestra_rb_ns_sr", # 4
     #"alice", # 5
     #"msf", # 6
@@ -14,8 +14,8 @@ ALGORITHMS = [
 
 ALGONAMES = [
     "Orchestra SB",
-#    "Orchestra RB / Storing",
-#    "Orchestra RB / Non-Storing",
+    "Orchestra RB / Storing",
+    "Orchestra RB / Non-Storing",
     # "Orchestra RB / Non-Storing (SR)", # with RPL storing rule
     # "ALICE",
     # "MSF",
@@ -23,8 +23,8 @@ ALGONAMES = [
 
 EXPERIMENTS = [
   "exp-collection",
-#  "exp-query",
-#  "exp-local"
+  "exp-query",
+  "exp-local"
 ]
 
 SLOTFRAME_SIZES =[
@@ -38,16 +38,16 @@ SLOTFRAME_SIZES =[
 ]
 
 SEND_INTERVALS = [
-#    8,  # ~8 packets per second
-#    15, # 4
-#    30, # 2
+    8,  # ~8 packets per second
+    15, # 4
+    30, # 2
     60, # 1
-#    120 # 0.5
+    120 # 0.5
 ]
 
 #sim-3-neigh
 NUM_NEIGHBORS = [
-#    3,
+    3,
     7,
-#    11
+    11
 ]

@@ -397,7 +397,7 @@ def load_all():
                                             "si_{}".format(si),
                                             "sf_{}".format(sf),
                                             exp,
-                                            "sim-{}-neigh-2".format(nn))
+                                            "sim-{}-neigh-*".format(nn))
 
                         for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
                             resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
