@@ -78,7 +78,7 @@
 #define TSCH_CONF_BURST_MAX_LEN 0
 
 /* increase the number of links */
-#define TSCH_SCHEDULE_MAX_LINKS 64
+#define TSCH_SCHEDULE_CONF_MAX_LINKS 64
 
 /* sender based, storing Orchestra + RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_SB 1
