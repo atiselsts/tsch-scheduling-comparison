@@ -153,11 +153,11 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
       }
 
       if(new_time_src != old_time_src) {
-        LOG_INFO("update time source: ");
-        LOG_INFO_LLADDR(old_time_src ? &old_time_src->addr : NULL);
-        LOG_INFO_(" -> ");
-        LOG_INFO_LLADDR(new_time_src ? &new_time_src->addr : NULL);
-        LOG_INFO_("\n");
+        LOG_ERR("update time source: ");
+        LOG_ERR_LLADDR(old_time_src ? &old_time_src->addr : NULL);
+        LOG_ERR_(" -> ");
+        LOG_ERR_LLADDR(new_time_src ? &new_time_src->addr : NULL);
+        LOG_ERR_("\n");
 
         /* Update time source */
         if(new_time_src != NULL) {
