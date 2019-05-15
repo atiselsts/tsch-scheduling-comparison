@@ -246,5 +246,7 @@ uint64_t tsch_get_network_uptime_ticks(void);
   */
 void tsch_disassociate(void);
 
+extern uint8_t tsch_failed;
+
 #endif /* __TSCH_H__ */
 /** @} */

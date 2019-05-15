@@ -80,6 +80,8 @@ void uip_ds6_link_neighbor_callback(int status, int numtx);
 #endif /* NETSTACK_CONF_WITH_IPV6 */
 #endif /* TSCH_LINK_NEIGHBOR_CALLBACK */
 
+uint8_t tsch_failed;
+
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
 static linkaddr_t last_eb_nbr_addr;
@@ -735,7 +737,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
   etimer_set(&scan_timer, CLOCK_SECOND / TSCH_ASSOCIATION_POLL_FREQUENCY);
   current_channel_since = clock_time();
 
-  while(!tsch_is_associated && !tsch_is_coordinator) {
+  while(!tsch_is_associated && !tsch_is_coordinator && !tsch_failed) {
     /* Hop to any channel offset */
     static uint8_t current_channel = 0;
 
@@ -934,6 +936,8 @@ tsch_init(void)
   radio_value_t radio_tx_mode;
   rtimer_clock_t t;
 
+  tsch_failed = 1;
+
   /* Check that the platform provides a TSCH timeslot timing template */
   if(TSCH_DEFAULT_TIMESLOT_TIMING == NULL) {
     LOG_ERR("! platform does not provide a timeslot timing template.\n");
@@ -982,6 +986,8 @@ tsch_init(void)
     LOG_ERR("! TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE). Abort init.\n");
     return;
   }
+
+  tsch_failed = 0;
 
   /* Init TSCH sub-modules */
   tsch_reset();

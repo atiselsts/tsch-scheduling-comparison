@@ -239,6 +239,8 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
       if(l == NULL) {
         LOG_ERR("! add_link memb_alloc failed\n");
         tsch_release_lock();
+        tsch_failed = 1;
+        tsch_disassociate();
       } else {
         static int current_link_handle = 0;
         struct tsch_neighbor *n;
