@@ -21,7 +21,7 @@
       org.contikios.cooja.contikimote.ContikiMoteType
       <identifier>mtype190</identifier>
       <description>Node</description>
-      <source>[CONFIG_DIR]/exp-query/node.c</source>
+      <source>[CONFIG_DIR]/node/node.c</source>
       <commands>make node.cooja -j TARGET=cooja</commands>
       <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
       <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>

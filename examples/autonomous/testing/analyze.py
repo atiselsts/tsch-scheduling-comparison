@@ -34,9 +34,8 @@ OUT_DIR = "../plots"
 
 DATA_DIRECTORY="../simulations"
 
-# The nodes generate 1 packet per minute; allow first 10 mins for the network tree building
-FIRST_SEQNUM = 11
-LAST_SEQNUM =  29
+START_TIME_MINUTES = 10
+END_TIME_MINUTES = 30
 
 # The root node is ignored in the calculations (XXX: maybe should not ignore its PRR?)
 ROOT_ID = 1
@@ -125,12 +124,12 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
 
         if pointlabels is not None:
             for j, sf in enumerate(pointlabels[i]):
-                pl.gca().annotate("sf={}".format(sf), (to_plot_x[j] + 0.3, to_plot_y[j] + 3))
+                pl.gca().annotate("sf={}".format(sf), (to_plot_x[j] + 0.1, to_plot_y[j] + 1), fontsize=6)
 
     pl.ylim(bottom=0, top=105)
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
-    pl.xlim([0, 20])
+    pl.xlim([0, 12.5])
 
     bbox = (1.0, 1.4)
     loc = "upper right"
@@ -147,6 +146,13 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
         pl.savefig(OUT_DIR + "/" + filename, format='pdf',
                    bbox_inches='tight')
 
+###########################################
+
+# The nodes generate 1 packet per minute; allow first 10 mins for the network tree building
+def get_seqnums(send_interval):
+    skip = START_TIME_MINUTES * 60 // send_interval
+    expect = END_TIME_MINUTES * 60 // send_interval
+    return (skip + 1, expect - 1)
 
 ###########################################
 
@@ -161,13 +167,15 @@ class MoteStats:
         self.radio_total = 0
         self.is_valid = False
 
-    def calc(self):
+    def calc(self, send_interval, first_seqnum, last_seqnum):
         if self.associated_at_minutes is None:
+            print("node {} never associated".format(self.id))
             self.is_valid = False
             return
 
-        first_seqnum = max(FIRST_SEQNUM, self.associated_at_minutes + 1)
-        if first_seqnum > LAST_SEQNUM:
+        if self.associated_at_minutes >= 30:
+            print("node {} associated too late: {}, seqnums={}".format(
+                self.id, self.associated_at_minutes, self.seqnums))
             self.is_valid = False
             return
 
@@ -177,7 +185,7 @@ class MoteStats:
             self.prr = 100.0 * self.packets_ack / self.packets_tx
         else:
             self.prr = 0.0
-        expected = LAST_SEQNUM - first_seqnum + 1
+        expected = (last_seqnum - first_seqnum) + 1
         actual = len(self.seqnums)
         self.pdr = 100.0 * actual / expected
         if self.radio_total:
@@ -186,12 +194,14 @@ class MoteStats:
             print("warning: no radio duty cycle for {}".format(self.id))
             self.rdc = 0.0
 
-def process_file(filename, experiment):
+def process_file(filename, experiment, send_interval):
     motes = {}
     has_assoc = set()
     print(filename)
 
     in_initialization = True
+
+    first_seqnum, last_seqnum = get_seqnums(send_interval)
 
     with open(filename, "r") as f:
         for line in f:
@@ -207,7 +217,7 @@ def process_file(filename, experiment):
             if node not in motes:
                 motes[node] = MoteStats(node)
 
-            if "association done" in line:
+            if "association done (1" in line:
                 #print(line)
                 has_assoc.add(node)
                 motes[node].seqnums = set()
@@ -226,7 +236,7 @@ def process_file(filename, experiment):
                 if "seqnum=" in line:
                     #print(line)
                     sn = int(fields[5].split("=")[1])
-                    if not (FIRST_SEQNUM <= sn <= LAST_SEQNUM):
+                    if not (first_seqnum <= sn <= last_seqnum):
                         continue
                     if "=" not in fields[6]:
                         continue
@@ -271,9 +281,13 @@ def process_file(filename, experiment):
     r = []
     for k in motes:
         m = motes[k]
-        m.calc()
+        if m.id == ROOT_ID:
+            continue
+        m.calc(send_interval, first_seqnum, last_seqnum)
         if m.is_valid:
             r.append((m.pdr, m.prr, m.rdc))
+#        else:
+#            print("mote {} does not have valid PDR: packets={}".format(m.id, m.seqnums))
     return r
 
 ###########################################
@@ -397,7 +411,7 @@ def load_all():
                                             "si_{}".format(si),
                                             "sf_{}".format(sf),
                                             exp,
-                                            "sim-{}-neigh-*".format(nn))
+                                            "sim-{}-neigh-new-3*".format(nn))
 
                         for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
                             resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
@@ -405,7 +419,7 @@ def load_all():
                             if not os.access(resultsfile, os.R_OK):
                                 continue
 
-                            r = process_file(resultsfile, exp)
+                            r = process_file(resultsfile, exp, si)
                             for pdr, prr, rdc in r:
                                 t_pdr_results.append(pdr)
                                 t_prr_results.append(pdr)
@@ -431,23 +445,41 @@ def main():
 
     data = load_all()
 
-    nn = 7
-    si = 60
-    exp = "exp-collection"
-    pdr_results = [[] for _ in ALGORITHMS]
-    rdc_results = [[] for _ in ALGORITHMS]
-    pointlabels = [[] for _ in ALGORITHMS]    
-    for sf in SLOTFRAME_SIZES:
-        print("sf={}".format(sf))
-        for i, a in enumerate(ALGORITHMS):
-            print("Algorithm {}".format(ALGONAMES[i]))
-            rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
-            pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
-            pointlabels[i].append(sf)
+    for nn in NUM_NEIGHBORS:
+        for si in SEND_INTERVALS:
+            exp = "exp-collection"
+            pdr_results = [[] for _ in ALGORITHMS]
+            rdc_results = [[] for _ in ALGORITHMS]
+            pointlabels = [[] for _ in ALGORITHMS]    
+            for sf in SLOTFRAME_SIZES:
+                print("sf={}".format(sf))
+                for i, a in enumerate(ALGORITHMS):
+                    print("Algorithm {}".format(ALGONAMES[i]))
+                    rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
+                    pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
+                    pointlabels[i].append(sf)
 
-    filename = "sim_pdr_per_duty_cycle_allsf_nn{}_si{}_{}.pdf".format(nn, si, exp)
-    graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
-               filename)
+            filename = "sim_pdr_per_duty_cycle_allsf_nn{}_si{}_{}.pdf".format(nn, si, exp)
+            graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+                       filename)
+
+        for sf in SLOTFRAME_SIZES:
+            exp = "exp-collection"
+            pdr_results = [[] for _ in ALGORITHMS]
+            rdc_results = [[] for _ in ALGORITHMS]
+            pointlabels = [[] for _ in ALGORITHMS]    
+            for si in SEND_INTERVALS:
+                print("si={}".format(si))
+                for i, a in enumerate(ALGORITHMS):
+                    print("Algorithm {}".format(ALGONAMES[i]))
+                    rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
+                    pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
+                    pointlabels[i].append(sf)
+
+            filename = "sim_pdr_per_duty_cycle_allsi_nn{}_sf{}_{}.pdf".format(nn, sf, exp)
+            graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+                       filename)
+
         
 ###########################################
 

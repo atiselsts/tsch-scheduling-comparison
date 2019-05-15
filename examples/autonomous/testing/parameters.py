@@ -27,15 +27,24 @@ EXPERIMENTS = [
   "exp-local"
 ]
 
-SLOTFRAME_SIZES =[
-    7,
-    11,
-    15,
-    19,
-    23,
-    27,
-    31
+SLOTFRAME_SIZES_A =[
+    7,  # initial
+    11, # =7+4
+    19, # =11+8
+    35, # =19+16
+    67, # =35+32
+    101 # =67+34
 ]
+
+SLOTFRAME_SIZES_B =[
+    7,  # initial
+    15, # =7+8
+    31, # =15+16
+    63, # =31+32
+    101 # =63+39
+]
+
+SLOTFRAME_SIZES = SLOTFRAME_SIZES_A
 
 SEND_INTERVALS = [
     8,  # ~8 packets per second
@@ -45,9 +54,7 @@ SEND_INTERVALS = [
     120 # 0.5
 ]
 
-#sim-3-neigh
 NUM_NEIGHBORS = [
-    3,
-    7,
-    11
+    3, # sparse
+    10 # dense
 ]
