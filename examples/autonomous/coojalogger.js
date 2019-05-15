@@ -1,6 +1,6 @@
 /* A simple log file generator script */
 
-TIMEOUT(1860000); /* 1860 seconds or 30+ minutes */
+TIMEOUT(3660000); /* 3660 seconds or 60+ minutes */
 //TIMEOUT(1000000); /* 1000 seconds or 15+ minutes */
 //TIMEOUT(10000);
 

@@ -69,7 +69,7 @@ PROCESS_THREAD(node_process, ev, data)
 
   if(node_id != MAIN_GW_ID) {
 
-    etimer_set(&periodic_timer, 10 * CLOCK_SECOND + random_rand() % (SEND_INTERVAL_SEC * CLOCK_SECOND));
+    etimer_set(&periodic_timer, WARM_UP_PERIOD_SEC * CLOCK_SECOND + random_rand() % (SEND_INTERVAL_SEC * CLOCK_SECOND));
 
     while(1) {
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));

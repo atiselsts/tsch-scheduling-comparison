@@ -14,8 +14,6 @@
 #define LOG_MODULE "Node"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#define WARM_UP_TIME    (1 * 60 * CLOCK_SECOND)
-
 /* Note: the max number of nodes that can be queried is equal to SEND_INTERVAL / QUERY_INTERVAL == 60 */
 #define QUERY_INTERVAL  (CLOCK_SECOND)
 
@@ -74,7 +72,7 @@ PROCESS_THREAD(node_process, ev, data)
 
   if(node_id == MAIN_GW_ID) {
     /* start the queries */
-    etimer_set(&periodic_timer, WARM_UP_TIME);
+    etimer_set(&periodic_timer, WARM_UP_PERIOD_SEC * CLOCK_SECOND);
 
     while(1) {
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer) || etimer_expired(&query_timer));
