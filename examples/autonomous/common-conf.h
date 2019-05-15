@@ -74,6 +74,12 @@
 /* Disable security */
 #define USE_TSCH_SECURITY 0
 
+/* disable packet bursts! */
+#define TSCH_CONF_BURST_MAX_LEN 0
+
+/* increase the number of links */
+#define TSCH_SCHEDULE_MAX_LINKS 64
+
 /* sender based, storing Orchestra + RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_SB 1
 /* receiver based, storing Orchestra + RPL */
@@ -117,6 +123,3 @@
 #ifndef SEND_INTERVAL_SEC
 #define SEND_INTERVAL_SEC 60
 #endif
-
-/* disable packet bursts! */
-#define TSCH_CONF_BURST_MAX_LEN 1
