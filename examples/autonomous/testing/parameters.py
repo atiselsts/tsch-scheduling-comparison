@@ -10,6 +10,7 @@ ALGORITHMS = [
     #"orchestra_rb_ns_sr", # 4
     #"alice", # 5
     #"msf", # 6
+    #"emsf", # 7
 ]
 
 ALGONAMES = [
@@ -19,6 +20,7 @@ ALGONAMES = [
     # "Orchestra RB / Non-Storing (SR)", # with RPL storing rule
     # "ALICE",
     # "MSF",
+    # "Extended MSF",
 ]
 
 EXPERIMENTS = [

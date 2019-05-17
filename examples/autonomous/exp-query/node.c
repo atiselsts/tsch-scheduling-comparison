@@ -14,8 +14,9 @@
 #define LOG_MODULE "Node"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-/* Note: the max number of nodes that can be queried is equal to SEND_INTERVAL / QUERY_INTERVAL == 60 */
-#define QUERY_INTERVAL  (CLOCK_SECOND)
+/* The max number of nodes that can be queried in the send interval */
+#define MAX_NODES_IN_NETWORK 60
+#define QUERY_INTERVAL  (SEND_INTERVAL_SEC * CLOCK_SECOND / MAX_NODES_IN_NETWORK)
 
 /*---------------------------------------------------------------------------*/
 static struct simple_udp_connection udp_conn;

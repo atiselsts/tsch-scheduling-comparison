@@ -129,7 +129,11 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.ylim(bottom=0, top=105)
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
-    pl.xlim([0, 12.5])
+    if "duty" in filename:
+        pl.xlim([0, 12.5])
+    else: # send frequency
+        pl.xscale("log")
+
 
     bbox = (1.0, 1.4)
     loc = "upper right"
@@ -411,7 +415,7 @@ def load_all():
                                             "si_{}".format(si),
                                             "sf_{}".format(sf),
                                             exp,
-                                            "sim-{}-neigh-new-3*".format(nn))
+                                            "sim-{}-neigh-new-*".format(nn))
 
                         for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
                             resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
@@ -437,17 +441,9 @@ def aggregate(data, a, si, sf, exp, nn, metric):
 
 ###########################################
 
-def main():
-    try:
-        os.mkdir(OUT_DIR)
-    except:
-        pass
-
-    data = load_all()
-
+def plot_all(data, exp):
     for nn in NUM_NEIGHBORS:
         for si in SEND_INTERVALS:
-            exp = "exp-collection"
             pdr_results = [[] for _ in ALGORITHMS]
             rdc_results = [[] for _ in ALGORITHMS]
             pointlabels = [[] for _ in ALGORITHMS]    
@@ -459,28 +455,56 @@ def main():
                     pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
                     pointlabels[i].append(sf)
 
-            filename = "sim_pdr_per_duty_cycle_allsf_nn{}_si{}_{}.pdf".format(nn, si, exp)
+            filename = "sim_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
             graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
                        filename)
 
+        pdr_results_all = [[] for _ in ALGORITHMS]
+        rdc_results_all = [[] for _ in ALGORITHMS]
+        si_results_all = [[] for _ in ALGORITHMS]
+        pointlabels_all = [[] for _ in ALGORITHMS]
+
         for sf in SLOTFRAME_SIZES:
-            exp = "exp-collection"
             pdr_results = [[] for _ in ALGORITHMS]
             rdc_results = [[] for _ in ALGORITHMS]
+            si_results = [[] for _ in ALGORITHMS]
             pointlabels = [[] for _ in ALGORITHMS]    
+
             for si in SEND_INTERVALS:
                 print("si={}".format(si))
+                fr = 60.0 / si
                 for i, a in enumerate(ALGORITHMS):
                     print("Algorithm {}".format(ALGONAMES[i]))
                     rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
                     pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
+                    si_results[i].append(fr)
                     pointlabels[i].append(sf)
 
-            filename = "sim_pdr_per_duty_cycle_allsi_nn{}_sf{}_{}.pdf".format(nn, sf, exp)
-            graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+                    pdr_results_all[i].append(pdr_results[i][-1])
+                    rdc_results_all[i].append(rdc_results[i][-1])
+                    si_results_all[i].append(fr)
+                    pointlabels_all[i].append(sf)
+
+            filename = "sim_{}_pdr_per_sfr_nn{}_sf{}.pdf".format(exp, nn, sf)
+            graph_line(si_results, pdr_results, "Send frequency, Hz", "End-to-end PDR, %", pointlabels,
+                       filename)
+        filename = "sim_{}_pdr_per_sfr_allsf_nn{}.pdf".format(exp, nn)
+        graph_line(si_results_all, pdr_results_all, "Send frequency, Hz", "End-to-end PDR, %", pointlabels_all,
                        filename)
 
-        
+###########################################
+
+def main():
+    try:
+        os.mkdir(OUT_DIR)
+    except:
+        pass
+
+    data = load_all()
+
+    for exp in EXPERIMENTS:
+        plot_all(data, exp)
+
 ###########################################
 
 if __name__ == '__main__':
