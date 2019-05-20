@@ -80,6 +80,9 @@ struct tsch_link {
   void *data;
 };
 
+/* allow to have special low-prio slotframes */
+#define TSCH_LOW_PRIO_SLOTFRAME_FLAG 0x8000
+
 /** \brief 802.15.4e slotframe (contains links) */
 struct tsch_slotframe {
   /* Slotframes are stored as a list: "next" must be the first field */

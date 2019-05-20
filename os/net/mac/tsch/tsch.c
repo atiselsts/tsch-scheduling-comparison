@@ -185,6 +185,7 @@ tsch_set_pan_secured(int enable)
 void
 tsch_set_join_priority(uint8_t jp)
 {
+  printf("set join prio = %u\n", jp);
   tsch_join_priority = jp;
 }
 /*---------------------------------------------------------------------------*/
@@ -374,6 +375,11 @@ eb_input(struct input_packet *current_input)
       last_eb_nbr_jp = eb_ies.ie_join_priority;
     }
 
+    /* If from the root, let Orchestra know the root's address */
+    if(eb_ies.ie_join_priority == 0) {
+      linkaddr_copy(&orchestra_linkaddr_root, (linkaddr_t *)&frame.src_addr);
+    }
+
 #if TSCH_AUTOSELECT_TIME_SOURCE
     if(!tsch_is_coordinator) {
       /* Maintain EB received counter for every neighbor */
@@ -557,6 +563,11 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
                                               &frame, &ies, &hdrlen, 0) == 0) {
     LOG_INFO("! failed to parse EB (len %u)\n", input_eb->len);
     return 0;
+  }
+
+  /* If from the root, let Orchestra know the root's address */
+  if(ies.ie_join_priority == 0) {
+    linkaddr_copy(&orchestra_linkaddr_root, (linkaddr_t *)&frame.src_addr);
   }
 
   tsch_current_asn = ies.ie_asn;

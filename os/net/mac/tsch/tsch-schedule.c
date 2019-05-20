@@ -392,16 +392,24 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           curr_backup = NULL;
         } else if(time_to_timeslot == time_to_curr_best) {
           struct tsch_link *new_best = NULL;
-          /* Two links are overlapping, we need to select one of them.
-           * By standard: prioritize Tx links first, second by lowest handle */
-          if((curr_best->link_options & LINK_OPTION_TX) == (l->link_options & LINK_OPTION_TX)) {
-            /* Both or neither links have Tx, select the one with lowest handle */
-            if(l->slotframe_handle < curr_best->slotframe_handle) {
-              new_best = l;
+          if((curr_best->slotframe_handle & TSCH_LOW_PRIO_SLOTFRAME_FLAG)
+              == (l->slotframe_handle & TSCH_LOW_PRIO_SLOTFRAME_FLAG)) {
+            /* Two links are overlapping, we need to select one of them.
+             * By standard: prioritize Tx links first, second by lowest handle */
+            if((curr_best->link_options & LINK_OPTION_TX) == (l->link_options & LINK_OPTION_TX)) {
+              /* Both or neither links have Tx, select the one with lowest handle */
+              if(l->slotframe_handle < curr_best->slotframe_handle) {
+                new_best = l;
+              }
+            } else {
+              /* Select the link that has the Tx option */
+              if(l->link_options & LINK_OPTION_TX) {
+                new_best = l;
+              }
             }
           } else {
-            /* Select the link that has the Tx option */
-            if(l->link_options & LINK_OPTION_TX) {
+            /* Select the link that has higher-priority slotframe */
+            if(curr_best->slotframe_handle & TSCH_LOW_PRIO_SLOTFRAME_FLAG) {
               new_best = l;
             }
           }

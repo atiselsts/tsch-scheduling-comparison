@@ -247,6 +247,7 @@ uint64_t tsch_get_network_uptime_ticks(void);
 void tsch_disassociate(void);
 
 extern uint8_t tsch_failed;
+extern linkaddr_t orchestra_linkaddr_root;
 
 #endif /* __TSCH_H__ */
 /** @} */
