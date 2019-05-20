@@ -55,12 +55,24 @@ struct orchestra_rule {
 struct orchestra_rule eb_per_time_source;
 struct orchestra_rule unicast_per_neighbor_rpl_storing;
 struct orchestra_rule unicast_per_neighbor_rpl_ns;
+struct orchestra_rule unicast_alice;
 struct orchestra_rule unicast_msf;
 struct orchestra_rule unicast_emsf;
+struct orchestra_rule special_for_root;
 struct orchestra_rule default_common;
 
 extern linkaddr_t orchestra_parent_linkaddr;
 extern int orchestra_parent_knows_us;
+
+extern linkaddr_t orchestra_linkaddr_root;
+
+#if ORCHESTRA_ROOT_RULE
+#define ORCHESTRA_IS_ROOT() (tsch_is_coordinator != 0)
+#define ORCHESTRA_IS_ROOT_ADDR(addr) linkaddr_cmp(addr, &orchestra_linkaddr_root)
+#else
+#define ORCHESTRA_IS_ROOT() 0
+#define ORCHESTRA_IS_ROOT_ADDR(addr) 0
+#endif
 
 /* Call from application to start Orchestra */
 void orchestra_init(void);

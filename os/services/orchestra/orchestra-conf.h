@@ -72,6 +72,12 @@
 #define ORCHESTRA_UNICAST_PERIOD                  17
 #endif /* ORCHESTRA_CONF_UNICAST_PERIOD */
 
+#ifdef ORCHESTRA_CONF_ROOT_PERIOD
+#define ORCHESTRA_ROOT_PERIOD                     ORCHESTRA_CONF_ROOT_PERIOD
+#else /* ORCHESTRA_CONF_ROOT_PERIOD */
+#define ORCHESTRA_ROOT_PERIOD                     9 /* selected to avoid common divisors with any of the common unicast periods */
+#endif /* ORCHESTRA_CONF_ROOT_PERIOD */
+
 /* Is the per-neighbor unicast slotframe sender-based (if not, it is receiver-based).
  * Note: sender-based works only with RPL storing mode as it relies on DAO and
  * routing entries to keep track of children and parents. */
@@ -101,5 +107,11 @@
 #else /* ORCHESTRA_CONF_COLLISION_FREE_HASH */
 #define ORCHESTRA_COLLISION_FREE_HASH             0 /* Set to 1 if ORCHESTRA_LINKADDR_HASH returns unique hashes */
 #endif /* ORCHESTRA_CONF_COLLISION_FREE_HASH */
+
+#ifdef ORCHESTRA_CONF_ROOT_RULE
+#define ORCHESTRA_ROOT_RULE                       ORCHESTRA_CONF_ROOT_RULE
+#else /* ORCHESTRA_CONF_ROOT_RULE */
+#define ORCHESTRA_ROOT_RULE                       0
+#endif /* ORCHESTRA_CONF_ROOT_RULE */
 
 #endif /* __ORCHESTRA_CONF_H__ */

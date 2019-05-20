@@ -61,6 +61,8 @@ linkaddr_t orchestra_parent_linkaddr;
 /* Set to one only after getting an ACK for a DAO sent to our preferred parent */
 int orchestra_parent_knows_us = 0;
 
+linkaddr_t orchestra_linkaddr_root;
+
 /* The set of Orchestra rules in use */
 const struct orchestra_rule *all_rules[] = ORCHESTRA_RULES;
 #define NUM_RULES (sizeof(all_rules) / sizeof(struct orchestra_rule *))
