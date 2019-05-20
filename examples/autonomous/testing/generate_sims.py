@@ -14,7 +14,7 @@ NUM_CORES = multiprocessing.cpu_count() * 7 // 8
 
 ENV = {
     "FIRMWARE_TYPE" : "1",
-    "ORCHESTRA_CONF_UNICAST_PERIOD" : "11"
+    "ORCHESTRA_CONF_UNICAST_PERIOD" : "11",
 }
 
 ########################################
@@ -99,8 +99,8 @@ def main():
     all_directories = []
     dirname1 = OUT_DIRECTORY
     create_out_dir(dirname1)
-    for i, a in enumerate(ALGORITHMS):
-        firmware_type = i + 1
+    for a in ALGORITHMS:
+        firmware_type = FIRMWARE_TYPES[a]
         dirname2 = os.path.join(dirname1, a)
         create_out_dir(dirname2)
         for si in SEND_INTERVALS:

@@ -9,24 +9,34 @@ ALGORITHMS = [
     "orchestra_rb_ns", # 3
     #"orchestra_rb_ns_sr", # 4
     #"alice", # 5
-    #"msf", # 6
-    #"emsf", # 7
+    "msf", # 6
+    "emsf", # 7
 ]
 
-ALGONAMES = [
-    "Orchestra SB",
-    "Orchestra RB / Storing",
-    "Orchestra RB / Non-Storing",
-    # "Orchestra RB / Non-Storing (SR)", # with RPL storing rule
-    # "ALICE",
-    # "MSF",
-    # "Extended MSF",
-]
+ALGONAMES = {
+    "orchestra_sb" : "Orchestra SB",
+    "orchestra_rb_s" : "Orchestra RB / Storing",
+    "orchestra_rb_ns" : "Orchestra RB / Non-Storing",
+    "orchestra_rb_ns_sr" : "Orchestra RB / Non-Storing (SR)", # with RPL storing rule
+    "alice" : "ALICE",
+    "msf" : "MSF",
+    "emsf" : "Extended MSF",
+}
+
+FIRMWARE_TYPES = {
+    "orchestra_sb" : 1,
+    "orchestra_rb_s" : 2,
+    "orchestra_rb_ns" : 3,
+    "orchestra_rb_ns_sr" : 4,
+    "alice" : 5,
+    "msf" : 6,
+    "emsf" : 7,
+}
 
 EXPERIMENTS = [
-  "exp-collection",
-  "exp-query",
-  "exp-local"
+    "exp-collection",
+    "exp-query",
+    "exp-local"
 ]
 
 SLOTFRAME_SIZES_A =[

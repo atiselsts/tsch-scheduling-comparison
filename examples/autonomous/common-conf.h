@@ -92,6 +92,8 @@
 #define FIRMWARE_TYPE_ALICE 5
 /* in the future - when implemented */
 #define FIRMWARE_TYPE_MSF 6
+/* in the future - when implemented */
+#define FIRMWARE_TYPE_EMSF 7
 
 /*******************************************************/
 /******************* Configure Orchestra ***************/
@@ -113,7 +115,11 @@
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
 #  error "Implement me!"
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
-#  error "Implement me!"
+/* include the msf rule */
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_msf, &default_common }
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_EMSF
+/* include the emsf rule */
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_emsf, &default_common }
 #endif
 
 /*******************************************************/

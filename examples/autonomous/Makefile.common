@@ -22,6 +22,8 @@ FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR=4
 FIRMWARE_TYPE_ALICE=5
 # in the future - when implemented
 FIRMWARE_TYPE_MSF=6
+# in the future - when implemented
+FIRMWARE_TYPE_EMSF=7
 
 # Other things that can be turned on or off for the experiments:
 # - the burst bit

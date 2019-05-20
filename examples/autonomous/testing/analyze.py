@@ -48,8 +48,8 @@ CI = 0.9
 MARKERS = ["o", "s", "X", "X", "X"]
 BASIC_MARKERS = ["o", "s", "X", "X", "X"]
 
-COLORS = ["green", "slateblue", "orange", "red"]
-BASIC_COLORS = ["green", "slateblue", "orange", "red"]
+COLORS = ["green", "slateblue", "orange", "red", "brown"]
+BASIC_COLORS = ["green", "slateblue", "orange", "red", "brown"]
 
 ###########################################
 
@@ -77,9 +77,9 @@ def graph_ci(data, ylabel, filename):
 
         x = np.arange(len(to_plot)) + (1.0 - width * 2) + width * i
         if 0:
-            pl.errorbar(x, to_plot, width, yerr=yerr, marker=MARKERS[i], label=ALGONAMES[i])
+            pl.errorbar(x, to_plot, width, yerr=yerr, marker=MARKERS[i], label=ALGONAMES[a])
         else:
-            pl.bar(x, to_plot, width, yerr=yerr, label=ALGONAMES[i], color=COLORS[i])
+            pl.bar(x, to_plot, width, yerr=yerr, label=ALGONAMES[a], color=COLORS[i])
 #        print("plot ", ylabel)
 #        print(to_plot)
 
@@ -120,7 +120,7 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
         to_plot_x = algo_xdata #[np.mean(d) for d in algo_xdata]
         to_plot_y = algo_ydata #[np.mean(d) for d in algo_ydata]
 
-        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[i], color=COLORS[i])
+        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[i])
 
         if pointlabels is not None:
             for j, sf in enumerate(pointlabels[i]):
@@ -129,17 +129,16 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.ylim(bottom=0, top=105)
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
-    if "duty" in filename:
-        pl.xlim([0, 12.5])
-    else: # send frequency
-        pl.xscale("log")
+#    if "duty" in filename:
+#        pl.xlim([0, 12.5])
+#    else: # send frequency
+#        pl.xscale("log")
 
-
-    bbox = (1.0, 1.4)
+    bbox = (1.0, 1.3)
     loc = "upper right"
 
     if "pdr" in filename:
-        legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=1,
+        legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=2,
                            prop={"size":11},
                            handler_map={lh.Line2D: lh.HandlerLine2D(numpoints=1)})
 
@@ -149,6 +148,7 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     else:
         pl.savefig(OUT_DIR + "/" + filename, format='pdf',
                    bbox_inches='tight')
+    pl.close()
 
 ###########################################
 
@@ -305,8 +305,8 @@ def compare_basic_metrics(filenames, experiment, description, ss):
 
     outfilename = experiment + ".pdf"
 
-    for i, a in enumerate(ALGORITHMS):
-        print("Algorithm {}_{}".format(ALGONAMES[i], ss))
+    for a in ALGORITHMS:
+        print("Algorithm {}_{}".format(ALGONAMES[a], ss))
         for j, fs in enumerate(filenames):
             t_pdr_results = []
             t_prr_results = []
@@ -352,9 +352,9 @@ def compare_per_duty_cycle(filenames, experiment, description):
         pdr_results = [[] for _ in ALGORITHMS]
         rdc_results = [[] for _ in ALGORITHMS]
 
-        for i, a in enumerate(ALGORITHMS):
+        for a in ALGORITHMS:
 
-            print("Algorithm {}".format(ALGONAMES[i]))
+            print("Algorithm {}".format(ALGONAMES[a]))
 
             for ss in SLOTFRAME_SIZES:
 
@@ -450,14 +450,16 @@ def plot_all(data, exp):
             for sf in SLOTFRAME_SIZES:
                 print("sf={}".format(sf))
                 for i, a in enumerate(ALGORITHMS):
-                    print("Algorithm {}".format(ALGONAMES[i]))
+                    print("Algorithm {}".format(ALGONAMES[a]))
                     rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
                     pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
                     pointlabels[i].append(sf)
 
             filename = "sim_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
-            graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+            graph_line(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
                        filename)
+
+        continue # XXX
 
         pdr_results_all = [[] for _ in ALGORITHMS]
         rdc_results_all = [[] for _ in ALGORITHMS]
@@ -473,8 +475,8 @@ def plot_all(data, exp):
             for si in SEND_INTERVALS:
                 print("si={}".format(si))
                 fr = 60.0 / si
-                for i, a in enumerate(ALGORITHMS):
-                    print("Algorithm {}".format(ALGONAMES[i]))
+                for a in ALGORITHMS:
+                    print("Algorithm {}".format(ALGONAMES[a]))
                     rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
                     pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
                     si_results[i].append(fr)
