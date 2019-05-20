@@ -113,7 +113,8 @@
 /* include the non-storing rule */
 #  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
-#  error "Implement me!"
+/* include the alice rule */
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_alice, &default_common }
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
 /* include the msf rule */
 #  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_msf, &default_common }
