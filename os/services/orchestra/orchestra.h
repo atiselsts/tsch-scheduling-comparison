@@ -64,14 +64,12 @@ struct orchestra_rule default_common;
 extern linkaddr_t orchestra_parent_linkaddr;
 extern int orchestra_parent_knows_us;
 
-extern linkaddr_t orchestra_linkaddr_root;
-
 #if ORCHESTRA_ROOT_RULE
 #define ORCHESTRA_IS_ROOT() (tsch_is_coordinator != 0)
-#define ORCHESTRA_IS_ROOT_ADDR(addr) linkaddr_cmp(addr, &orchestra_linkaddr_root)
+extern linkaddr_t orchestra_linkaddr_root;
+extern uint8_t is_root_rule_active;
 #else
 #define ORCHESTRA_IS_ROOT() 0
-#define ORCHESTRA_IS_ROOT_ADDR(addr) 0
 #endif
 
 /* Call from application to start Orchestra */

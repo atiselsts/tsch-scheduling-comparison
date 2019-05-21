@@ -153,6 +153,13 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+
+#if ORCHESTRA_ROOT_RULE
+  if(linkaddr_cmp(dest, &orchestra_linkaddr_root) && is_root_rule_active) {
+    return 0;
+  }
+#endif
+
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
      && neighbor_has_uc_link(dest)) {
     if(slotframe != NULL) {

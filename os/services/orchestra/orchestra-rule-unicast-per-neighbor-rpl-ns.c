@@ -58,16 +58,6 @@ get_node_timeslot(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
-static void
-child_added(const linkaddr_t *linkaddr)
-{
-}
-/*---------------------------------------------------------------------------*/
-static void
-child_removed(const linkaddr_t *linkaddr)
-{
-}
-/*---------------------------------------------------------------------------*/
 static int
 select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
@@ -75,6 +65,13 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
      && !linkaddr_cmp(dest, &linkaddr_null)) {
+
+#if ORCHESTRA_ROOT_RULE
+    if(linkaddr_cmp(dest, &orchestra_linkaddr_root) && is_root_rule_active) {
+      return 0;
+    }
+#endif
+
     if(slotframe != NULL) {
       *slotframe = slotframe_handle;
     }
@@ -89,6 +86,14 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
 static void
 new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new)
 {
+  if(new != old) {
+    const linkaddr_t *new_addr = new != NULL ? &new->addr : NULL;
+    if(new_addr != NULL) {
+      linkaddr_copy(&orchestra_parent_linkaddr, new_addr);
+    } else {
+      linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
+    }
+  }
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -114,7 +119,7 @@ struct orchestra_rule unicast_per_neighbor_rpl_ns = {
   init,
   new_time_source,
   select_packet,
-  child_added,
-  child_removed,
+  NULL,
+  NULL,
   "unicast per neighbor NS"
 };
