@@ -105,22 +105,32 @@
 
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED       (FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB)
 
+#ifndef ORCHESTRA_CONF_ROOT_RULE
+#define ORCHESTRA_CONF_ROOT_RULE 0
+#endif
+
+#if ORCHESTRA_CONF_ROOT_RULE
+#define COMMON_RULES &special_for_root, &default_common
+#else
+#define COMMON_RULES &default_common
+#endif
+
 /* Select Orchestra rules depending on the schedule type */
 #if FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_S
 /* include the storing rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_storing, &default_common }
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_storing, COMMON_RULES  }
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR
 /* include the non-storing rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, COMMON_RULES }
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
 /* include the alice rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_alice, &default_common }
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_alice, COMMON_RULES }
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
 /* include the msf rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_msf, &default_common }
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_msf, COMMON_RULES }
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_EMSF
 /* include the emsf rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_emsf, &default_common }
+#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_emsf, COMMON_RULES }
 #endif
 
 /*******************************************************/

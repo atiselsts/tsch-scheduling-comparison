@@ -185,7 +185,6 @@ tsch_set_pan_secured(int enable)
 void
 tsch_set_join_priority(uint8_t jp)
 {
-  printf("set join prio = %u\n", jp);
   tsch_join_priority = jp;
 }
 /*---------------------------------------------------------------------------*/
@@ -377,7 +376,7 @@ eb_input(struct input_packet *current_input)
 
     /* If from the root, let Orchestra know the root's address */
     if(eb_ies.ie_join_priority == 0) {
-      linkaddr_copy(&orchestra_linkaddr_root, (linkaddr_t *)&frame.src_addr);
+      orchestra_set_root_address((linkaddr_t *)&frame.src_addr);
     }
 
 #if TSCH_AUTOSELECT_TIME_SOURCE
@@ -567,7 +566,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 
   /* If from the root, let Orchestra know the root's address */
   if(ies.ie_join_priority == 0) {
-    linkaddr_copy(&orchestra_linkaddr_root, (linkaddr_t *)&frame.src_addr);
+    orchestra_set_root_address((linkaddr_t *)&frame.src_addr);
   }
 
   tsch_current_asn = ies.ie_asn;
