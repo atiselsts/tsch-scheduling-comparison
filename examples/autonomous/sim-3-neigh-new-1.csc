@@ -12,7 +12,7 @@
       <rssi_inflection_point>-92.0</rssi_inflection_point>
       <path_loss_exponent>3.0</path_loss_exponent>
       <awgn_sigma>0.0</awgn_sigma>
-      <enable_time_variation>false</enable_time_variation>
+      <enable_time_variation>true</enable_time_variation>
     </radiomedium>
     <events>
       <logoutput>40000</logoutput>
