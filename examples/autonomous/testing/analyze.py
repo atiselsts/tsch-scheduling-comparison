@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import subprocess
+import json
 
 import matplotlib
 matplotlib.use('Agg')
@@ -33,9 +34,10 @@ matplotlib.rcParams['pdf.fonttype'] = 42
 OUT_DIR = "../plots"
 
 DATA_DIRECTORY="../simulations"
+DATA_FILE = "cached_data.json"
 
-START_TIME_MINUTES = 10
-END_TIME_MINUTES = 30
+START_TIME_MINUTES = 30
+END_TIME_MINUTES = 60
 
 # The root node is ignored in the calculations (XXX: maybe should not ignore its PRR?)
 ROOT_ID = 1
@@ -45,11 +47,8 @@ CI = 0.9
 
 ###########################################
 
-MARKERS = ["o", "s", "X", "X", "X"]
-BASIC_MARKERS = ["o", "s", "X", "X", "X"]
-
-COLORS = ["green", "slateblue", "orange", "red", "brown"]
-BASIC_COLORS = ["green", "slateblue", "orange", "red", "brown"]
+MARKERS = ["o", "s", "X", "X", "X", "X"]
+BASIC_MARKERS = ["o", "s", "X", "X", "X", "X"]
 
 ###########################################
 
@@ -79,7 +78,7 @@ def graph_ci(data, ylabel, filename):
         if 0:
             pl.errorbar(x, to_plot, width, yerr=yerr, marker=MARKERS[i], label=ALGONAMES[a])
         else:
-            pl.bar(x, to_plot, width, yerr=yerr, label=ALGONAMES[a], color=COLORS[i])
+            pl.bar(x, to_plot, width, yerr=yerr, label=ALGONAMES[a], color=COLORS[a])
 #        print("plot ", ylabel)
 #        print(to_plot)
 
@@ -113,26 +112,33 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
 
     width = 0.15
 
-    for i, a in enumerate(ALGORITHMS):
+    if len(xdata) == len(ALGORITHMS):
+        algos = ALGORITHMS
+    elif len(xdata) == len(BEST_ALGORITHMS):
+        algos = BEST_ALGORITHMS
+    else:
+        raise "Unknown data dimensions"
+
+    for i, a in enumerate(algos):
         algo_xdata = xdata[i]
         algo_ydata = ydata[i]
 
         to_plot_x = algo_xdata #[np.mean(d) for d in algo_xdata]
         to_plot_y = algo_ydata #[np.mean(d) for d in algo_ydata]
 
-        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[i])
+        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[a])
 
         if pointlabels is not None:
             for j, sf in enumerate(pointlabels[i]):
-                pl.gca().annotate("sf={}".format(sf), (to_plot_x[j] + 0.1, to_plot_y[j] + 1), fontsize=6)
+                pl.gca().annotate("{}".format(sf), (to_plot_x[j] + 0.1, to_plot_y[j] + 1), fontsize=6)
 
     pl.ylim(bottom=0, top=105)
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
-#    if "duty" in filename:
-#        pl.xlim([0, 12.5])
-#    else: # send frequency
-#        pl.xscale("log")
+    if "duty" in filename:
+        pl.xlim([0, 12.5])
+    else: # send frequency
+        pl.xscale("log")
 
     bbox = (1.0, 1.3)
     loc = "upper right"
@@ -152,11 +158,10 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
 
 ###########################################
 
-# The nodes generate 1 packet per minute; allow first 10 mins for the network tree building
 def get_seqnums(send_interval):
-    skip = START_TIME_MINUTES * 60 // send_interval
-    expect = END_TIME_MINUTES * 60 // send_interval
-    return (skip + 1, expect - 1)
+    duration_seconds = (END_TIME_MINUTES - START_TIME_MINUTES) * 60
+    num_packets = duration_seconds // send_interval
+    return (1, num_packets)
 
 ###########################################
 
@@ -230,7 +235,7 @@ def process_file(filename, experiment, send_interval):
 
             if in_initialization:
                 # ignore the first N minutes of the test, while the network is being built
-                if "initial phase complete" in line:
+                if ts > START_TIME_MINUTES * 60 * 1000:
                     in_initialization = False
                 else:
                     continue
@@ -248,8 +253,7 @@ def process_file(filename, experiment, send_interval):
                     # this is needed to distinguish between "from" and "to" in the query example
                     if fromtext == "from":
                         fromnode = int(fromaddr.split(":")[-1], 16)
-                        if fromnode in has_assoc \
-                           and motes[fromnode].associated_at_minutes < sn:
+                        if fromnode in has_assoc :
                             # account for the seqnum
                             motes[fromnode].seqnums.add(sn)
                             # print("add sn={} fromnode={}".format(sn, fromnode))
@@ -269,14 +273,16 @@ def process_file(filename, experiment, send_interval):
                 motes[node].packets_tx += tx
                 motes[node].packets_ack += ack
                 continue
-
+          
             # 600073000:8 [INFO: Energest  ] Radio total :    1669748/  60000000 (27 permil)
             if "Radio total" in line:
-                on = int(fields[8][:-1])
-                total = int(fields[9])
-                motes[node].radio_on += on
-                motes[node].radio_total += total
-                continue
+                # only account for the period when data packets are sent
+                if ts > START_TIME_MINUTES * 60 * 1000:
+                    on = int(fields[8][:-1])
+                    total = int(fields[9])
+                    motes[node].radio_on += on
+                    motes[node].radio_total += total
+                    continue
 
             if "add packet failed" in line:
                 # TODO: account for queue drops!
@@ -398,13 +404,13 @@ def load_all():
     for a in ALGORITHMS:
         data[a] = {}
         for si in SEND_INTERVALS:
-            data[a][si] = {}
+            data[a][str(si)] = {}
             for sf in SLOTFRAME_SIZES:
-                data[a][si][sf] = {}
+                data[a][str(si)][str(sf)] = {}
                 for exp in EXPERIMENTS:
-                    data[a][si][sf][exp] = {}
+                    data[a][str(si)][str(sf)][exp] = {}
                     for nn in NUM_NEIGHBORS:
-                        data[a][si][sf][exp][nn] = {}
+                        data[a][str(si)][str(sf)][exp][str(nn)] = {}
 
                         t_pdr_results = []
                         t_prr_results = []
@@ -426,72 +432,73 @@ def load_all():
                             r = process_file(resultsfile, exp, si)
                             for pdr, prr, rdc in r:
                                 t_pdr_results.append(pdr)
-                                t_prr_results.append(pdr)
+                                t_prr_results.append(prr)
                                 t_rdc_results.append(rdc)
 
-                        data[a][si][sf][exp][nn]["pdr"] = np.mean(t_pdr_results)
-                        data[a][si][sf][exp][nn]["prr"] = np.mean(t_prr_results)
-                        data[a][si][sf][exp][nn]["rdc"] = np.mean(t_rdc_results)
+                        data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = np.mean(t_pdr_results)
+                        data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = np.mean(t_prr_results)
+                        data[a][str(si)][str(sf)][exp][str(nn)]["rdc"] = np.mean(t_rdc_results)
     return data
 
 ###########################################
 
 def aggregate(data, a, si, sf, exp, nn, metric):
-    return data[a][si][sf][exp][nn][metric]
+    return data[a][str(si)][str(sf)][exp][str(nn)][metric]
 
 ###########################################
 
 def plot_all(data, exp):
+    # plot all per duty cycle
     for nn in NUM_NEIGHBORS:
         for si in SEND_INTERVALS:
             pdr_results = [[] for _ in ALGORITHMS]
             rdc_results = [[] for _ in ALGORITHMS]
             pointlabels = [[] for _ in ALGORITHMS]    
             for sf in SLOTFRAME_SIZES:
-                print("sf={}".format(sf))
+                sfs = "sf={}".format(sf)
+                print(sfs)
                 for i, a in enumerate(ALGORITHMS):
                     print("Algorithm {}".format(ALGONAMES[a]))
                     rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
                     pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
-                    pointlabels[i].append(sf)
+                    pointlabels[i].append(sfs)
 
             filename = "sim_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
             graph_line(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
                        filename)
 
-        continue # XXX
+###########################################
+            
+def plot_best_per_send_frequency(data, exp):
 
-        pdr_results_all = [[] for _ in ALGORITHMS]
-        rdc_results_all = [[] for _ in ALGORITHMS]
-        si_results_all = [[] for _ in ALGORITHMS]
-        pointlabels_all = [[] for _ in ALGORITHMS]
-
-        for sf in SLOTFRAME_SIZES:
-            pdr_results = [[] for _ in ALGORITHMS]
-            rdc_results = [[] for _ in ALGORITHMS]
-            si_results = [[] for _ in ALGORITHMS]
-            pointlabels = [[] for _ in ALGORITHMS]    
+    # plot comparison of the best
+    for sfi in range(3):
+        for nn in NUM_NEIGHBORS:
+            pdr_results = [[] for _ in BEST_ALGORITHMS]
+            rdc_results = [[] for _ in BEST_ALGORITHMS]
+            si_results  = [[] for _ in BEST_ALGORITHMS]
+            pointlabels = [[] for _ in BEST_ALGORITHMS]
 
             for si in SEND_INTERVALS:
-                print("si={}".format(si))
+                #print("si={}".format(si))
                 fr = 60.0 / si
-                for a in ALGORITHMS:
+
+                for i, a in enumerate(BEST_ALGORITHMS):
                     print("Algorithm {}".format(ALGONAMES[a]))
+                    if sfi == 0:
+                        sf = 19 if a == "orchestra_rb_ns" else 11
+                    elif sfi == 1:
+                        sf = 35 if a == "orchestra_rb_ns" else 19
+                    else:
+                        sf = 101
+
                     rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
                     pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
                     si_results[i].append(fr)
-                    pointlabels[i].append(sf)
+                    pointlabels[i].append("rdc={:.1f}%".format(rdc_results[i][-1])) # the PDR
 
-                    pdr_results_all[i].append(pdr_results[i][-1])
-                    rdc_results_all[i].append(rdc_results[i][-1])
-                    si_results_all[i].append(fr)
-                    pointlabels_all[i].append(sf)
-
-            filename = "sim_{}_pdr_per_sfr_nn{}_sf{}.pdf".format(exp, nn, sf)
-            graph_line(si_results, pdr_results, "Send frequency, Hz", "End-to-end PDR, %", pointlabels,
-                       filename)
-        filename = "sim_{}_pdr_per_sfr_allsf_nn{}.pdf".format(exp, nn)
-        graph_line(si_results_all, pdr_results_all, "Send frequency, Hz", "End-to-end PDR, %", pointlabels_all,
+            filename = "sim_{}_pdr_per_sfr_sf{}_nn{}.pdf".format(exp, sf, nn)
+            graph_line(si_results, pdr_results, "Send frequency, packets / minute", "End-to-end PDR, %", pointlabels,
                        filename)
 
 ###########################################
@@ -502,10 +509,19 @@ def main():
     except:
         pass
 
-    data = load_all()
+    if os.access(DATA_FILE, os.R_OK):
+        print("Cached file found, using it directly")
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+    else:
+        print("Cached file not found, parsing log files...")
+        data = load_all()
+        with open(DATA_FILE, "w") as f:
+            json.dump(data, f)
 
     for exp in EXPERIMENTS:
         plot_all(data, exp)
+        plot_best_per_send_frequency(data, exp)
 
 ###########################################
 

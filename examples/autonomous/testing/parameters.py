@@ -8,9 +8,15 @@ ALGORITHMS = [
     "orchestra_rb_s", # 2
     "orchestra_rb_ns", # 3
     #"orchestra_rb_ns_sr", # 4
-    #"alice", # 5
+    "alice", # 5
     "msf", # 6
     "emsf", # 7
+]
+
+BEST_ALGORITHMS = [
+    "orchestra_sb",
+    "orchestra_rb_ns",
+    "alice",
 ]
 
 ALGONAMES = {
@@ -18,9 +24,19 @@ ALGONAMES = {
     "orchestra_rb_s" : "Orchestra RB / Storing",
     "orchestra_rb_ns" : "Orchestra RB / Non-Storing",
     "orchestra_rb_ns_sr" : "Orchestra RB / Non-Storing (SR)", # with RPL storing rule
-    "alice" : "ALICE",
+    "alice" : "Link-based", # ALICE-like - do not use the name ALICE because it implies other features!
     "msf" : "MSF",
     "emsf" : "Extended MSF",
+}
+
+COLORS = {
+    "orchestra_sb" : "green",
+    "orchestra_rb_s" : "slateblue",
+    "orchestra_rb_ns" : "orange",
+    "orchestra_rb_ns_sr" : "grey",
+    "alice" : "blue",
+    "msf" : "red",
+    "emsf" : "brown"
 }
 
 FIRMWARE_TYPES = {
@@ -59,11 +75,10 @@ SLOTFRAME_SIZES_B =[
 SLOTFRAME_SIZES = SLOTFRAME_SIZES_A
 
 SEND_INTERVALS = [
-    8,  # ~8 packets per second
-    15, # 4
-    30, # 2
-    60, # 1
-    120 # 0.5
+    6,   # 10 packets per minute
+    20,  # 3
+    60,  # 1
+    180, # 0.333
 ]
 
 NUM_NEIGHBORS = [
