@@ -66,6 +66,10 @@ PROCESS_THREAD(node_process, ev, data)
     NETSTACK_ROUTING.root_start();
   }
 
+  /* do it here because of the root rule */
+  extern void orchestra_init(void);
+  orchestra_init();
+
   /* start TSCH */
   NETSTACK_MAC.on();
 

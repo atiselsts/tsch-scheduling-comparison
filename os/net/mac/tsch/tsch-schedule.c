@@ -416,13 +416,43 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 
           /* Maintain backup_link */
           if(curr_backup == NULL) {
-            /* Check if 'l' best can be used as backup */
-            if(new_best != l && (l->link_options & LINK_OPTION_RX)) { /* Does 'l' have Rx flag? */
+            if(new_best != NULL && new_best != curr_best) {
+              curr_backup = curr_best;
+            } else {
               curr_backup = l;
             }
-            /* Check if curr_best can be used as backup */
-            if(new_best != curr_best && (curr_best->link_options & LINK_OPTION_RX)) { /* Does curr_best have Rx flag? */
+          } else {
+            if(new_best != NULL && new_best != curr_best) {
+              /* current best becomes backup */
               curr_backup = curr_best;
+            } else {
+              /* select the best of the backup links */
+              struct tsch_link *new_backup = NULL;
+              if((curr_backup->slotframe_handle & TSCH_LOW_PRIO_SLOTFRAME_FLAG)
+                  == (l->slotframe_handle & TSCH_LOW_PRIO_SLOTFRAME_FLAG)) {
+                /* Two links are overlapping, we need to select one of them.
+                 * By standard: prioritize Tx links first, second by lowest handle */
+                if((curr_backup->link_options & LINK_OPTION_TX) == (l->link_options & LINK_OPTION_TX)) {
+                  /* Both or neither links have Tx, select the one with lowest handle */
+                  if(l->slotframe_handle < curr_backup->slotframe_handle) {
+                    new_backup = l;
+                  }
+                } else {
+                  /* Select the link that has the Tx option */
+                  if(l->link_options & LINK_OPTION_TX) {
+                    new_backup = l;
+                  }
+                }
+              } else {
+                /* Select the link that has higher-priority slotframe */
+                if(curr_backup->slotframe_handle & TSCH_LOW_PRIO_SLOTFRAME_FLAG) {
+                  new_backup = l;
+                }
+              }
+
+              if(new_backup != NULL) {
+                curr_backup = new_backup;
+              }
             }
           }
 

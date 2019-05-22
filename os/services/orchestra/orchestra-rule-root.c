@@ -48,6 +48,9 @@ static uint16_t slotframe_handle = 0;
 static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_unicast;
 
+linkaddr_t orchestra_linkaddr_root;
+uint8_t is_root_rule_active;
+
 /*---------------------------------------------------------------------------*/
 static uint16_t
 get_node_timeslot(const linkaddr_t *addr)
@@ -59,20 +62,59 @@ get_node_timeslot(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
+static void activate_root_rule(void)
+{
+  uint16_t timeslot;
+
+  if(!is_root_rule_active) {
+    timeslot = get_node_timeslot(&linkaddr_node_addr);
+    tsch_schedule_add_link(sf_unicast,
+            /*LINK_OPTION_SHARED | */ LINK_OPTION_TX,
+            LINK_TYPE_NORMAL, &orchestra_linkaddr_root,
+            timeslot, channel_offset);
+    is_root_rule_active = 1;
+  }
+}
+/*---------------------------------------------------------------------------*/
+static void deactivate_root_rule(void)
+{
+  uint16_t timeslot;
+  if(is_root_rule_active) {
+    timeslot = get_node_timeslot(&linkaddr_node_addr);
+    tsch_schedule_remove_link_by_timeslot(sf_unicast, timeslot);
+    is_root_rule_active = 0;
+  }
+}
+/*---------------------------------------------------------------------------*/
+void orchestra_set_root_address(linkaddr_t *root)
+{
+  if(!linkaddr_cmp(&orchestra_linkaddr_root, root)) {
+    printf("set root address to %u\n", root->u8[7]);
+    /* update the cached address */
+    linkaddr_copy(&orchestra_linkaddr_root, root);
+    if(linkaddr_cmp(&orchestra_linkaddr_root, &orchestra_parent_linkaddr)) {
+      activate_root_rule();
+    } else {
+      deactivate_root_rule();
+    }
+  }
+}
+/*---------------------------------------------------------------------------*/
 static int
 select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
      && !ORCHESTRA_IS_ROOT()
-     && linkaddr_cmp(dest, &orchestra_linkaddr_root)) {
-    if(slotframe != NULL) {
-      *slotframe = slotframe_handle;
-    }
-    if(timeslot != NULL) {
-      *timeslot = get_node_timeslot(dest);
-    }
+     && linkaddr_cmp(dest, &orchestra_linkaddr_root)
+     && is_root_rule_active) {
+    /* printf("root rule from 0x%02x to 0x%02x\n", */
+    /*         linkaddr_node_addr.u8[7], dest->u8[7]); */
+    /* accept all */
+    *slotframe = 0xffff;
+    *timeslot = 0xffff;
     return 1;
   }
   return 0;
@@ -81,13 +123,14 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
 static void
 init(uint16_t sf_handle)
 {
-  int i;
   uint16_t timeslot;
 
+  /* mark this slotframe as low priority (overridden by all other ones in case of collision) */
   slotframe_handle = sf_handle | TSCH_LOW_PRIO_SLOTFRAME_FLAG;
   channel_offset = sf_handle;
 
   if(ORCHESTRA_IS_ROOT()) {
+    printf("root rule - is a root node\n");
     /* Slotframe for unicast reception */
     sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, 1);
     timeslot = 0;
@@ -97,22 +140,35 @@ init(uint16_t sf_handle)
         timeslot, channel_offset);
   } else {
     /* Slotframe for unicast transmissions */
+    printf("root rule - not root node\n");
     sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_ROOT_PERIOD);
-    timeslot = get_node_timeslot(&linkaddr_node_addr);
-    tsch_schedule_add_link(sf_unicast,
-        LINK_OPTION_SHARED | LINK_OPTION_TX,
-        LINK_TYPE_NORMAL, &tsch_broadcast_address,
-        timeslot, channel_offset);
   }
 }
 /*---------------------------------------------------------------------------*/
-struct orchestra_rule unicast_special_for_root = {
+static void
+new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new)
+{
+  /* assume the `orchestra_parent_linkaddr` already has been set by an unicast rule! */
+  /* printf("set parent address to %u\n", orchestra_parent_linkaddr.u8[7]); */
+  if(linkaddr_cmp(&orchestra_linkaddr_root, &orchestra_parent_linkaddr)) {
+    activate_root_rule();
+  } else {
+    deactivate_root_rule();
+  }
+}
+/*---------------------------------------------------------------------------*/
+struct orchestra_rule special_for_root = {
   init,
-  NULL,
+  new_time_source,
   select_packet,
   NULL,
   NULL,
   "special for root"
 };
 
+#else  /* ORCHESTRA_ROOT_RULE */
+void orchestra_set_root_address(linkaddr_t *root)
+{
+  /* nothing */
+}
 #endif /* ORCHESTRA_ROOT_RULE */

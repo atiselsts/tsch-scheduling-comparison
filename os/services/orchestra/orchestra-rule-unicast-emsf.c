@@ -106,11 +106,16 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) != FRAME802154_DATAFRAME
-      || dest == NULL
       || linkaddr_cmp(dest, &linkaddr_null)
       || linkaddr_cmp(dest, &tsch_broadcast_address)) {
     return 0;
   }
+
+#if ORCHESTRA_ROOT_RULE
+  if(linkaddr_cmp(dest, &orchestra_linkaddr_root) && is_root_rule_active) {
+    return 0;
+  }
+#endif
 
   if(slotframe != NULL) {
     *slotframe = slotframe_handle;
