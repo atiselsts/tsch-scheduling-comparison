@@ -51,7 +51,7 @@ static uint16_t channel_offset = 0;
 
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint32_t *timeslot)
 {
   /* We are the default slotframe, select anything */
   if(slotframe != NULL) {

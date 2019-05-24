@@ -45,18 +45,18 @@ static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_eb;
 
 /*---------------------------------------------------------------------------*/
-static uint16_t
+static uint32_t
 get_node_timeslot(const linkaddr_t *addr)
 {
 #if ORCHESTRA_EBSF_PERIOD > 0
   return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_EBSF_PERIOD;
 #else
-  return 0xffff;
+  return 0xffffffff;
 #endif
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint32_t *timeslot)
 {
   /* Select EBs only */
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_BEACONFRAME) {

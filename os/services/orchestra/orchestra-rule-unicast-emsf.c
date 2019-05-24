@@ -53,13 +53,13 @@ static struct tsch_slotframe *sf_unicast;
 static bool is_parent;
 
 /*---------------------------------------------------------------------------*/
-static uint16_t
+static uint32_t
 get_node_timeslot(const linkaddr_t *addr)
 {
   if(addr != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
-    return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_UNICAST_PERIOD;
+    return ORCHESTRA_LINKADDR_HASH(addr);
   } else {
-    return 0xffff;
+    return 0xffffffff;
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -67,7 +67,7 @@ static void
 add_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL) {
-    const uint16_t timeslot = get_node_timeslot(linkaddr);
+    const uint32_t timeslot = get_node_timeslot(linkaddr);
     const uint8_t link_options = LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED;
 
     /* Add/update link (for Rx only) */
@@ -80,15 +80,15 @@ static void
 remove_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL) {
-    const uint16_t timeslot = get_node_timeslot(linkaddr);
+    const uint32_t timeslot = get_node_timeslot(linkaddr);
     uint8_t link_options = LINK_OPTION_TX | LINK_OPTION_SHARED;
-    uint16_t own_timeslot = get_node_timeslot(&linkaddr_node_addr);
+    uint32_t own_timeslot = get_node_timeslot(&linkaddr_node_addr);
 
     if(timeslot == own_timeslot) {
       /* we need this timeslot */
       link_options |= LINK_OPTION_RX;
     } else if(is_parent) {
-      if(timeslot == (own_timeslot + ORCHESTRA_UNICAST_PERIOD / 2) % ORCHESTRA_UNICAST_PERIOD) {
+      if(timeslot == own_timeslot + ORCHESTRA_UNICAST_PERIOD / 2) {
         /* we need this timeslot */
         link_options |= LINK_OPTION_RX;
       }
@@ -101,7 +101,7 @@ remove_uc_link(const linkaddr_t *linkaddr)
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint32_t *timeslot)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
@@ -132,7 +132,7 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
 
   if(orchestra_parent_knows_us && linkaddr_cmp(&orchestra_parent_linkaddr, dest)) {
     /* select the timeslot of the remote node */
-    *timeslot = (get_node_timeslot(dest) + ORCHESTRA_UNICAST_PERIOD / 2) % ORCHESTRA_UNICAST_PERIOD;
+    *timeslot = get_node_timeslot(dest) + ORCHESTRA_UNICAST_PERIOD / 2;
     return 1;
   }
 
@@ -164,10 +164,10 @@ static void
 add_child(const linkaddr_t *linkaddr)
 {
   if(!is_parent) {
-    uint16_t timeslot;
+    uint32_t timeslot;
     is_parent = 1;
 
-    timeslot = (get_node_timeslot(&linkaddr_node_addr) + ORCHESTRA_UNICAST_PERIOD / 2) % ORCHESTRA_UNICAST_PERIOD;
+    timeslot = get_node_timeslot(&linkaddr_node_addr) + ORCHESTRA_UNICAST_PERIOD / 2;
     tsch_schedule_add_link(sf_unicast,
         LINK_OPTION_SHARED | LINK_OPTION_TX | LINK_OPTION_RX,
         LINK_TYPE_NORMAL, &tsch_broadcast_address,
@@ -179,10 +179,10 @@ static void
 remove_child(const linkaddr_t *linkaddr)
 {
   if(uip_ds6_route_num_routes() == 0) {
-    uint16_t timeslot;
+    uint32_t timeslot;
     is_parent = 0;
 
-    timeslot = (get_node_timeslot(&linkaddr_node_addr) + ORCHESTRA_UNICAST_PERIOD / 2) % ORCHESTRA_UNICAST_PERIOD;
+    timeslot = get_node_timeslot(&linkaddr_node_addr) + ORCHESTRA_UNICAST_PERIOD / 2;
     // if(timeslot == get_node_timeslot(&linkaddr_node_addr)) {
     //   return;
     // }
@@ -202,12 +202,13 @@ static void
 init(uint16_t sf_handle)
 {
   int i;
-  uint16_t own_timeslot;
+  uint32_t own_timeslot;
 
   slotframe_handle = sf_handle;
   channel_offset = sf_handle;
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
+  sf_unicast->do_recalculate_timeslots = 1;
   own_timeslot = get_node_timeslot(&linkaddr_node_addr);
   /* Add a Tx link at each available timeslot. Make the link Rx at our own timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {

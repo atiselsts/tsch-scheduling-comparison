@@ -52,19 +52,19 @@ linkaddr_t orchestra_linkaddr_root;
 uint8_t is_root_rule_active;
 
 /*---------------------------------------------------------------------------*/
-static uint16_t
+static uint32_t
 get_node_timeslot(const linkaddr_t *addr)
 {
   if(addr != NULL && ORCHESTRA_ROOT_PERIOD > 0) {
-    return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_ROOT_PERIOD;
+    return ORCHESTRA_LINKADDR_HASH(addr);
   } else {
-    return 0xffff;
+    return 0xffffffff;
   }
 }
 /*---------------------------------------------------------------------------*/
 static void activate_root_rule(void)
 {
-  uint16_t timeslot;
+  uint32_t timeslot;
 
   if(!is_root_rule_active) {
     timeslot = get_node_timeslot(&linkaddr_node_addr);
@@ -78,7 +78,7 @@ static void activate_root_rule(void)
 /*---------------------------------------------------------------------------*/
 static void deactivate_root_rule(void)
 {
-  uint16_t timeslot;
+  uint32_t timeslot;
   if(is_root_rule_active) {
     timeslot = get_node_timeslot(&linkaddr_node_addr);
     tsch_schedule_remove_link_by_timeslot(sf_unicast, timeslot);
@@ -101,7 +101,7 @@ void orchestra_set_root_address(linkaddr_t *root)
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint32_t *timeslot)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
@@ -112,9 +112,11 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
      && is_root_rule_active) {
     /* printf("root rule from 0x%02x to 0x%02x\n", */
     /*         linkaddr_node_addr.u8[7], dest->u8[7]); */
-    /* accept all */
-    *slotframe = 0xffff;
-    *timeslot = 0xffff;
+    if(slotframe != NULL) {
+      *slotframe = slotframe_handle;
+    }
+    /* no specific timeslot */
+    *timeslot = 0xffffffff;
     return 1;
   }
   return 0;
@@ -123,8 +125,6 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
 static void
 init(uint16_t sf_handle)
 {
-  uint16_t timeslot;
-
   /* mark this slotframe as low priority (overridden by all other ones in case of collision) */
   slotframe_handle = sf_handle | TSCH_LOW_PRIO_SLOTFRAME_FLAG;
   channel_offset = sf_handle;
@@ -133,11 +133,10 @@ init(uint16_t sf_handle)
     printf("root rule - is a root node\n");
     /* Slotframe for unicast reception */
     sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, 1);
-    timeslot = 0;
     tsch_schedule_add_link(sf_unicast,
         LINK_OPTION_SHARED | LINK_OPTION_RX,
         LINK_TYPE_NORMAL, &tsch_broadcast_address,
-        timeslot, channel_offset);
+        0, channel_offset);
   } else {
     /* Slotframe for unicast transmissions */
     printf("root rule - not root node\n");

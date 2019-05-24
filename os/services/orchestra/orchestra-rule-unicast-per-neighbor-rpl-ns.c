@@ -48,18 +48,18 @@ static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_unicast;
 
 /*---------------------------------------------------------------------------*/
-static uint16_t
+static uint32_t
 get_node_timeslot(const linkaddr_t *addr)
 {
   if(addr != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
-    return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_UNICAST_PERIOD;
+    return ORCHESTRA_LINKADDR_HASH(addr);
   } else {
-    return 0xffff;
+    return 0xffffffff;
   }
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint32_t *timeslot)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
@@ -100,11 +100,12 @@ static void
 init(uint16_t sf_handle)
 {
   int i;
-  uint16_t rx_timeslot;
+  uint32_t rx_timeslot;
   slotframe_handle = sf_handle;
   channel_offset = sf_handle;
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
+  sf_unicast->do_recalculate_timeslots = 1;
   rx_timeslot = get_node_timeslot(&linkaddr_node_addr);
   /* Add a Tx link at each available timeslot. Make the link Rx at our own timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {

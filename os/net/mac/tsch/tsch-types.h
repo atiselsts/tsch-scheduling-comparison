@@ -68,6 +68,8 @@ struct tsch_link {
   /* uint8_t handle; */
   /* Timeslot for this link */
   uint16_t timeslot;
+  /* The raw hash value (excluding the timeslot) */
+  uint32_t hash_value;
   /* Channel offset for this link */
   uint16_t channel_offset;
   /* A bit string that defines
@@ -89,6 +91,8 @@ struct tsch_slotframe {
   struct tsch_slotframe *next;
   /* Unique identifier */
   uint16_t handle;
+  /* Dynamically change timeslots? */
+  uint8_t do_recalculate_timeslots;
   /* Number of timeslots in the slotframe.
    * Stored as struct asn_divisor_t because we often need ASN%size */
   struct tsch_asn_divisor_t size;

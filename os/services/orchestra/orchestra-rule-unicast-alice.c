@@ -60,13 +60,13 @@ static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_unicast;
 
 /*---------------------------------------------------------------------------*/
-static uint16_t
+static uint32_t
 get_node_timeslot(const linkaddr_t *from, const linkaddr_t *to)
 {
   if(from == NULL || to == NULL || ORCHESTRA_UNICAST_PERIOD <= 0) {
-    return 0xffff;
+    return 0xffffffff;
   }
-  return (256u * ORCHESTRA_LINKADDR_HASH(from) + ORCHESTRA_LINKADDR_HASH(to)) % ORCHESTRA_UNICAST_PERIOD;
+  return 256u * ORCHESTRA_LINKADDR_HASH(from) + ORCHESTRA_LINKADDR_HASH(to);
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -87,7 +87,7 @@ static void
 add_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL) {
-    uint16_t timeslot = get_node_timeslot(linkaddr, &linkaddr_node_addr);
+    uint32_t timeslot = get_node_timeslot(linkaddr, &linkaddr_node_addr);
     uint8_t link_options = LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED;
 
     /* Add/update link */
@@ -99,7 +99,7 @@ add_uc_link(const linkaddr_t *linkaddr)
 static void
 remove_uc_link(const linkaddr_t *linkaddr)
 {
-  uint16_t timeslot;
+  uint32_t timeslot;
   struct tsch_link *l;
 
   if(linkaddr == NULL) {
@@ -149,7 +149,7 @@ child_removed(const linkaddr_t *linkaddr)
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
+select_packet(uint16_t *slotframe, uint32_t *timeslot)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
@@ -198,6 +198,7 @@ init(uint16_t sf_handle)
   channel_offset = sf_handle;
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
+  sf_unicast->do_recalculate_timeslots = 1;
 
   /* Add a Tx link at each available timeslot. Make the link Rx at our own timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {
