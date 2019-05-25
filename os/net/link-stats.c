@@ -227,11 +227,11 @@ link_stats_input_callback(const linkaddr_t *lladdr)
 #else /* LINK_STATS_INIT_ETX_FROM_RSSI */
       stats->etx = ETX_DEFAULT * ETX_DIVISOR;
 #endif /* LINK_STATS_INIT_ETX_FROM_RSSI */
-    }
 
 #if LINK_STATS_PACKET_COUNTERS
-    stats->cnt_current.num_packets_rx = 1;
+      stats->cnt_current.num_packets_rx = 1;
 #endif
+    }
 
     return;
   }
