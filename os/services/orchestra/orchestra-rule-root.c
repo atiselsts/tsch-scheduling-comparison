@@ -56,7 +56,7 @@ static uint32_t
 get_node_timeslot(const linkaddr_t *addr)
 {
   if(addr != NULL && ORCHESTRA_ROOT_PERIOD > 0) {
-    return ORCHESTRA_LINKADDR_HASH(addr);
+    return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_ROOT_PERIOD;
   } else {
     return 0xffffffff;
   }
@@ -69,7 +69,7 @@ static void activate_root_rule(void)
   if(!is_root_rule_active) {
     timeslot = get_node_timeslot(&linkaddr_node_addr);
     tsch_schedule_add_link(sf_unicast,
-            /*LINK_OPTION_SHARED | */ LINK_OPTION_TX,
+            LINK_OPTION_SHARED |  LINK_OPTION_TX,
             LINK_TYPE_NORMAL, &orchestra_linkaddr_root,
             timeslot, channel_offset);
     is_root_rule_active = 1;

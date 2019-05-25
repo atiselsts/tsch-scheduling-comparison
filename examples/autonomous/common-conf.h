@@ -53,11 +53,6 @@
 #define RPL_CALLBACK_PARENT_SWITCH tsch_rpl_callback_parent_switch
 #define RPL_CALLBACK_NEW_DIO_INTERVAL tsch_rpl_callback_new_dio_interval
 
-/* TSCH slotframe size */
-#ifndef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
-#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH 17
-#endif
-
 /* Do not start TSCH at init, wait for NETSTACK_MAC.on() */
 #define TSCH_CONF_AUTOSTART 0
 
@@ -80,6 +75,9 @@
 /* increase the number of links */
 #define TSCH_SCHEDULE_CONF_MAX_LINKS 120
 
+/* reduce */
+#define TSCH_CONF_MAC_MAX_BE 3
+
 /* sender based, storing Orchestra + RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_SB 1
 /* receiver based, storing Orchestra + RPL */
@@ -99,8 +97,9 @@
 /******************* Configure Orchestra ***************/
 /*******************************************************/
 
+/* slotframe size */
 #ifndef ORCHESTRA_CONF_UNICAST_PERIOD
-#define ORCHESTRA_CONF_UNICAST_PERIOD             11
+#define ORCHESTRA_CONF_UNICAST_PERIOD             101 //19
 #endif
 
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED       (FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB)

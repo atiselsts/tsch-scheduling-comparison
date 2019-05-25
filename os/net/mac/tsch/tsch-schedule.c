@@ -388,10 +388,10 @@ wraparound_slotframe(struct tsch_asn_t *asn, struct tsch_slotframe *sf)
   l = list_head(sf->links_list);
   while(l != NULL) {
     l->timeslot = hash(l->hash_value + 65536 * slotframe_counter) % sf->size.val;
-    printf("sf=%u hash=%u ts=%u\n", sf->handle, l->hash_value, l->timeslot);
+//    printf("sf=%u rx=%u hash=%u ts=%u\n", sf->handle, l->link_options & LINK_OPTION_RX, l->hash_value, l->timeslot);
     l = list_item_next(l);
   }
-  printf("***\n");
+//  printf("***\n");
 }
 /*---------------------------------------------------------------------------*/
 /* Returns the next active link after a given ASN, and a backup link (for the same ASN, with Rx flag) */
