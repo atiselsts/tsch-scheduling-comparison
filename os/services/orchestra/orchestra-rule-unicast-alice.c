@@ -88,7 +88,14 @@ add_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL) {
     uint32_t timeslot = get_node_timeslot(linkaddr, &linkaddr_node_addr);
-    uint8_t link_options = LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED;
+    uint8_t link_options;
+
+    if(ORCHESTRA_IS_ROOT()) {
+      /* never use the unicast rule for reception */
+      link_options = LINK_OPTION_TX | LINK_OPTION_SHARED;
+    } else {
+      link_options = LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED;
+    }
 
     /* Add/update link */
     tsch_schedule_add_link(sf_unicast, link_options, LINK_TYPE_NORMAL, &tsch_broadcast_address,
@@ -200,7 +207,7 @@ init(uint16_t sf_handle)
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
   sf_unicast->do_recalculate_timeslots = 1;
 
-  /* Add a Tx link at each available timeslot. Make the link Rx at our own timeslot. */
+  /* Add a Tx link at each available timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {
     tsch_schedule_add_link(sf_unicast,
         LINK_OPTION_SHARED | LINK_OPTION_TX,

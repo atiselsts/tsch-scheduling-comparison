@@ -1,4 +1,3 @@
-/* -*- c -*- */
 /*
  * Copyright (c) 2019, Institute of Electronics and Computer Science (EDI)
  *

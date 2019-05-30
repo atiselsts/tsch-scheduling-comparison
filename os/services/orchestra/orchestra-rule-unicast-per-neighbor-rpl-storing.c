@@ -102,8 +102,10 @@ add_uc_link(const linkaddr_t *linkaddr)
     }
 
     /* Add/update link */
-    tsch_schedule_add_link(sf_unicast, link_options, LINK_TYPE_NORMAL, &tsch_broadcast_address,
+    if(!(link_options == LINK_OPTION_RX && ORCHESTRA_IS_ROOT())) {
+      tsch_schedule_add_link(sf_unicast, link_options, LINK_TYPE_NORMAL, &tsch_broadcast_address,
           timeslot, channel_offset);
+    }
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -215,10 +217,13 @@ init(uint16_t sf_handle)
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
   sf_unicast->do_recalculate_timeslots = 1;
   timeslot = get_node_timeslot(&linkaddr_node_addr);
-  tsch_schedule_add_link(sf_unicast,
-            ORCHESTRA_UNICAST_SENDER_BASED ? LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG: LINK_OPTION_RX,
+  uint32_t link_options = ORCHESTRA_UNICAST_SENDER_BASED ? LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG: LINK_OPTION_RX;
+  if(!(link_options == LINK_OPTION_RX && ORCHESTRA_IS_ROOT())) {
+    tsch_schedule_add_link(sf_unicast,
+            link_options,
             LINK_TYPE_NORMAL, &tsch_broadcast_address,
             timeslot, channel_offset);
+  }
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule unicast_per_neighbor_rpl_storing = {
