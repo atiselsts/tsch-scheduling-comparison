@@ -1610,6 +1610,14 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
   }
   p->rank = dio->rank;
 
+  if(dio->rank == ROOT_RANK(instance)) {
+    extern void orchestra_set_root_address(linkaddr_t *root);
+    linkaddr_t *lladdr = (linkaddr_t *)rpl_get_parent_lladdr(p);
+    if(lladdr) {
+      orchestra_set_root_address(lladdr);
+    }
+  }
+
   if(dio->rank == RPL_INFINITE_RANK && p == dag->preferred_parent) {
     /* Our preferred parent advertised an infinite rank, reset DIO timer */
     rpl_reset_dio_timer(instance);
