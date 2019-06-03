@@ -108,29 +108,30 @@
 #define ORCHESTRA_CONF_ROOT_RULE 0
 #endif
 
-#if ORCHESTRA_CONF_ROOT_RULE
-#define COMMON_RULES &special_for_root, &default_common
-#else
-#define COMMON_RULES &default_common
-#endif
-
 /* Select Orchestra rules depending on the schedule type */
 #if FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_S
 /* include the storing rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_storing, COMMON_RULES  }
+#  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_storing
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR
 /* include the non-storing rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, COMMON_RULES }
+#  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_ns
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
 /* include the alice rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_alice, COMMON_RULES }
+#  define FIRMWARE_UNICAST_RULE unicast_alice
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
 /* include the msf rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_msf, COMMON_RULES }
+#  define FIRMWARE_UNICAST_RULE unicast_msf
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_EMSF
 /* include the emsf rule */
-#  define ORCHESTRA_CONF_RULES { &eb_per_time_source, &unicast_emsf, COMMON_RULES }
+#  define FIRMWARE_UNICAST_RULE unicast_emsf
 #endif
+
+/* For root: the root rule (Rx) comes last */
+#define ORCHESTRA_CONF_RULES_ROOT { &eb_per_time_source, &FIRMWARE_UNICAST_RULE, &default_common, &special_for_root }
+/* For other nodes: root rule (Tx) comes before the unicast neigbhor rules and the default rule */
+#define ORCHESTRA_CONF_RULES_NONROOT { &eb_per_time_source, &special_for_root, &FIRMWARE_UNICAST_RULE, &default_common }
+
+/* Note: the EBSF rule is prioritized above all! */
 
 /*******************************************************/
 /*************** Configure other settings **************/
