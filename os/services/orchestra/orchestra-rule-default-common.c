@@ -51,8 +51,16 @@ static uint16_t channel_offset = 0;
 
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint32_t *timeslot)
+select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
+#if ORCHESTRA_ROOT_RULE
+  /* do not use this slotframe for packets to root */
+  const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+  if(linkaddr_cmp(dest, &orchestra_linkaddr_root) && is_root_rule_active) {
+    return 0;
+  }
+#endif
+
   /* We are the default slotframe, select anything */
   if(slotframe != NULL) {
     *slotframe = slotframe_handle;
@@ -67,7 +75,7 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  channel_offset = slotframe_handle;
+/*  channel_offset = slotframe_handle; */
   /* Default slotframe: for broadcast or unicast to neighbors we
    * do not have a link to */
   struct tsch_slotframe *sf_common = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_COMMON_SHARED_PERIOD);

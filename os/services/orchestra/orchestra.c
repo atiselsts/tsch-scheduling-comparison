@@ -62,8 +62,11 @@ linkaddr_t orchestra_parent_linkaddr;
 int orchestra_parent_knows_us = 0;
 
 /* The set of Orchestra rules in use */
-const struct orchestra_rule *all_rules[] = ORCHESTRA_RULES;
-#define NUM_RULES (sizeof(all_rules) / sizeof(struct orchestra_rule *))
+const struct orchestra_rule *all_rules_root[] = ORCHESTRA_RULES_ROOT;
+const struct orchestra_rule *all_rules_nonroot[] = ORCHESTRA_RULES_NONROOT;
+#define NUM_RULES (sizeof(all_rules_root) / sizeof(struct orchestra_rule *))
+
+const struct orchestra_rule **all_rules;
 
 /*---------------------------------------------------------------------------*/
 static void
@@ -116,7 +119,7 @@ orchestra_callback_packet_ready(void)
   int i;
   /* By default, use any slotframe, any timeslot */
   uint16_t slotframe = 0xffff;
-  uint32_t timeslot = 0xffffffff;
+  uint16_t timeslot = 0xffff;
 
   /* Loop over all rules until finding one able to handle the packet */
   for(i = 0; i < NUM_RULES; i++) {
@@ -129,8 +132,7 @@ orchestra_callback_packet_ready(void)
 
 #if TSCH_WITH_LINK_SELECTOR
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_SLOTFRAME, slotframe);
-  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot & 0xffff);
-  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_TIMESLOT_HIWORD, (timeslot >> 16)  & 0xffff);
+  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
 #endif
 }
 /*---------------------------------------------------------------------------*/
@@ -143,9 +145,18 @@ orchestra_callback_new_time_source(const struct tsch_neighbor *old, const struct
    * */
 
   int i;
+  const linkaddr_t *new_addr = new != NULL ? &new->addr : NULL;
+
   if(new != old) {
     orchestra_parent_knows_us = 0;
   }
+
+  if(new_addr != NULL) {
+    linkaddr_copy(&orchestra_parent_linkaddr, new_addr);
+  } else {
+    linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
+  }
+
   for(i = 0; i < NUM_RULES; i++) {
     if(all_rules[i]->new_time_source != NULL) {
       all_rules[i]->new_time_source(old, new);
@@ -157,6 +168,13 @@ void
 orchestra_init(void)
 {
   int i;
+
+  if(ORCHESTRA_IS_ROOT()) {
+    all_rules = all_rules_root;
+  } else {
+    all_rules = all_rules_nonroot;
+  }
+
   /* Snoop on packet transmission to know if our parent knows about us
    * (i.e. has ACKed at one of our DAOs since we decided to use it as a parent) */
   netstack_sniffer_add(&orchestra_sniffer);

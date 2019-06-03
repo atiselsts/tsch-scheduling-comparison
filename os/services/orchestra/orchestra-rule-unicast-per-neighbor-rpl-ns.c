@@ -48,29 +48,23 @@ static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_unicast;
 
 /*---------------------------------------------------------------------------*/
-static uint32_t
+static uint16_t
 get_node_timeslot(const linkaddr_t *addr)
 {
   if(addr != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
-    return ORCHESTRA_LINKADDR_HASH(addr);
+    return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_UNICAST_PERIOD;
   } else {
-    return 0xffffffff;
+    return 0xffff;
   }
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint32_t *timeslot)
+select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
   /* Select data packets we have a unicast link to */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
      && !linkaddr_cmp(dest, &linkaddr_null)) {
-
-#if ORCHESTRA_ROOT_RULE
-    if(linkaddr_cmp(dest, &orchestra_linkaddr_root) && is_root_rule_active) {
-      return 0;
-    }
-#endif
 
     if(slotframe != NULL) {
       *slotframe = slotframe_handle;
@@ -86,31 +80,23 @@ select_packet(uint16_t *slotframe, uint32_t *timeslot)
 static void
 new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new)
 {
-  if(new != old) {
-    const linkaddr_t *new_addr = new != NULL ? &new->addr : NULL;
-    if(new_addr != NULL) {
-      linkaddr_copy(&orchestra_parent_linkaddr, new_addr);
-    } else {
-      linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
-    }
-  }
 }
 /*---------------------------------------------------------------------------*/
 static void
 init(uint16_t sf_handle)
 {
   int i;
-  uint32_t rx_timeslot;
+  uint16_t rx_timeslot;
   slotframe_handle = sf_handle;
-  channel_offset = sf_handle;
+/*  channel_offset = sf_handle; */
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-  sf_unicast->do_recalculate_timeslots = 1;
-  rx_timeslot = get_node_timeslot(&linkaddr_node_addr);
+/*  sf_unicast->do_recalculate_timeslots = 1; */
+  rx_timeslot = get_node_timeslot(&linkaddr_node_addr) % ORCHESTRA_UNICAST_PERIOD;
   /* Add a Tx link at each available timeslot. Make the link Rx at our own timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {
     tsch_schedule_add_link(sf_unicast,
-        LINK_OPTION_SHARED | LINK_OPTION_TX | ( i == rx_timeslot && !ORCHESTRA_IS_ROOT() ? LINK_OPTION_RX : 0 ),
+        LINK_OPTION_SHARED | LINK_OPTION_TX | ( i == rx_timeslot ? LINK_OPTION_RX : 0 ),
         LINK_TYPE_NORMAL, &tsch_broadcast_address,
         i, channel_offset);
   }

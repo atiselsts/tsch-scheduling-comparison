@@ -41,22 +41,22 @@
 #include "net/packetbuf.h"
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0;
+/*static uint16_t channel_offset = 0;*/
 static struct tsch_slotframe *sf_eb;
 
 /*---------------------------------------------------------------------------*/
-static uint32_t
+static uint16_t
 get_node_timeslot(const linkaddr_t *addr)
 {
 #if ORCHESTRA_EBSF_PERIOD > 0
   return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_EBSF_PERIOD;
 #else
-  return 0xffffffff;
+  return 0xffff;
 #endif
 }
 /*---------------------------------------------------------------------------*/
 static int
-select_packet(uint16_t *slotframe, uint32_t *timeslot)
+select_packet(uint16_t *slotframe, uint16_t *timeslot)
 {
   /* Select EBs only */
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_BEACONFRAME) {
@@ -108,7 +108,7 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  channel_offset = sf_handle;
+  /*channel_offset = sf_handle;*/
   sf_eb = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_EBSF_PERIOD);
   /* EB link: every neighbor uses its own to avoid contention */
   tsch_schedule_add_link(sf_eb,

@@ -38,19 +38,40 @@
 #ifndef __ORCHESTRA_CONF_H__
 #define __ORCHESTRA_CONF_H__
 
-#ifdef ORCHESTRA_CONF_RULES
-#define ORCHESTRA_RULES ORCHESTRA_CONF_RULES
-#else /* ORCHESTRA_CONF_RULES */
+#ifndef ORCHESTRA_CONF_RULES_ROOT
+#define ORCHESTRA_CONF_RULES_ROOT ORCHESTRA_CONF_RULES
+#define ORCHESTRA_CONF_RULES_NONROOT ORCHESTRA_CONF_RULES
+#endif
+
+#ifdef ORCHESTRA_CONF_RULES_ROOT
+#define ORCHESTRA_RULES_ROOT ORCHESTRA_CONF_RULES_ROOT
+#else /* ORCHESTRA_CONF_RULES_ROOT */
 /* A default configuration with:
  * - a sender-based slotframe for EB transmission
  * - a sender-based or receiver-based slotframe for unicast to RPL parents and children
  * - a common shared slotframe for any other traffic (mostly broadcast)
  *  */
-#define ORCHESTRA_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
+#define ORCHESTRA_RULES_ROOT { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
 /* Example configuration for RPL non-storing mode: */
-/* #define ORCHESTRA_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common } */
+/* #define ORCHESTRA_RULES_ROOT { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common } */
 
-#endif /* ORCHESTRA_CONF_RULES */
+#endif /* ORCHESTRA_CONF_RULES_ROOT */
+
+
+#ifdef ORCHESTRA_CONF_RULES_NONROOT
+#define ORCHESTRA_RULES_NONROOT ORCHESTRA_CONF_RULES_NONROOT
+#else /* ORCHESTRA_CONF_RULES_NONROOT */
+/* A default configuration with:
+ * - a sender-based slotframe for EB transmission
+ * - a sender-based or receiver-based slotframe for unicast to RPL parents and children
+ * - a common shared slotframe for any other traffic (mostly broadcast)
+ *  */
+#define ORCHESTRA_RULES_NONROOT { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common }
+/* Example configuration for RPL non-storing mode: */
+/* #define ORCHESTRA_RULES_NONROOT { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common } */
+
+#endif /* ORCHESTRA_CONF_RULES_NONROOT */
+
 
 /* Length of the various slotframes. Tune to balance network capacity,
  * contention, energy, latency. */
