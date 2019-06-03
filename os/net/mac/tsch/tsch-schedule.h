@@ -102,7 +102,7 @@ int tsch_schedule_remove_all_slotframes(void);
  */
 struct tsch_link *tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                                          uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
-                                         uint32_t timeslot, uint16_t channel_offset);
+                                         uint16_t timeslot, uint16_t channel_offset);
 /**
 * \brief Looks for a link from a handle
 * \param handle The target handle
@@ -116,7 +116,7 @@ struct tsch_link *tsch_schedule_get_link_by_handle(uint16_t handle);
  * \param timeslot The desired timeslot
  * \return The link if found, NULL otherwise
  */
-struct tsch_link *tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe, uint32_t timeslot);
+struct tsch_link *tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe, uint16_t timeslot);
 
 /**
  * \brief Removes a link
@@ -132,7 +132,7 @@ int tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link
  * \param timeslot The timeslot where to look for the link within the target slotframe
  * \return 1 if success, 0 if failure
  */
-int tsch_schedule_remove_link_by_timeslot(struct tsch_slotframe *slotframe, uint32_t timeslot);
+int tsch_schedule_remove_link_by_timeslot(struct tsch_slotframe *slotframe, uint16_t timeslot);
 
 
 /**

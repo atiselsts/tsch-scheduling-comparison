@@ -68,8 +68,6 @@ struct tsch_link {
   /* uint8_t handle; */
   /* Timeslot for this link */
   uint16_t timeslot;
-  /* The raw hash value (excluding the timeslot) */
-  uint32_t hash_value;
   /* Channel offset for this link */
   uint16_t channel_offset;
   /* A bit string that defines
@@ -82,17 +80,12 @@ struct tsch_link {
   void *data;
 };
 
-/* allow to have special low-prio slotframes */
-#define TSCH_LOW_PRIO_SLOTFRAME_FLAG 0x8000
-
 /** \brief 802.15.4e slotframe (contains links) */
 struct tsch_slotframe {
   /* Slotframes are stored as a list: "next" must be the first field */
   struct tsch_slotframe *next;
   /* Unique identifier */
   uint16_t handle;
-  /* Dynamically change timeslots? */
-  uint8_t do_recalculate_timeslots;
   /* Number of timeslots in the slotframe.
    * Stored as struct asn_divisor_t because we often need ASN%size */
   struct tsch_asn_divisor_t size;
