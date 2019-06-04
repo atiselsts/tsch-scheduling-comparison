@@ -45,6 +45,8 @@ ROOT_ID = 1
 # confidence interval
 CI = 0.9
 
+ONLY_MEDIAN = True
+
 ###########################################
 
 MARKERS = ["o", "s", "X", "X", "X", "X"]
@@ -136,7 +138,7 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
     if "duty" in filename:
-        pl.xlim([0, 12.5])
+        pl.xlim([0, 13])
     else: # send frequency
         pl.xscale("log")
 
@@ -416,6 +418,10 @@ def load_all():
                         t_prr_results = []
                         t_rdc_results = []
 
+                        a_pdr_results = []
+                        a_prr_results = []
+                        a_rdc_results = []
+
                         path = os.path.join(DATA_DIRECTORY,
                                             a,
                                             "si_{}".format(si),
@@ -430,14 +436,35 @@ def load_all():
                                 continue
 
                             r = process_file(resultsfile, exp, si)
-                            for pdr, prr, rdc in r:
-                                t_pdr_results.append(pdr)
-                                t_prr_results.append(prr)
-                                t_rdc_results.append(rdc)
+                            pdr = [x[0] for x in r]
+                            prr = [x[1] for x in r]
+                            rdc = [x[2] for x in r]
+                            t_pdr_results += pdr
+                            t_prr_results += prr
+                            t_rdc_results += rdc
+                            a_pdr_results.append(np.mean(pdr))
+                            a_prr_results.append(np.mean(prr))
+                            a_rdc_results.append(np.mean(rdc))
 
-                        data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = np.mean(t_pdr_results)
-                        data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = np.mean(t_prr_results)
-                        data[a][str(si)][str(sf)][exp][str(nn)]["rdc"] = np.mean(t_rdc_results)
+
+                        if ONLY_MEDIAN:
+                            if len(a_pdr_results):
+                                midpoint = len(a_pdr_results) // 2
+                                pdr_metric = sorted(a_pdr_results)[midpoint]
+                                prr_metric = sorted(a_prr_results)[midpoint]
+                                rdc_metric = sorted(a_rdc_results)[midpoint]
+                            else:
+                                pdr_metric = 0
+                                prr_metric = 0
+                                rdc_metric = 0
+                        else:
+                            pdr_metric = np.mean(t_pdr_results)
+                            prr_metric = np.mean(t_prr_results)
+                            rdc_metric = np.mean(t_rdc_results)
+
+                        data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = pdr_metric
+                        data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = prr_metric
+                        data[a][str(si)][str(sf)][exp][str(nn)]["rdc"] = rdc_metric
     return data
 
 ###########################################
