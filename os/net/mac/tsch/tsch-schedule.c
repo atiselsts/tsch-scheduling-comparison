@@ -368,6 +368,7 @@ struct tsch_link *
 tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset,
     struct tsch_link **backup_link)
 {
+  uint16_t time_to_curr_best = 0;
   struct tsch_link *curr_best = NULL;
   struct tsch_link *curr_backup = NULL; /* Keep a back link in case the current link
   turns out useless when the time comes. For instance, for a Tx-only link, if there is
@@ -379,28 +380,17 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     while(sf != NULL) {
       /* Get timeslot from ASN, given the slotframe length */
       uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
-      timeslot++;
-      if(timeslot == sf->size.val) {
-        timeslot = 0;
-      }
       struct tsch_link *l = list_head(sf->links_list);
       while(l != NULL) {
-        if(timeslot != l->timeslot) {
-          /* not matching timeslot; do not consider this link */
-          l = list_item_next(l);
-          continue;
-        }
-
-        if(curr_best == NULL) {
+        uint16_t time_to_timeslot =
+          l->timeslot > timeslot ?
+          l->timeslot - timeslot :
+          sf->size.val + l->timeslot - timeslot;
+        if(curr_best == NULL || time_to_timeslot < time_to_curr_best) {
+          time_to_curr_best = time_to_timeslot;
           curr_best = l;
           curr_backup = NULL;
-        } else if((l->slotframe_handle == 0 || curr_best->slotframe_handle == 0)
-            && l->slotframe_handle != curr_best->slotframe_handle) {
-          /* always prioritize zero-th slotframe (for EB) */
-          if(l->slotframe_handle == 0) {
-            curr_best = l;
-          }
-        } else {
+        } else if(time_to_timeslot == time_to_curr_best) {
           struct tsch_link *new_best = NULL;
           /* Two links are overlapping, we need to select one of them.
            * By standard: prioritize Tx links first, second by lowest handle */
@@ -413,6 +403,16 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             /* Select the link that has the Tx option */
             if(l->link_options & LINK_OPTION_TX) {
               new_best = l;
+            }
+          }
+
+          /* XXX non-standard: always prioritize zero-th slotframe (for EB) */
+          if(l->slotframe_handle != curr_best->slotframe_handle
+              && (l->slotframe_handle == 0 || curr_best->slotframe_handle == 0)) {
+            if(l->slotframe_handle == 0) {
+              new_best = l;
+            } else {
+              new_best = NULL;
             }
           }
 
@@ -438,6 +438,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
       }
       sf = list_item_next(sf);
     }
+    if(time_offset != NULL) {
+      *time_offset = time_to_curr_best;
+    }
   }
   // if(curr_best) {
   //   printf("select sf=%u ts=%u Tx=%u Rx=%u\n",
@@ -447,9 +450,6 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
   //       curr_best->link_options & LINK_OPTION_RX
   //     );
   // }
-  if(time_offset != NULL) {
-    *time_offset = 1;
-  }
   if(backup_link != NULL) {
     *backup_link = curr_backup;
     // if(curr_backup) {
