@@ -47,7 +47,7 @@
 #include "net/routing/routing.h"
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0;
+static uint16_t channel_offset = 1;
 static struct tsch_slotframe *sf_unicast;
 
 static bool is_parent;
@@ -172,14 +172,6 @@ remove_child(const linkaddr_t *linkaddr)
     is_parent = 0;
 
     timeslot = (get_node_timeslot(&linkaddr_node_addr) + ORCHESTRA_UNICAST_PERIOD / 2) % ORCHESTRA_UNICAST_PERIOD;
-    // if(timeslot == get_node_timeslot(&linkaddr_node_addr)) {
-    //   return;
-    // }
-    // if(!linkaddr_cmp(&orchestra_parent_linkaddr, &linkaddr_null)) {
-    //   if(timeslot == get_node_timeslot(&orchestra_parent_linkaddr)) {
-    //     return;
-    //   }
-    // }
     tsch_schedule_add_link(sf_unicast,
         LINK_OPTION_SHARED | LINK_OPTION_TX,
         LINK_TYPE_NORMAL, &tsch_broadcast_address,
@@ -194,10 +186,9 @@ init(uint16_t sf_handle)
   uint16_t own_timeslot;
 
   slotframe_handle = sf_handle;
-/*  channel_offset = sf_handle; */
+  /* channel_offset = sf_handle; */
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-/*  sf_unicast->do_recalculate_timeslots = 1; */
   own_timeslot = get_node_timeslot(&linkaddr_node_addr);
   /* Add a Tx link at each available timeslot. Make the link Rx at our own timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {

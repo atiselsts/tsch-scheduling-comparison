@@ -43,7 +43,7 @@
 #include "net/routing/routing.h"
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0;
+static uint16_t channel_offset = 1;
 static struct tsch_slotframe *sf_unicast;
 
 /*---------------------------------------------------------------------------*/

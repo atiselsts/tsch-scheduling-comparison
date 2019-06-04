@@ -60,7 +60,7 @@
 #endif
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0;
+static uint16_t channel_offset = 1;
 static struct tsch_slotframe *sf_unicast;
 
 /*---------------------------------------------------------------------------*/
@@ -199,10 +199,9 @@ init(uint16_t sf_handle)
   uint16_t timeslot;
 
   slotframe_handle = sf_handle;
-/*  channel_offset = sf_handle; */
+  /* channel_offset = sf_handle; */
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-/*  sf_unicast->do_recalculate_timeslots = 1; */
   timeslot = get_node_timeslot(&linkaddr_node_addr);
   uint32_t link_options = ORCHESTRA_UNICAST_SENDER_BASED ? LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG: LINK_OPTION_RX;
   tsch_schedule_add_link(sf_unicast,

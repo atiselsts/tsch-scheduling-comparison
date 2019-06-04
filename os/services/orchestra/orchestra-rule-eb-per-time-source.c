@@ -41,7 +41,7 @@
 #include "net/packetbuf.h"
 
 static uint16_t slotframe_handle = 0;
-/*static uint16_t channel_offset = 0;*/
+static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_eb;
 
 /*---------------------------------------------------------------------------*/
@@ -108,13 +108,13 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  /*channel_offset = sf_handle;*/
+  /* channel_offset = sf_handle; */
   sf_eb = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_EBSF_PERIOD);
   /* EB link: every neighbor uses its own to avoid contention */
   tsch_schedule_add_link(sf_eb,
                          LINK_OPTION_TX,
                          LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                         get_node_timeslot(&linkaddr_node_addr), 0);
+                         get_node_timeslot(&linkaddr_node_addr), channel_offset);
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule eb_per_time_source = {

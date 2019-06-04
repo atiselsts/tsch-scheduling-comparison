@@ -44,7 +44,7 @@
 #if ORCHESTRA_ROOT_RULE
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0;
+static uint16_t channel_offset = 2;
 static struct tsch_slotframe *sf_unicast;
 
 linkaddr_t orchestra_linkaddr_root;
@@ -105,9 +105,8 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot)
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
 
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
-     && !ORCHESTRA_IS_ROOT()
-     && linkaddr_cmp(dest, &orchestra_linkaddr_root)
-     && is_root_rule_active) {
+     && is_root_rule_active
+     && linkaddr_cmp(dest, &orchestra_linkaddr_root)) {
     /* printf("root rule from 0x%02x to 0x%02x\n", */
     /*       linkaddr_node_addr.u8[7], dest->u8[7]); */
     if(slotframe != NULL) {
@@ -124,7 +123,7 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-/*  channel_offset = sf_handle;*/
+  /* channel_offset = sf_handle; */
 
   if(ORCHESTRA_IS_ROOT()) {
     printf("root rule - is a root node\n");
@@ -136,7 +135,7 @@ init(uint16_t sf_handle)
         0, channel_offset);
   } else {
     /* Slotframe for unicast transmissions */
-    printf("root rule - not root node\n");
+    printf("root rule - not a root node\n");
     sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_ROOT_PERIOD);
   }
 }
