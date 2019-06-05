@@ -84,5 +84,7 @@
 #define TSCH_CLOCK_TO_TICKS(c) (((c) * RTIMER_SECOND) / CLOCK_SECOND)
 #define TSCH_CLOCK_TO_SLOTS(c, timeslot_length) (TSCH_CLOCK_TO_TICKS(c) / timeslot_length)
 
+#define TSCH_DYNAMIC_CHANNEL_OFFSET 0xfffe
+
 #endif /* __TSCH_CONST_H__ */
 /** @} */

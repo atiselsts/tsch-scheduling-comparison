@@ -78,6 +78,10 @@
 /* reduce */
 #define TSCH_CONF_MAC_MAX_BE 3
 
+/*******************************************************/
+/****************** Firmware Type options **************/
+/*******************************************************/
+
 /* sender based, storing Orchestra + RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_SB 1
 /* receiver based, storing Orchestra + RPL */
@@ -109,12 +113,17 @@
 #endif
 
 /* Select Orchestra rules depending on the schedule type */
-#if FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_S
+#if FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB
 /* include the storing rule */
 #  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_storing
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_S
+/* include the storing rule */
+#  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_storing
+#  define ORCHESTRA_CONF_MULTIPLE_CHANNELS 1 /* no penalty for multiple channels */
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR
 /* include the non-storing rule */
 #  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_ns
+#  define ORCHESTRA_CONF_MULTIPLE_CHANNELS 1 /* no penalty for multiple channels */
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
 /* include the alice rule */
 #  define FIRMWARE_UNICAST_RULE unicast_alice
@@ -124,6 +133,10 @@
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_EMSF
 /* include the emsf rule */
 #  define FIRMWARE_UNICAST_RULE unicast_emsf
+#endif
+
+#ifndef ORCHESTRA_CONF_MULTIPLE_CHANNELS
+#define ORCHESTRA_CONF_MULTIPLE_CHANNELS 0
 #endif
 
 /* For root: the root rule (Rx) comes last */

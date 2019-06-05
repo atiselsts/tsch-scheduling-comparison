@@ -241,8 +241,18 @@ tsch_release_lock(void)
 
 /* Return channel from ASN and channel offset */
 uint8_t
-tsch_calculate_channel(struct tsch_asn_t *asn, uint8_t channel_offset)
+tsch_calculate_channel(uint8_t is_tx_slot, struct tsch_asn_t *asn, uint16_t channel_offset)
 {
+  if(channel_offset == TSCH_DYNAMIC_CHANNEL_OFFSET) {
+    /* select the channnel dynamically */
+    if(is_tx_slot) {
+      /* use the destination's channel offset */
+      channel_offset = current_neighbor->addr.u8[7];
+    } else {
+      /* use own channel offset */
+      channel_offset = linkaddr_node_addr.u8[7];
+    }
+  }
   uint16_t index_of_0 = TSCH_ASN_MOD(*asn, tsch_hopping_sequence_length);
   uint16_t index_of_offset = (index_of_0 + channel_offset) % tsch_hopping_sequence_length.val;
   return tsch_hopping_sequence[index_of_offset];
@@ -1010,6 +1020,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
+        uint8_t is_tx_slot = current_packet != NULL;
         /* If we are in a burst, we stick to current channel instead of
          * doing channel hopping, as per IEEE 802.15.4-2015 */
         if(burst_link_scheduled) {
@@ -1017,14 +1028,14 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           burst_link_scheduled = 0;
         } else {
           /* Hop channel */
-          tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, current_link->channel_offset);
+          tsch_current_channel = tsch_calculate_channel(is_tx_slot, &tsch_current_asn, current_link->channel_offset);
         }
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */
         tsch_radio_on(TSCH_RADIO_CMD_ON_START_OF_TIMESLOT);
         /* Decide whether it is a TX/RX/IDLE or OFF slot */
         /* Actual slot operation */
-        if(current_packet != NULL) {
+        if(is_tx_slot) {
           /* We have something to transmit, do the following:
            * 1. send
            * 2. update_backoff_state(current_neighbor)

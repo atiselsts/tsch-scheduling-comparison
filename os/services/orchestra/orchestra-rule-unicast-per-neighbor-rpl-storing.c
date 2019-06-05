@@ -60,7 +60,7 @@
 #endif
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 1;
+static uint16_t channel_offset = ORCHESTRA_MULTIPLE_CHANNELS ? TSCH_DYNAMIC_CHANNEL_OFFSET : 1;
 static struct tsch_slotframe *sf_unicast;
 
 /*---------------------------------------------------------------------------*/

@@ -70,7 +70,7 @@ extern int tsch_current_burst_count;
  * \param channel_offset A given channel offset
  * \return The resulting channel
  */
-uint8_t tsch_calculate_channel(struct tsch_asn_t *asn, uint8_t channel_offset);
+uint8_t tsch_calculate_channel(uint8_t is_tx_slot, struct tsch_asn_t *asn, uint16_t channel_offset);
 /**
  * Checks if the TSCH lock is set. Accesses to global structures outside of
  * interrupts must be done through the lock, unless the sturcutre has
