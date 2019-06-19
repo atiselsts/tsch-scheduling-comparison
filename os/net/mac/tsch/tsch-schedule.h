@@ -158,5 +158,14 @@ struct tsch_slotframe *tsch_schedule_slotframe_head(void);
  */
 struct tsch_slotframe *tsch_schedule_slotframe_next(struct tsch_slotframe *sf);
 
+static inline uint8_t
+tsch_schedule_get_node_channel_offset(const linkaddr_t *addr)
+{
+  if(addr != NULL) {
+    return addr->u8[7];
+  }
+  return 0;
+}
+
 #endif /* __TSCH_SCHEDULE_H__ */
 /** @} */

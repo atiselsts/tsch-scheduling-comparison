@@ -403,7 +403,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
           }
 
-          /* XXX non-standard: always prioritize zero-th slotframe (for EB) */
+          /* XXX non-standard: always prioritize the zero-th slotframe (for EB) */
           if(l->slotframe_handle != curr_best->slotframe_handle
               && (l->slotframe_handle == 0 || curr_best->slotframe_handle == 0)) {
             if(l->slotframe_handle == 0) {

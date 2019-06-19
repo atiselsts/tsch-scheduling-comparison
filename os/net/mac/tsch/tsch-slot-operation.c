@@ -247,10 +247,10 @@ tsch_calculate_channel(uint8_t is_tx_slot, struct tsch_asn_t *asn, uint16_t chan
     /* select the channnel dynamically */
     if(is_tx_slot) {
       /* use the destination's channel offset */
-      channel_offset = current_neighbor->addr.u8[7];
+      channel_offset = tsch_schedule_get_node_channel_offset(&current_neighbor->addr);
     } else {
       /* use own channel offset */
-      channel_offset = linkaddr_node_addr.u8[7];
+      channel_offset = tsch_schedule_get_node_channel_offset(&linkaddr_node_addr);
     }
   }
   uint16_t index_of_0 = TSCH_ASN_MOD(*asn, tsch_hopping_sequence_length);
