@@ -108,8 +108,9 @@
 
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED       (FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_SB)
 
+/* Enable special rule for root? */
 #ifndef ORCHESTRA_CONF_ROOT_RULE
-#define ORCHESTRA_CONF_ROOT_RULE 0
+#define ORCHESTRA_CONF_ROOT_RULE 1
 #endif
 
 /* Select Orchestra rules depending on the schedule type */
@@ -119,11 +120,9 @@
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_S
 /* include the storing rule */
 #  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_storing
-#  define ORCHESTRA_CONF_MULTIPLE_CHANNELS 1 /* no penalty for multiple channels */
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR
 /* include the non-storing rule */
 #  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_ns
-#  define ORCHESTRA_CONF_MULTIPLE_CHANNELS 1 /* no penalty for multiple channels */
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
 /* include the alice rule */
 #  define FIRMWARE_UNICAST_RULE unicast_alice
@@ -135,8 +134,9 @@
 #  define FIRMWARE_UNICAST_RULE unicast_emsf
 #endif
 
+/* Enable multiple channels? */
 #ifndef ORCHESTRA_CONF_MULTIPLE_CHANNELS
-#define ORCHESTRA_CONF_MULTIPLE_CHANNELS 0
+#define ORCHESTRA_CONF_MULTIPLE_CHANNELS 1
 #endif
 
 /* For root: the root rule (Rx) comes last */
