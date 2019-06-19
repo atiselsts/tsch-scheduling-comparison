@@ -142,6 +142,8 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     else: # send frequency
         pl.xscale("log")
 
+    pl.gca().axhline(y=100)
+
     bbox = (1.0, 1.3)
     loc = "upper right"
 
@@ -513,9 +515,9 @@ def plot_best_per_send_frequency(data, exp):
                 for i, a in enumerate(BEST_ALGORITHMS):
                     print("Algorithm {}".format(ALGONAMES[a]))
                     if sfi == 0:
-                        sf = 19 if a == "orchestra_rb_ns" else 11
+                        sf = 11
                     elif sfi == 1:
-                        sf = 35 if a == "orchestra_rb_ns" else 19
+                        sf = 19
                     else:
                         sf = 101
 

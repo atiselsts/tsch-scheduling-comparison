@@ -10,7 +10,7 @@ ALGORITHMS = [
     #"orchestra_rb_ns_sr", # 4
     "alice", # 5
     "msf", # 6
-    "emsf", # 7
+#    "emsf", # 7
 ]
 
 BEST_ALGORITHMS = [
@@ -75,10 +75,9 @@ SLOTFRAME_SIZES_B =[
 SLOTFRAME_SIZES = SLOTFRAME_SIZES_A
 
 SEND_INTERVALS = [
-    6,   # 10 packets per minute
-    20,  # 3
-    60,  # 1
-    180, # 0.333
+    6,   # 10 packets per minute  (6x5^0)
+    30,  # 2 packets per minute   (6x5^1)
+    150  # packet per 2.5 minutes (6x5^2)
 ]
 
 NUM_NEIGHBORS = [
