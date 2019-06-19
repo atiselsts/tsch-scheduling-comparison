@@ -28,10 +28,13 @@
  */
 /**
  * \file
- *         Orchestra: a slotframe dedicated to unicast data transmission. Designed for
+ *         MSF: a slotframe dedicated to unicast data transmission. Designed for
  *         RPL storing mode only, as this is based on the knowledge of the children (and parent).
  *         Nodes listen/transmit at a timeslot defined as hash(MAC) % ORCHESTRA_SB_UNICAST_PERIOD
- *         Nodes also listen/transmit at a timeslot defined as hash(parent.MAC) % ORCHESTRA_SB_UNICAST_PERIOD
+ *         Nodes also listen/transmit at hash(parent.MAC) % ORCHESTRA_SB_UNICAST_PERIOD
+ *
+ *         Based on the "6TiSCH Minimal Scheduling Function (MSF)" Internet Draft.
+ *         draft-ietf-6tisch-msf-03
  *
  * \author Atis Elsts <atis.elsts@edi.lv>
  */
@@ -43,7 +46,7 @@
 #include "net/routing/routing.h"
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 1;
+static uint16_t channel_offset = ORCHESTRA_MULTIPLE_CHANNELS ? TSCH_DYNAMIC_CHANNEL_OFFSET : 1;
 static struct tsch_slotframe *sf_unicast;
 
 /*---------------------------------------------------------------------------*/

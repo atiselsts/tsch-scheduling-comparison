@@ -28,7 +28,7 @@
  */
 /**
  * \file
- *         Orchestra: a slotframe dedicated to unicast data transmission. Designed for
+ *         EMSF (Extended MSF): a slotframe dedicated to unicast data transmission. Designed for
  *         RPL storing mode only, as this is based on the knowledge of the children (and parent).
  *         Communication to children:
  *           Nodes listen at a timeslot defined as hash(MAC)
@@ -47,7 +47,7 @@
 #include "net/routing/routing.h"
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 1;
+static uint16_t channel_offset = ORCHESTRA_MULTIPLE_CHANNELS ? TSCH_DYNAMIC_CHANNEL_OFFSET : 1;
 static struct tsch_slotframe *sf_unicast;
 
 static bool is_parent;

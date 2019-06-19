@@ -96,7 +96,7 @@
 #ifdef ORCHESTRA_CONF_ROOT_PERIOD
 #define ORCHESTRA_ROOT_PERIOD                     ORCHESTRA_CONF_ROOT_PERIOD
 #else /* ORCHESTRA_CONF_ROOT_PERIOD */
-#define ORCHESTRA_ROOT_PERIOD                     9 /* selected to avoid common divisors with any of the common unicast periods */
+#define ORCHESTRA_ROOT_PERIOD                     13 /* selected to avoid common divisors with any of the common unicast periods */
 #endif /* ORCHESTRA_CONF_ROOT_PERIOD */
 
 /* Is the per-neighbor unicast slotframe sender-based (if not, it is receiver-based).
