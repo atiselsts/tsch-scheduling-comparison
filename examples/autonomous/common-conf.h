@@ -110,7 +110,7 @@
 
 /* Enable special rule for root? */
 #ifndef ORCHESTRA_CONF_ROOT_RULE
-#define ORCHESTRA_CONF_ROOT_RULE 1
+#define ORCHESTRA_CONF_ROOT_RULE 0
 #endif
 
 /* Select Orchestra rules depending on the schedule type */
