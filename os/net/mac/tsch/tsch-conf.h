@@ -409,6 +409,13 @@
 by default, useful in case of duplicate seqno */
 #endif
 
+/* Always prioritize slotframe 0? (non-standard) */
+#ifdef TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO
+#define TSCH_PRIORITIZE_SLOTFRAME_ZERO TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO
+#else
+#define TSCH_PRIORITIZE_SLOTFRAME_ZERO 0
+#endif
+
 /******** Configuration: hardware-specific settings *******/
 
 /* HW frame filtering enabled */

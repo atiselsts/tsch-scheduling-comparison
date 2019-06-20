@@ -403,15 +403,16 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
           }
 
+#if TSCH_PRIORITIZE_SLOTFRAME_ZERO
           /* XXX non-standard: always prioritize the zero-th slotframe (for EB) */
-          if(l->slotframe_handle != curr_best->slotframe_handle
-              && (l->slotframe_handle == 0 || curr_best->slotframe_handle == 0)) {
+          if((l->slotframe_handle == 0) != (curr_best->slotframe_handle == 0)) {
             if(l->slotframe_handle == 0) {
               new_best = l;
             } else {
               new_best = NULL;
             }
           }
+#endif /* TSCH_PRIORITIZE_SLOTFRAME_ZERO */
 
           /* Maintain backup_link */
           if(curr_backup == NULL) {
@@ -439,24 +440,8 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
       *time_offset = time_to_curr_best;
     }
   }
-  // if(curr_best) {
-  //   printf("select sf=%u ts=%u Tx=%u Rx=%u\n",
-  //       curr_best->slotframe_handle,
-  //       curr_best->timeslot,
-  //       curr_best->link_options & LINK_OPTION_TX,
-  //       curr_best->link_options & LINK_OPTION_RX
-  //     );
-  // }
   if(backup_link != NULL) {
     *backup_link = curr_backup;
-    // if(curr_backup) {
-    // printf(" backup sf=%u ts=%u Tx=%u Rx=%u\n",
-    //     curr_backup->slotframe_handle,
-    //     curr_backup->timeslot,
-    //     curr_backup->link_options & LINK_OPTION_TX,
-    //     curr_backup->link_options & LINK_OPTION_RX
-    //   );
-    // }
   }
   return curr_best;
 }

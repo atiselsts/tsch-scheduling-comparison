@@ -136,15 +136,18 @@
 
 /* Enable multiple channels? */
 #ifndef ORCHESTRA_CONF_MULTIPLE_CHANNELS
-#define ORCHESTRA_CONF_MULTIPLE_CHANNELS 1
+#define ORCHESTRA_CONF_MULTIPLE_CHANNELS 0
+#endif
+
+/* If this is enabled, the EBSF rule is prioritized above all */
+#ifndef TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO
+#define TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO 0
 #endif
 
 /* For root: the root rule (Rx) comes last */
 #define ORCHESTRA_CONF_RULES_ROOT { &eb_per_time_source, &FIRMWARE_UNICAST_RULE, &default_common, &special_for_root }
 /* For other nodes: root rule (Tx) comes before the unicast neigbhor rules and the default rule */
 #define ORCHESTRA_CONF_RULES_NONROOT { &eb_per_time_source, &special_for_root, &FIRMWARE_UNICAST_RULE, &default_common }
-
-/* Note: the EBSF rule is prioritized above all! */
 
 /*******************************************************/
 /*************** Configure other settings **************/
