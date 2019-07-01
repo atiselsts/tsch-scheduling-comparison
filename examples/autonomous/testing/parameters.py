@@ -19,6 +19,11 @@ BEST_ALGORITHMS = [
     "alice",
 ]
 
+COMPARATIVE_ALGORITHMS = [
+    "dataset1",
+    "dataset2",
+]
+
 ALGONAMES = {
     "orchestra_sb" : "Orchestra SB",
     "orchestra_rb_s" : "Orchestra RB / Storing",
@@ -27,6 +32,10 @@ ALGONAMES = {
     "alice" : "Link-based", # ALICE-like - do not use the name ALICE because it implies other features!
     "msf" : "MSF",
     "emsf" : "Extended MSF",
+
+    # generic names
+    "dataset1" : "Dataset 1",
+    "dataset2" : "Dataset 2",
 }
 
 COLORS = {
@@ -36,7 +45,10 @@ COLORS = {
     "orchestra_rb_ns_sr" : "grey",
     "alice" : "blue",
     "msf" : "red",
-    "emsf" : "brown"
+    "emsf" : "brown",
+
+    "dataset1" : "red",
+    "dataset2" : "green",
 }
 
 FIRMWARE_TYPES = {

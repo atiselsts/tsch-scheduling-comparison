@@ -34,7 +34,10 @@ matplotlib.rcParams['pdf.fonttype'] = 42
 OUT_DIR = "../plots"
 
 DATA_DIRECTORY="../simulations"
+DATA_DIRECTORY2="../simulations-all-enabled"
+
 DATA_FILE = "cached_data.json"
+DATA_FILE2 = "cached_data2.json"
 
 START_TIME_MINUTES = 30
 END_TIME_MINUTES = 60
@@ -118,6 +121,8 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
         algos = ALGORITHMS
     elif len(xdata) == len(BEST_ALGORITHMS):
         algos = BEST_ALGORITHMS
+    elif len(xdata) == 2:
+        algos = COMPARATIVE_ALGORITHMS
     else:
         raise "Unknown data dimensions"
 
@@ -162,10 +167,15 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
 
 ###########################################
 
-def get_seqnums(send_interval):
+def get_seqnums(send_interval, start_time = START_TIME_MINUTES):
     duration_seconds = (END_TIME_MINUTES - START_TIME_MINUTES) * 60
     num_packets = duration_seconds // send_interval
-    return (1, num_packets)
+    if start_time <= START_TIME_MINUTES:
+        first_packet = 1
+    else:
+        skipped_seqnums = (start_time - START_TIME_MINUTES) * 60 // send_interval
+        first_packet = 1 + skipped_seqnums
+    return (first_packet, num_packets)
 
 ###########################################
 
@@ -183,14 +193,14 @@ class MoteStats:
     def calc(self, send_interval, first_seqnum, last_seqnum):
         if self.associated_at_minutes is None:
             print("node {} never associated".format(self.id))
-            self.is_valid = False
-            return
+            #self.is_valid = False
+            #return
 
         if self.associated_at_minutes >= 30:
             print("node {} associated too late: {}, seqnums={}".format(
                 self.id, self.associated_at_minutes, self.seqnums))
-            self.is_valid = False
-            return
+            #self.is_valid = False
+            #return
 
         self.is_valid = True
 
@@ -198,9 +208,19 @@ class MoteStats:
             self.prr = 100.0 * self.packets_ack / self.packets_tx
         else:
             self.prr = 0.0
-        expected = (last_seqnum - first_seqnum) + 1
+
+        if self.associated_at_minutes >= 30:
+            first_seqnum, last_seqnum = get_seqnums(send_interval)
+            pass
+        else:
+            expected = (last_seqnum - first_seqnum) + 1
         actual = len(self.seqnums)
-        self.pdr = 100.0 * actual / expected
+
+        if expected:
+            self.pdr = 100.0 * actual / expected
+        else:
+            self.pdr = 0.0
+
         if self.radio_total:
             self.rdc = 100.0 * self.radio_on / self.radio_total
         else:
@@ -403,7 +423,7 @@ def test_groups(filenames, experiment, description):
 
 ###########################################
 
-def load_all():
+def load_all(data_directory):
     data = {}
     for a in ALGORITHMS:
         data[a] = {}
@@ -424,7 +444,7 @@ def load_all():
                         a_prr_results = []
                         a_rdc_results = []
 
-                        path = os.path.join(DATA_DIRECTORY,
+                        path = os.path.join(data_directory,
                                             a,
                                             "si_{}".format(si),
                                             "sf_{}".format(sf),
@@ -497,6 +517,33 @@ def plot_all(data, exp):
                        filename)
 
 ###########################################
+
+def plot_comparative_runs(data1, data2, exp):
+    # plot all per duty cycle
+    for nn in NUM_NEIGHBORS:
+        for si in SEND_INTERVALS:
+            for i, a in enumerate(ALGORITHMS):
+                print("Algorithm {}".format(ALGONAMES[a]))
+                pdr_results = [[], []]
+                rdc_results = [[], []]
+                pointlabels = [[], []]
+
+                for sf in SLOTFRAME_SIZES:
+                    sfs = "sf={}".format(sf)
+                    print(sfs)
+                    rdc_results[0].append(aggregate(data1, a, si, sf, exp, nn, "rdc"))
+                    pdr_results[0].append(aggregate(data1, a, si, sf, exp, nn, "pdr"))
+                    pointlabels[0].append(sfs)
+
+                    rdc_results[1].append(aggregate(data2, a, si, sf, exp, nn, "rdc"))
+                    pdr_results[1].append(aggregate(data2, a, si, sf, exp, nn, "pdr"))
+                    pointlabels[1].append(sfs)
+
+                filename = "sim_comparative_{}_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, a, nn, si)
+                graph_line(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+                           filename)
+
+###########################################
             
 def plot_best_per_send_frequency(data, exp):
 
@@ -532,25 +579,33 @@ def plot_best_per_send_frequency(data, exp):
 
 ###########################################
 
+def ensure_loaded(data_file, data_directory):
+    if os.access(data_file, os.R_OK):
+        print("Cached file found, using it directly")
+        with open(data_file, "r") as f:
+            data = json.load(f)
+    else:
+        print("Cached file not found, parsing log files...")
+        data = load_all(data_directory)
+        with open(data_file, "w") as f:
+            json.dump(data, f)
+    return data
+
+###########################################
+
 def main():
     try:
         os.mkdir(OUT_DIR)
     except:
         pass
 
-    if os.access(DATA_FILE, os.R_OK):
-        print("Cached file found, using it directly")
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-    else:
-        print("Cached file not found, parsing log files...")
-        data = load_all()
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f)
+    data1 = ensure_loaded(DATA_FILE, DATA_DIRECTORY)
+    data2 = ensure_loaded(DATA_FILE2, DATA_DIRECTORY2)
 
     for exp in EXPERIMENTS:
-        plot_all(data, exp)
-        plot_best_per_send_frequency(data, exp)
+#        plot_all(data1, exp)
+#        plot_best_per_send_frequency(data1, exp)
+        plot_comparative_runs(data1, data2, exp)
 
 ###########################################
 
