@@ -186,10 +186,8 @@ init(uint16_t sf_handle)
   int i;
 
   slotframe_handle = sf_handle;
-  /* channel_offset = sf_handle; */
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-
   /* Add a Tx link at each available timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {
     tsch_schedule_add_link(sf_unicast,

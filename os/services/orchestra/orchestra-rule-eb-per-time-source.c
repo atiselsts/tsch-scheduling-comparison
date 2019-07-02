@@ -108,7 +108,6 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  /* channel_offset = sf_handle; */
   sf_eb = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_EBSF_PERIOD);
   /* EB link: every neighbor uses its own to avoid contention */
   tsch_schedule_add_link(sf_eb,

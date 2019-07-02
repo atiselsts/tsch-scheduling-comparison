@@ -110,7 +110,7 @@
 
 /* Enable special rule for root? */
 #ifndef ORCHESTRA_CONF_ROOT_RULE
-#define ORCHESTRA_CONF_ROOT_RULE 0
+#define ORCHESTRA_CONF_ROOT_RULE 1
 #endif
 
 /* Select Orchestra rules depending on the schedule type */
@@ -136,12 +136,12 @@
 
 /* Enable multiple channels? */
 #ifndef ORCHESTRA_CONF_MULTIPLE_CHANNELS
-#define ORCHESTRA_CONF_MULTIPLE_CHANNELS 0
+#define ORCHESTRA_CONF_MULTIPLE_CHANNELS 1
 #endif
 
 /* If this is enabled, the EBSF rule is prioritized above all */
 #ifndef TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO
-#define TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO 0
+#define TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO 1
 #endif
 
 /* For root: the root rule (Rx) comes last */

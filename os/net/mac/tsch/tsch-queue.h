@@ -104,6 +104,8 @@ int tsch_queue_packet_count(const linkaddr_t *addr);
  * \return The packet that was removed if any, NULL otherwise
  */
 struct tsch_packet *tsch_queue_remove_packet_from_queue(struct tsch_neighbor *n);
+/* Flush a neighbor queue */
+void tsch_queue_flush_nbr_queue(struct tsch_neighbor *n);
 /**
  * \brief Free a packet
  * \param p The packet to be freed

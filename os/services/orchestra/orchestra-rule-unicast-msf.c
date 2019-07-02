@@ -36,6 +36,8 @@
  *         Based on the "6TiSCH Minimal Scheduling Function (MSF)" Internet Draft.
  *         draft-ietf-6tisch-msf-03
  *
+ *         Code based on orchestra-rule-unicast-per-neighbor-rpl-ns.c
+ *
  * \author Atis Elsts <atis.elsts@edi.lv>
  */
 
@@ -60,67 +62,70 @@ get_node_timeslot(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
+static int
+select_packet(uint16_t *slotframe, uint16_t *timeslot)
+{
+  uint8_t is_child = 0;
+
+  /* Select data packets we have a unicast link to */
+  const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
+     && !linkaddr_cmp(dest, &linkaddr_null)) {
+
+    if(slotframe != NULL) {
+      *slotframe = slotframe_handle;
+    }
+
+    /* handle the child case (valid for storing mode only) */
+    if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)dest) != NULL) {
+      if(timeslot != NULL) {
+        /* select the timeslot of the local node */
+        *timeslot = get_node_timeslot(&linkaddr_node_addr);
+        is_child = 1;
+      }
+    }
+
+    if(!is_child) {
+      /* handle the case of other nodes (including parent) */
+      if(timeslot != NULL) {
+        /* select the timeslot of the remote node */
+        *timeslot = get_node_timeslot(dest);
+      }
+    }
+    return 1;
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
 static void
-add_uc_link(const linkaddr_t *linkaddr)
+add_parent_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL) {
     const uint16_t timeslot = get_node_timeslot(linkaddr);
     const uint8_t link_options = LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED;
 
-    /* Add/update link */
+    /* Add/update Rx link for the parent */
     tsch_schedule_add_link(sf_unicast, link_options, LINK_TYPE_NORMAL, &tsch_broadcast_address,
                            timeslot, channel_offset);
   }
 }
 /*---------------------------------------------------------------------------*/
 static void
-remove_uc_link(const linkaddr_t *linkaddr)
+remove_parent_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL) {
     const uint16_t timeslot = get_node_timeslot(linkaddr);
     uint8_t link_options = LINK_OPTION_TX | LINK_OPTION_SHARED;
 
     if(timeslot == get_node_timeslot(&linkaddr_node_addr)) {
-      /* we need this timeslot */
+      /* We need this timeslot for Rx */
       link_options |= LINK_OPTION_RX;
     }
 
-    /* Add/update link */
+    /* Add/update link to remove the LINK_OPTION_RX flag */
     tsch_schedule_add_link(sf_unicast, link_options, LINK_TYPE_NORMAL, &tsch_broadcast_address,
                            timeslot, channel_offset);
   }
-}
-/*---------------------------------------------------------------------------*/
-static int
-select_packet(uint16_t *slotframe, uint16_t *timeslot)
-{
-  /* Select data packets we have a unicast link to */
-  const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) != FRAME802154_DATAFRAME
-      || linkaddr_cmp(dest, &linkaddr_null)
-      || linkaddr_cmp(dest, &tsch_broadcast_address)) {
-    return 0;
-  }
-
-  if(slotframe != NULL) {
-    *slotframe = slotframe_handle;
-  }
-
-  /* handle the child case (valid for storing mode only) */
-  if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)dest) != NULL) {
-    if(timeslot != NULL) {
-      /* select the timeslot of the local node */
-      *timeslot = get_node_timeslot(&linkaddr_node_addr);
-    }
-    return 1;
-  }
-
-  /* handle the case of other nodes (including parent) */
-  if(timeslot != NULL) {
-    /* select the timeslot of the remote node */
-    *timeslot = get_node_timeslot(dest);
-  }
-  return 1;
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -129,8 +134,8 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
   if(new != old) {
     const linkaddr_t *old_addr = old != NULL ? &old->addr : NULL;
     const linkaddr_t *new_addr = new != NULL ? &new->addr : NULL;
-    remove_uc_link(old_addr);
-    add_uc_link(new_addr);
+    remove_parent_link(old_addr);
+    add_parent_link(new_addr);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -138,18 +143,15 @@ static void
 init(uint16_t sf_handle)
 {
   int i;
-  uint16_t own_timeslot;
-
+  uint16_t rx_timeslot;
   slotframe_handle = sf_handle;
-/*  channel_offset = sf_handle; */
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-/*  sf_unicast->do_recalculate_timeslots = 1; */
-  own_timeslot = get_node_timeslot(&linkaddr_node_addr);
+  rx_timeslot = get_node_timeslot(&linkaddr_node_addr);
   /* Add a Tx link at each available timeslot. Make the link Rx at our own timeslot. */
   for(i = 0; i < ORCHESTRA_UNICAST_PERIOD; i++) {
     tsch_schedule_add_link(sf_unicast,
-        LINK_OPTION_SHARED | LINK_OPTION_TX | ( i == own_timeslot ? LINK_OPTION_RX : 0 ),
+        LINK_OPTION_SHARED | LINK_OPTION_TX | ( i == rx_timeslot ? LINK_OPTION_RX : 0 ),
         LINK_TYPE_NORMAL, &tsch_broadcast_address,
         i, channel_offset);
   }

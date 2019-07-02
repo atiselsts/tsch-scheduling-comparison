@@ -187,7 +187,7 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
 }
 /*---------------------------------------------------------------------------*/
 /* Flush a neighbor queue */
-static void
+void
 tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
 {
   while(!tsch_queue_is_empty(n)) {

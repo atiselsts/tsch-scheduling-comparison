@@ -112,6 +112,8 @@ remove_uc_link(const linkaddr_t *linkaddr)
 {
   uint16_t timeslot;
   struct tsch_link *l;
+  uint8_t old_link_options;
+  uint8_t new_link_options;
 
   if(linkaddr == NULL) {
     return;
@@ -122,6 +124,7 @@ remove_uc_link(const linkaddr_t *linkaddr)
   if(l == NULL) {
     return;
   }
+  old_link_options = l->link_options;
   /* Does our current parent need this timeslot? */
   if(timeslot == get_node_timeslot(&orchestra_parent_linkaddr)) {
     /* Yes, this timeslot is being used, return */
@@ -142,12 +145,21 @@ remove_uc_link(const linkaddr_t *linkaddr)
   /* Do we need this timeslot? */
   if(timeslot == get_node_timeslot(&linkaddr_node_addr)) {
     /* This is our link, keep it but update the link options */
-    uint8_t link_options = ORCHESTRA_UNICAST_SENDER_BASED ? LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG: LINK_OPTION_RX;
-    tsch_schedule_add_link(sf_unicast, link_options, LINK_TYPE_NORMAL, &tsch_broadcast_address,
+    new_link_options = ORCHESTRA_UNICAST_SENDER_BASED ? LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG: LINK_OPTION_RX;
+    tsch_schedule_add_link(sf_unicast, new_link_options, LINK_TYPE_NORMAL, &tsch_broadcast_address,
               timeslot, channel_offset);
   } else {
     /* Remove link */
     tsch_schedule_remove_link(sf_unicast, l);
+    new_link_options = 0;
+  }
+
+  if((old_link_options & LINK_OPTION_TX) && !(new_link_options & LINK_OPTION_TX)) {
+    struct tsch_neighbor *n = tsch_queue_get_nbr(linkaddr);
+    if(n != NULL) {
+      /* flush packets for this neighbor to free the global queue space */
+      tsch_queue_flush_nbr_queue(n);
+    }
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -199,7 +211,6 @@ init(uint16_t sf_handle)
   uint16_t timeslot;
 
   slotframe_handle = sf_handle;
-  /* channel_offset = sf_handle; */
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
   timeslot = get_node_timeslot(&linkaddr_node_addr);
