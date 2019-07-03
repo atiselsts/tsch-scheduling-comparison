@@ -135,7 +135,7 @@
 /**********************************************************************/
 /*******   orchestra sender-based  vs. receiver-based    **************/
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED 1 //1:sender-based 0:receiver-based
-#define ORCHESTRA_ONE_CHANNEL_OFFSET 1
+#define ORCHESTRA_ONE_CHANNEL_OFFSET 0 //1:single channel offset, 0:multiple channel offset
 /**********************************************************************/
 /******* ALICE : WITH_ALICE=1    , ORCHESTRA: UNDEFINE  ***************/
 //#define WITH_ALICE 0 //ALICE:1 ORCHESTRA:undefine.
