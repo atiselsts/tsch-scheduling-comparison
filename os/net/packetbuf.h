@@ -227,6 +227,9 @@ enum {
 #if TSCH_WITH_LINK_SELECTOR
   PACKETBUF_ATTR_TSCH_SLOTFRAME,
   PACKETBUF_ATTR_TSCH_TIMESLOT,
+#ifdef MULTIPLE_CHANNEL_OFFSETS
+  PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET, //ksh.
+#endif
 #endif /* TSCH_WITH_LINK_SELECTOR */
 
   /* Scope 1 attributes: used between two neighbors only. */

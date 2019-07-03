@@ -107,6 +107,54 @@
 
 #endif /* WITH_SECURITY */
 
+
+
+/*******************************************************/
+/******************* Orchestra Scheduler ***************/
+/*******************************************************/
+
+
+#ifndef MULTIPLE_CHANNEL_OFFSETS
+#define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. use multiple channel offsets.
+#endif
+
+
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD 31 //ksh.. original: 31. (broadcast and default slotframe length)
+#define ORCHESTRA_CONF_UNICAST_PERIOD 17 //43 // 7, 11, 23, 31, 43, 47, 59, 67, 71    
+//#define ORCHESTRA_CONF_EBSF_PERIOD 397//.. original: 397. (EB slotframe)
+
+
+
+/**********************************************************************/
+/*******   orchestra sender-based  vs. receiver-based    **************/
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED 1 //1:sender-based 0:receiver-based
+#define ORCHESTRA_ONE_CHANNEL_OFFSET 1
+/**********************************************************************/
+/******* ALICE : WITH_ALICE=1    , ORCHESTRA: UNDEFINE  ***************/
+//#define WITH_ALICE 0 //ALICE:1 ORCHESTRA:undefine.
+/**********************************************************************/
+
+
+
+#if WITH_ALICE
+//#define ALICE_CALLBACK_PACKET_SELECTION alice_callback_packet_selection //ksh. alice packet selection
+//#define ALICE_TSCH_CALLBACK_SLOTFRAME_START alice_callback_slotframe_start //ksh. alice time varying slotframe schedule
+#endif
+/**********************************************************************/
+/**********************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*******************************************************/
 /************* Other system configuration **************/
 /*******************************************************/

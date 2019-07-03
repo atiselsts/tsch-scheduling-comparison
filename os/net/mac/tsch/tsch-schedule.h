@@ -118,6 +118,11 @@ struct tsch_link *tsch_schedule_get_link_by_handle(uint16_t handle);
  */
 struct tsch_link *tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe, uint16_t timeslot);
 
+#ifdef MULTIPLE_CHANNEL_OFFSETS
+//ksh. timeslot and channel offset
+struct tsch_link *tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t timeslot, uint16_t channel_offset);
+#endif
+
 /**
  * \brief Removes a link
  * \param slotframe The slotframe the link belongs to
@@ -134,6 +139,17 @@ int tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link
  */
 int tsch_schedule_remove_link_by_timeslot(struct tsch_slotframe *slotframe, uint16_t timeslot);
 
+#ifdef MULTIPLE_CHANNEL_OFFSETS
+//ksh. timeslot and channel offset
+int tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t timeslot, uint16_t channel_offset);
+#endif
+
+
+/*---------------------------------------------------------------------------*/
+//ksh..// Thomas Wang  32bit-Interger Mix Function
+uint16_t
+real_hash(uint32_t value, uint16_t mod); //Thomas Wang method..
+/*---------------------------------------------------------------------------*/
 
 /**
  * \brief Returns the next active link after a given ASN, and a backup link (for the same ASN, with Rx flag)

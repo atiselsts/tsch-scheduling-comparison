@@ -97,6 +97,30 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
   }
   return NULL;
 }
+
+
+
+/*---------------------------------------------------------------------------*/
+//ksh..// Thomas Wang  32bit-Interger Mix Function
+uint16_t
+real_hash(uint32_t value, uint16_t mod){ //Thomas Wang method..
+
+//  uint32_t input=value;
+//  uint32_t a=input;//|(input<<16);
+
+  uint32_t a=value;
+ 
+  a = (a ^ 61) ^ (a >> 16);
+  a = a + (a << 3);
+  a = a ^ (a >> 4);
+  a = a * 0x27d4eb2d;
+  a = a ^ (a >> 15);
+
+//  a= a+(a>>16) ; //ksh.. 20190510
+  
+  return (uint16_t)(a% (uint32_t)mod);
+}
+
 /*---------------------------------------------------------------------------*/
 /* Removes all slotframes, resulting in an empty schedule */
 int
@@ -149,6 +173,42 @@ tsch_schedule_get_slotframe_by_handle(uint16_t handle)
   }
   return NULL;
 }
+
+
+
+#ifdef MULTIPLE_CHANNEL_OFFSETS
+/*---------------------------------------------------------------------------*/
+//ksh. remove link by timeslot and channel offset
+int
+tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t timeslot, uint16_t channel_offset)
+{
+  return slotframe != NULL &&
+         tsch_schedule_remove_link(slotframe, tsch_schedule_get_link_by_ts_choff(slotframe, timeslot, channel_offset));
+}
+/*---------------------------------------------------------------------------*/
+//ksh. get link by timeslot and channel offset
+struct tsch_link *
+tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t timeslot, uint16_t channel_offset)
+{
+  if(!tsch_is_locked()) {
+    if(slotframe != NULL) {
+      struct tsch_link *l = list_head(slotframe->links_list);
+      /* Loop over all items. Assume there is max one link per timeslot */
+      while(l != NULL) {
+        if(l->timeslot == timeslot && l->channel_offset == channel_offset) {
+          return l;
+        }
+        l = list_item_next(l);
+      }
+      return l;
+    }
+  }
+  return NULL;
+}
+
+#endif
+
+
 /*---------------------------------------------------------------------------*/
 /* Looks for a link from a handle */
 struct tsch_link *
@@ -228,7 +288,13 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
 
     /* Start with removing the link currently installed at this timeslot (needed
      * to keep neighbor state in sync with link options etc.) */
+
+#ifdef MULTIPLE_CHANNEL_OFFSETS //ksh..
+    tsch_schedule_remove_link_by_ts_choff(slotframe, timeslot, channel_offset); //ksh..
+#else
     tsch_schedule_remove_link_by_timeslot(slotframe, timeslot);
+#endif
+
     if(!tsch_get_lock()) {
       LOG_ERR("! add_link memb_alloc couldn't take lock\n");
     } else {

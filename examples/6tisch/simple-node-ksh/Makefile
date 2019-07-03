@@ -26,7 +26,8 @@ MODULES += os/net/routing/rpl-classic
 MODULES += os/services/shell
 
 ifeq ($(MAKE_WITH_ORCHESTRA),1)
-MODULES += os/services/orchestra
+#MODULES += os/services/orchestra
+MODULES += os/services/mc-orchestra
 endif
 
 ifeq ($(MAKE_WITH_SECURITY),1)
