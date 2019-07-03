@@ -113,6 +113,13 @@
 /******************* Orchestra Scheduler ***************/
 /*******************************************************/
 
+#define SEND_INTERVAL   	((60) * (CLOCK_SECOND))
+#define SEND_TIME		(random_rand() % (SEND_INTERVAL)) //backoff 
+
+#define UDP_CLIENT_PORT	8765
+#define UDP_SERVER_PORT	5678
+
+
 
 #ifndef MULTIPLE_CHANNEL_OFFSETS
 #define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. use multiple channel offsets.
