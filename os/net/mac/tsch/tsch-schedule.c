@@ -60,6 +60,11 @@
 #define LOG_MODULE "TSCH Sched"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+
+#define DEBUG DEBUG_PRINT
+#include "net/ipv6/uip-debug.h"
+
+
 /* Pre-allocated space for links */
 MEMB(link_memb, struct tsch_link, TSCH_SCHEDULE_MAX_LINKS);
 /* Pre-allocated space for slotframes */
@@ -445,6 +450,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
       uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
       struct tsch_link *l = list_head(sf->links_list);
       while(l != NULL) {
+
         uint16_t time_to_timeslot =
           l->timeslot > timeslot ?
           l->timeslot - timeslot :
@@ -509,6 +515,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
   if(backup_link != NULL) {
     *backup_link = curr_backup;
   }
+
   return curr_best;
 }
 /*---------------------------------------------------------------------------*/

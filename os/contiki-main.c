@@ -51,7 +51,20 @@
 #include "net/queuebuf.h"
 #include "net/app-layer/coap/coap-engine.h"
 #include "services/rpl-border-router/rpl-border-router.h"
+
+
+
+#if CURRENT_TSCH_SCHEDULER == 1
 #include "services/orchestra/orchestra.h"
+#elif CURRENT_TSCH_SCHEDULER == 2
+#include "services/mc-orchestra/orchestra.h"
+#elif CURRENT_TSCH_SCHEDULER == 3
+#include "services/alice/orchestra.h"
+#endif
+
+
+
+
 #include "services/shell/serial-shell.h"
 #include "services/simple-energest/simple-energest.h"
 #include "services/tsch-cs/tsch-cs.h"

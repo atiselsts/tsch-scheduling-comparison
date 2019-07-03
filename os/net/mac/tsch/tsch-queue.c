@@ -55,6 +55,12 @@
 #include "net/mac/tsch/tsch.h"
 #include <string.h>
 
+
+
+#define DEBUG DEBUG_PRINT
+#include "net/ipv6/uip-debug.h"
+
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "TSCH Queue"

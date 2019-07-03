@@ -47,7 +47,6 @@
 #include "net/routing/routing.h"
 
 
-
 #define DEBUG DEBUG_PRINT
 #include "net/ipv6/uip-debug.h"
 
@@ -243,12 +242,12 @@ init(uint16_t sf_handle)
   uint16_t channel_offset = get_node_channel_offset(&linkaddr_node_addr); //ksh.
 
 
-
+  PRINTF("MC-Orchestra: unicast sf length: %u\n", ORCHESTRA_UNICAST_PERIOD);
 
 if (ORCHESTRA_UNICAST_SENDER_BASED==1){
-  PRINTF("Orchestra: Sender-based\n");
+  PRINTF("MC-Orchestra: Sender-based\n");
 }else{
-  PRINTF("Orchestra: Receiver-based\n");
+  PRINTF("MC-Orchestra: Receiver-based\n");
 }
 
 
