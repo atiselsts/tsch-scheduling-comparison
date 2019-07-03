@@ -121,9 +121,7 @@
 
 
 
-#ifndef MULTIPLE_CHANNEL_OFFSETS
-#define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. use multiple channel offsets.
-#endif
+
 
 
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD 31 //ksh.. original: 31. (broadcast and default slotframe length)
@@ -132,10 +130,22 @@
 
 
 
+
+#define CURRENT_TSCH_SCHEDULER 2 //MAKE_WITH_SCHEDULER,  1: orchestra 2:mc-orchestra 3:ALIC
+
+
+
+#if CURRENT_TSCH_SCHEDULER > 1
+#define ORCHESTRA_CONF_RULES { &eb_per_time_source, &default_common , &unicast_per_neighbor_rpl_storing}
+#ifndef MULTIPLE_CHANNEL_OFFSETS
+#define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. use multiple channel offsets.
+#endif
+#endif
+
 /**********************************************************************/
 /*******   orchestra sender-based  vs. receiver-based    **************/
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED 1 //1:sender-based 0:receiver-based
-#define ORCHESTRA_ONE_CHANNEL_OFFSET 0 //1:single channel offset, 0:multiple channel offset
+#define ORCHESTRA_ONE_CHANNEL_OFFSET 1 //1:single channel offset, 0:multiple channel offset
 /**********************************************************************/
 /******* ALICE : WITH_ALICE=1    , ORCHESTRA: UNDEFINE  ***************/
 //#define WITH_ALICE 0 //ALICE:1 ORCHESTRA:undefine.

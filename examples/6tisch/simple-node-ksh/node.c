@@ -51,8 +51,6 @@
 #include "net/ipv6/uip-udp-packet.h"
 
 
-
-
 #define DEBUG DEBUG_PRINT
 #include "net/ipv6/uip-debug.h"
 
@@ -68,14 +66,15 @@ static uip_ipaddr_t server_ipaddr;
 
 
 static int is_coordinator;
-
-
-
 int sent=0;
 int received=0;
 
 
+
+
+
 /*---------------------------------------------------------------------------*/
+
 static void
 send_packet(void *ptr)
 {
@@ -87,14 +86,23 @@ send_packet(void *ptr)
 //  rpl_instance_t *instance =rpl_get_default_instance();
 //  uip_ip6addr(&server_ipaddr, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0x00ff, 0xfe00, 1);
 
+
+
+  if(NETSTACK_ROUTING.get_root_ipaddr(&server_ipaddr)){
+
+  printf("client-server addr : "); PRINT6ADDR(&server_ipaddr);
+
   char buf[10];
   sprintf(buf, "x");
   uip_udp_packet_sendto(client_conn, buf, strlen(buf), &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+
+  }
 
 
 }
 
 /*---------------------------------------------------------------------------*/
+
 static void
 tcpip_handler(void)
 {
@@ -123,15 +131,21 @@ tcpip_handler(void)
 }
 
 /*---------------------------------------------------------------------------*/
+
 static void
 set_global_address(void)
 {
+/*
   uip_ipaddr_t ipaddr;
   uip_ip6addr(&ipaddr, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
   uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
   uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
-  uip_ip6addr(&server_ipaddr, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 1);
-  printf("server addr : "); PRINT6ADDR(&server_ipaddr);
+  printf("my addr : "); PRINT6ADDR(&ipaddr);
+
+*/
+//  uip_ip6addr(&server_ipaddr, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 1);
+//  uip_ip6addr(&server_ipaddr, 254, 254, 254, 0, 1, 1, 1, 1);
+//  printf("server addr : "); PRINT6ADDR(&server_ipaddr);
 }
 
 
@@ -151,12 +165,11 @@ PROCESS_THREAD(node_process, ev, data)
 
 
 
-
 if(!is_coordinator){
 
   set_global_address();
 
-  /* new connection with remote host */
+
   client_conn = udp_new(NULL, UIP_HTONS(UDP_SERVER_PORT), NULL); 
   if(client_conn == NULL) {
     PRINTF("No UDP connection available, exiting the process!\n");
@@ -171,12 +184,13 @@ if(!is_coordinator){
 }else{
 
 
-
   uip_ipaddr_t ipaddr;
   uip_ip6addr(&ipaddr, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 1);
   uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF);
 
-
+  PRINTF("SERVER ADDR: ");
+  PRINT6ADDR(&ipaddr);
+  PRINTF("\n");
 
   server_conn = udp_new(NULL, UIP_HTONS(UDP_CLIENT_PORT), NULL);
   if(server_conn == NULL) {
@@ -192,7 +206,6 @@ if(!is_coordinator){
 
 
 }
-
 
 
 
@@ -241,22 +254,6 @@ if(!is_coordinator){
 
 
 
-
-
-
-/*
-    while(1) {
-      // Used for non-regression testing 
-      #if (UIP_MAX_ROUTES != 0)
-        PRINTF("Routing entries: %u\n", uip_ds6_route_num_routes());
-      #endif
-      #if (UIP_SR_LINK_NUM != 0)
-        PRINTF("Routing links: %u\n", uip_sr_num_nodes());
-      #endif
-      PROCESS_YIELD_UNTIL(etimer_expired(&et));
-      etimer_reset(&et);
-    }
-*/
   }
 #endif /* WITH_PERIODIC_ROUTES_PRINT */
 

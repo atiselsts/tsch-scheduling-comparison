@@ -6,7 +6,8 @@ PLATFORMS_EXCLUDE = sky nrf52dk native simplelink
 CONTIKI=../../..
 
  # force Orchestra from command line
-MAKE_WITH_ORCHESTRA ?= 1
+#MAKE_WITH_TSCH_SCHEDULER:   1: orchestra 2:mc-orchestra 3:ALICE
+MAKE_WITH_TSCH_SCHEDULER = 2
 # force Security from command line
 MAKE_WITH_SECURITY ?= 0
  # print #routes periodically, used for regression tests
@@ -23,12 +24,31 @@ MODULES += os/net/routing/rpl-classic
 
 
 
+
+
+
 MODULES += os/services/shell
 
-ifeq ($(MAKE_WITH_ORCHESTRA),1)
 #MODULES += os/services/orchestra
-MODULES += os/services/mc-orchestra
+
+ifeq ($(MAKE_WITH_TSCH_SCHEDULER),1)
+MODULES += os/services/orchestra
+$(info $$MAKE_WITH_TSCH_SCHEDULER is [$(MAKE_WITH_TSCH_SCHEDULER)] orchestra)
 endif
+
+ifeq ($(MAKE_WITH_TSCH_SCHEDULER),2)
+MODULES += os/services/mc-orchestra
+$(info $$MAKE_WITH_TSCH_SCHEDULER is [$(MAKE_WITH_TSCH_SCHEDULER)] mc-orchestra)
+endif
+
+ifeq ($(MAKE_WITH_TSCH_SCHEDULER),3)
+MODULES += os/services/alice
+$(info $$MAKE_WITH_TSCH_SCHEDULER is [$(MAKE_WITH_TSCH_SCHEDULER)] alice)
+endif
+
+
+
+
 
 ifeq ($(MAKE_WITH_SECURITY),1)
 CFLAGS += -DWITH_SECURITY=1
