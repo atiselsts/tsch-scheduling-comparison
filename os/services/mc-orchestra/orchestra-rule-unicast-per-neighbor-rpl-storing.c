@@ -73,7 +73,7 @@ static uint16_t
 get_node_timeslot(const linkaddr_t *addr)
 {
   if(addr != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
-    return real_hash(ORCHESTRA_LINKADDR_HASH(addr), ORCHESTRA_UNICAST_PERIOD);
+    return real_hash5(ORCHESTRA_LINKADDR_HASH(addr), ORCHESTRA_UNICAST_PERIOD);
   } else {
     return 0xffff;
   }
@@ -91,7 +91,7 @@ get_node_channel_offset(const linkaddr_t *addr1)
 
   if(addr1 != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
     int a = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE)/sizeof(uint8_t))-1;
-    return 1+real_hash(ORCHESTRA_LINKADDR_HASH(addr1),a); //ksh.. multiple channel offsets are allowed for unicast slotframe. (0 is used for EB slotframe)
+    return 1+real_hash5(ORCHESTRA_LINKADDR_HASH(addr1),a); //ksh.. multiple channel offsets are allowed for unicast slotframe. (0 is used for EB slotframe)
   } else {
     return slotframe_handle; //default value of ch_off is set as slotframe_handle.
   }

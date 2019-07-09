@@ -65,6 +65,11 @@
 #include "net/ipv6/uip-debug.h"
 
 
+
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START 
+   void ALICE_TSCH_CALLBACK_SLOTFRAME_START(uint16_t sfid, uint16_t sfsize); 
+#endif 
+
 /* Pre-allocated space for links */
 MEMB(link_memb, struct tsch_link, TSCH_SCHEDULE_MAX_LINKS);
 /* Pre-allocated space for slotframes */
@@ -121,11 +126,18 @@ real_hash(uint32_t value, uint16_t mod){ //Thomas Wang method..
   a = a * 0x27d4eb2d;
   a = a ^ (a >> 15);
 
-//  a= a+(a>>16) ; //ksh.. 20190510
   
   return (uint16_t)(a% (uint32_t)mod);
 }
+/*---------------------------------------------------------------------------*/
+//ksh..// Thomas Wang  32bit-Interger Mix Function
+uint16_t
+real_hash5(uint32_t value, uint16_t mod){ //ksh..
 
+  uint32_t a=value;
+  a = ((((a + (a>>16)) ^ (a>>9)) ^ (a<<3)) ^ (a>>5));
+  return (uint16_t)(a% (uint32_t)mod);
+}
 /*---------------------------------------------------------------------------*/
 /* Removes all slotframes, resulting in an empty schedule */
 int
@@ -179,8 +191,6 @@ tsch_schedule_get_slotframe_by_handle(uint16_t handle)
   return NULL;
 }
 
-
-
 #ifdef MULTIPLE_CHANNEL_OFFSETS
 /*---------------------------------------------------------------------------*/
 //ksh. remove link by timeslot and channel offset
@@ -208,6 +218,7 @@ tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t ti
       return l;
     }
   }
+
   return NULL;
 }
 
@@ -233,6 +244,7 @@ tsch_schedule_get_link_by_handle(uint16_t handle)
       sf = list_item_next(sf);
     }
   }
+
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
@@ -351,13 +363,129 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
   }
   return l;
 }
+
+
+/*---------------------------------------------------------------------------*/
+#if WITH_ALICE == 1 //ksh
+//ksh. set link option by timeslot and channel offset
+struct tsch_link *
+tsch_schedule_set_link_option_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t timeslot, uint16_t channel_offset, uint8_t* link_options) //ksh ..
+{
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+  if(1){//ksh 20190708//  if(!tsch_is_locked()) { 
+#else
+  if(!tsch_is_locked()) { 
+#endif
+    if(slotframe != NULL) {
+      struct tsch_link *l = list_head(slotframe->links_list);
+      /* Loop over all items. Assume there is max one link per timeslot */
+      while(l != NULL) {
+        if(l->timeslot == timeslot && l->channel_offset == channel_offset) {
+          *link_options |= l->link_options;//ksh..
+          l->link_options |= *link_options;
+        }
+        l = list_item_next(l);
+      }
+      return l;
+    }
+  }
+
+  return NULL;
+}
+
+/*---------------------------------------------------------------------------*/
+/* Adds a link to a slotframe, return a pointer to it (NULL if failure) */
+struct tsch_link *
+tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
+                       uint8_t link_options, enum link_type link_type, const linkaddr_t *address, const linkaddr_t *neighbor,
+                       uint16_t timeslot, uint16_t channel_offset)
+{
+  struct tsch_link *l = NULL;
+  if(slotframe != NULL) {
+    /* We currently support only one link per timeslot in a given slotframe. */
+
+    /* Validation of specified timeslot and channel_offset */
+    if(timeslot > (slotframe->size.val - 1)) {
+      LOG_ERR("! add_link invalid timeslot: %u\n", timeslot);
+      return NULL;
+    } else if(channel_offset > 15) {
+      LOG_ERR("! add_link invalid channel_offset: %u\n", channel_offset);
+      return NULL;
+    }
+
+    /* Start with removing the link currently installed at this timeslot (needed
+     * to keep neighbor state in sync with link options etc.) */
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+    if(0){//ksh 20190708//    if(!tsch_get_lock()) {
+#else
+    if(!tsch_get_lock()) {
+#endif
+      LOG_ERR("! add_link memb_alloc couldn't take lock\n");
+    } else {
+      l = memb_alloc(&link_memb);
+      if(l == NULL) {
+        LOG_ERR("! add_link memb_alloc failed\n");
+        tsch_release_lock();
+      } else {
+        static int current_link_handle = 0;
+        struct tsch_neighbor *n;
+        /* Add the link to the slotframe */
+        list_add(slotframe->links_list, l);
+        /* Initialize link */
+        l->handle = current_link_handle++;
+
+        l->link_option_alice = link_options;//ksh.. //neighbor's original setting.
+        tsch_schedule_set_link_option_by_ts_choff(slotframe, timeslot, channel_offset, &link_options); //ksh defined.
+
+
+        l->link_options = link_options;
+        l->link_type = link_type;
+        l->slotframe_handle = slotframe->handle;
+        l->timeslot = timeslot;
+        l->channel_offset = channel_offset;
+        l->data = NULL;
+        if(address == NULL) {
+          address = &linkaddr_null;
+        }
+        linkaddr_copy(&l->addr, address);
+
+        LOG_INFO("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
+                 slotframe->handle,
+                 print_link_options(link_options),
+                 print_link_type(link_type), timeslot, channel_offset);
+        LOG_INFO_LLADDR(address);
+        LOG_INFO_("\n");
+        /* Release the lock before we update the neighbor (will take the lock) */
+        tsch_release_lock();
+
+        if(l->link_options & LINK_OPTION_TX) {
+          n = tsch_queue_add_nbr(&l->addr);
+          /* We have a tx link to this neighbor, update counters */
+          if(n != NULL) {
+            n->tx_links_count++;
+            if(!(l->link_options & LINK_OPTION_SHARED)) {
+              n->dedicated_tx_links_count++;
+            }
+          }
+        }
+      }
+    }
+  }
+  return l;
+}
+#endif
+
 /*---------------------------------------------------------------------------*/
 /* Removes a link from slotframe. Return 1 if success, 0 if failure */
 int
 tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
 {
   if(slotframe != NULL && l != NULL && l->slotframe_handle == slotframe->handle) {
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+    if(1){//ksh 20190708//    if(tsch_get_lock()) {
+#else
     if(tsch_get_lock()) {
+#endif
       uint8_t link_options;
       linkaddr_t addr;
 
@@ -428,24 +556,88 @@ tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe, uint16_t ti
       return l;
     }
   }
+
   return NULL;
 }
+
+/*---------------------------------------------------------------------------*///ksh.. 
+//ksh. alice time varying schedule
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+void tsch_schedule_alice_data_Sf_reschedule(struct tsch_asn_t *asn){//ksh..
+ if(!tsch_is_locked()) { 
+
+    int flag=0;//ksh..
+    struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(ALICE_UNICAST_SF_ID);
+    if(sf==NULL){ 
+       return; 
+    }
+
+    if( (currSFID==0 && nextSFID==limitSFID) || (  !(currSFID==0 && nextSFID==limitSFID) && currSFID > nextSFID)  ){   
+       nextSFID=currSFID;
+       ALICE_TSCH_CALLBACK_SLOTFRAME_START(nextSFID, (uint16_t)sf->size.val);
+    }
+
+    uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+    struct tsch_link *l = list_head(sf->links_list);
+    while(l != NULL) {        
+      if(l->timeslot > timeslot){ //ksh. Check if any link exists after this timeslot in the current unicast slotframe
+        flag=1; //In the current unicast slotframe schedule, the current timeslot is not a last one.
+      }
+      l = list_item_next(l);
+    }//ksh.. while end .. link
+
+
+    if(flag==0 && currSFID == nextSFID){//It means that the current timeslot is the last timeslot scheduled on the current slotframe. update SFID and reschedule the slotframe.
+      if(currSFID==limitSFID ){
+         nextSFID = 0;
+      }else{
+         nextSFID = currSFID+1;
+      }
+
+      //printf("\n\n ====================== NEXT SF: %u =======================\n", nextSFID);
+      ALICE_TSCH_CALLBACK_SLOTFRAME_START(nextSFID, (uint16_t)sf->size.val);
+    }//if end //if(flag==0 && currSFID == nextSFID){
+
+  }//ksh.. tsch is locked 
+
+}
+#endif//ksh.
+
+
 /*---------------------------------------------------------------------------*/
 /* Returns the next active link after a given ASN, and a backup link (for the same ASN, with Rx flag) */
 struct tsch_link *
 tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset,
     struct tsch_link **backup_link)
 {
+
   uint16_t time_to_curr_best = 0;
   struct tsch_link *curr_best = NULL;
   struct tsch_link *curr_backup = NULL; /* Keep a back link in case the current link
   turns out useless when the time comes. For instance, for a Tx-only link, if there is
   no outgoing packet in queue. In that case, run the backup link instead. The backup link
   must have Rx flag set. */
-  if(!tsch_is_locked()) {
+ if(!tsch_is_locked()) {
     struct tsch_slotframe *sf = list_head(slotframe_list);
     /* For each slotframe, look for the earliest occurring link */
     while(sf != NULL) {
+
+
+
+
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START//ksh..
+       if(sf->handle == ALICE_UNICAST_SF_ID ){
+            uint16_t mod=TSCH_ASN_MOD(*asn, sf->size);
+            struct tsch_asn_t newasn;
+            TSCH_ASN_COPY(newasn, *asn);
+            TSCH_ASN_DEC(newasn, mod);
+            currSFID = TSCH_ASN_DEVISION(newasn, sf->size);
+
+            tsch_schedule_alice_data_Sf_reschedule(asn); //ALICE time varying scheduling
+       }
+#endif
+
+
       /* Get timeslot from ASN, given the slotframe length */
       uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
       struct tsch_link *l = list_head(sf->links_list);
@@ -455,6 +647,14 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           l->timeslot > timeslot ?
           l->timeslot - timeslot :
           sf->size.val + l->timeslot - timeslot;
+
+
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START//ksh..
+    if(sf->handle == ALICE_UNICAST_SF_ID && currSFID !=nextSFID && l->timeslot > timeslot){
+       time_to_timeslot = 999; //maximum value;
+    }
+#endif
+
         if(curr_best == NULL || time_to_timeslot < time_to_curr_best) {
           time_to_curr_best = time_to_timeslot;
           curr_best = l;
@@ -468,6 +668,8 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             if(l->slotframe_handle < curr_best->slotframe_handle) {
               new_best = l;
             }
+
+
           } else {
             /* Select the link that has the Tx option */
             if(l->link_options & LINK_OPTION_TX) {

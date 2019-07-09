@@ -6,8 +6,8 @@ PLATFORMS_EXCLUDE = sky nrf52dk native simplelink
 CONTIKI=../../..
 
  # force Orchestra from command line
-#MAKE_WITH_TSCH_SCHEDULER:   1: orchestra 2:mc-orchestra 3:ALICE
-MAKE_WITH_TSCH_SCHEDULER = 2
+#MAKE_WITH_TSCH_SCHEDULER:   1: orchestra 2:mc-orchestra 3:ALICE   
+MAKE_WITH_TSCH_SCHEDULER = 3
 # force Security from command line
 MAKE_WITH_SECURITY ?= 0
  # print #routes periodically, used for regression tests

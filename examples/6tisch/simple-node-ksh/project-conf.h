@@ -125,37 +125,49 @@
 
 
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD 31 //ksh.. original: 31. (broadcast and default slotframe length)
-#define ORCHESTRA_CONF_UNICAST_PERIOD 17 //43 // 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_UNICAST_PERIOD 17 // 7, 11, 23, 31, 43, 47, 59, 67, 71    
 //#define ORCHESTRA_CONF_EBSF_PERIOD 397//.. original: 397. (EB slotframe)
 
 
 
 
-#define CURRENT_TSCH_SCHEDULER 2 //MAKE_WITH_SCHEDULER,  1: orchestra 2:mc-orchestra 3:ALIC
+#define CURRENT_TSCH_SCHEDULER 3 //MAKE_WITH_SCHEDULER,  1: orchestra 2:mc-orchestra 3:ALICE
 
 
 
 #if CURRENT_TSCH_SCHEDULER > 1
 #define ORCHESTRA_CONF_RULES { &eb_per_time_source, &default_common , &unicast_per_neighbor_rpl_storing}
+#define ALICE_UNICAST_SF_ID 2 //slotframe handle of unicast slotframe
+#define ALICE_BROADCAST_SF_ID 1 //slotframe handle of broadcast/default slotframe
 #ifndef MULTIPLE_CHANNEL_OFFSETS
-#define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. use multiple channel offsets.
+#define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. allow multiple channel offsets.
 #endif
 #endif
+
+
 
 /**********************************************************************/
 /*******   orchestra sender-based  vs. receiver-based    **************/
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED 1 //1:sender-based 0:receiver-based
-#define ORCHESTRA_ONE_CHANNEL_OFFSET 1 //1:single channel offset, 0:multiple channel offset
-/**********************************************************************/
-/******* ALICE : WITH_ALICE=1    , ORCHESTRA: UNDEFINE  ***************/
-//#define WITH_ALICE 0 //ALICE:1 ORCHESTRA:undefine.
+#define ORCHESTRA_ONE_CHANNEL_OFFSET 0 //mc-orchestra -> 1:single channel offset, 0:multiple channel offsets
 /**********************************************************************/
 
+
+
+
+#if CURRENT_TSCH_SCHEDULER == 3 //ALICE
+#define WITH_ALICE   1//KSH
+#undef ORCHESTRA_CONF_UNICAST_SENDER_BASED
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED 1 //1:sender-based 0:receiver-based
+
+#else //CURRENT_TSCH_SCHEDULER != 3
+#define WITH_ALICE  0 //KSH
+#endif
 
 
 #if WITH_ALICE
-//#define ALICE_CALLBACK_PACKET_SELECTION alice_callback_packet_selection //ksh. alice packet selection
-//#define ALICE_TSCH_CALLBACK_SLOTFRAME_START alice_callback_slotframe_start //ksh. alice time varying slotframe schedule
+#define ALICE_CALLBACK_PACKET_SELECTION alice_callback_packet_selection //ksh. alice packet selection
+#define ALICE_TSCH_CALLBACK_SLOTFRAME_START alice_callback_slotframe_start //ksh. alice time varying slotframe schedule
 #endif
 /**********************************************************************/
 /**********************************************************************/

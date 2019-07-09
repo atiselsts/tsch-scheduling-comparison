@@ -145,6 +145,19 @@ int TSCH_CALLBACK_PACKET_READY(void);
 
 /***** External Variables *****/
 
+
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START//ksh..
+
+extern uint16_t currSFID;
+extern uint16_t nextSFID;
+extern uint16_t limitSFID;
+
+uint16_t alice_tsch_schedule_get_current_sfid(struct tsch_slotframe *sf);
+#endif
+
+
+
+
 /* Are we coordinator of the TSCH network? */
 extern int tsch_is_coordinator;
 /* Are we associated to a TSCH network? */
