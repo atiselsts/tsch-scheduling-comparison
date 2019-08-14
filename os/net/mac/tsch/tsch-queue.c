@@ -343,7 +343,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
                       struct tsch_link *link, uint8_t mac_tx_status)
 {
   int in_queue = 1;
-  int is_shared_link = link->link_options & LINK_OPTION_SHARED;
+  int is_shared_link = link != NULL && (link->link_options & LINK_OPTION_SHARED);
   int is_unicast = !n->is_broadcast;
 
   if(mac_tx_status == MAC_TX_OK) {
