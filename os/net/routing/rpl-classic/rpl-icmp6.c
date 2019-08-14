@@ -467,6 +467,17 @@ dio_input(void)
 
   rpl_process_dio(&from, &dio);
 
+#if ORCHESTRA_ROOT_RULE
+  if(dio.rank == dio.dag_min_hoprankinc) {
+    /* The sender is a root; add it to TSCH roots to make sure we add TSCH links to it correctly */
+    const uip_lladdr_t *source;
+    source = uip_ds6_nbr_lladdr_from_ipaddr(&from);
+    if(source != NULL) {
+      orchestra_set_root_address((linkaddr_t *)source);
+    }
+  }
+#endif
+
 discard:
   uipbuf_clear();
 }

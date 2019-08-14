@@ -197,13 +197,13 @@ init(uint16_t sf_handle)
   }
 }
 /*---------------------------------------------------------------------------*/
-struct orchestra_rule unicast_alice = {
+struct orchestra_rule unicast_link = {
   init,
   new_time_source,
   select_packet,
   child_added,
   child_removed,
-  "alice"
+  "link"
 };
 
 #endif /* UIP_MAX_ROUTES */

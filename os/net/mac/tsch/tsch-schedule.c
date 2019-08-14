@@ -408,9 +408,6 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
     if(timeslot > (slotframe->size.val - 1)) {
       LOG_ERR("! add_link invalid timeslot: %u\n", timeslot);
       return NULL;
-    } else if(channel_offset > 15) {
-      LOG_ERR("! add_link invalid channel_offset: %u\n", channel_offset);
-      return NULL;
     }
 
     /* Start with removing the link currently installed at this timeslot (needed
@@ -499,12 +496,12 @@ tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
       if(l == current_link) {
         current_link = NULL;
       }
-      LOG_ERR("remove_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
+      LOG_INFO("remove_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                slotframe->handle,
                print_link_options(l->link_options),
                print_link_type(l->link_type), l->timeslot, l->channel_offset);
-      LOG_ERR_LLADDR(&l->addr);
-      LOG_ERR_("\n");
+      LOG_INFO_LLADDR(&l->addr);
+      LOG_INFO_("\n");
 
       list_remove(slotframe->links_list, l);
       memb_free(&link_memb, l);

@@ -8,14 +8,16 @@ ALGORITHMS = [
     "orchestra_rb_s", # 2
     "orchestra_rb_ns", # 3
     #"orchestra_rb_ns_sr", # 4
-    "alice", # 5
+    "link", # 5
     "msf", # 6
-#    "emsf", # 7
+    "emsf", # 7
+    "alice", # 8
 ]
 
 BEST_ALGORITHMS = [
     "orchestra_sb",
     "orchestra_rb_ns",
+    "link",
     "alice",
 ]
 
@@ -29,9 +31,10 @@ ALGONAMES = {
     "orchestra_rb_s" : "Orchestra RB / Storing",
     "orchestra_rb_ns" : "Orchestra RB / Non-Storing",
     "orchestra_rb_ns_sr" : "Orchestra RB / Non-Storing (SR)", # with RPL storing rule
-    "alice" : "Link-based", # ALICE-like - do not use the name ALICE because it implies other features!
+    "link" : "Link-based", # ALICE-like - do not use the name ALICE because it implies other features!
     "msf" : "MSF",
     "emsf" : "Extended MSF",
+    "alice" : "ALICE",
 
     # generic names
     "dataset1" : "Dataset 1",
@@ -43,9 +46,10 @@ COLORS = {
     "orchestra_rb_s" : "slateblue",
     "orchestra_rb_ns" : "orange",
     "orchestra_rb_ns_sr" : "grey",
-    "alice" : "blue",
+    "link" : "lightblue",
     "msf" : "red",
     "emsf" : "brown",
+    "alice" : "blue",
 
     "dataset1" : "red",
     "dataset2" : "green",
@@ -56,9 +60,10 @@ FIRMWARE_TYPES = {
     "orchestra_rb_s" : 2,
     "orchestra_rb_ns" : 3,
     "orchestra_rb_ns_sr" : 4,
-    "alice" : 5,
+    "link" : 5,
     "msf" : 6,
     "emsf" : 7,
+    "alice" : 8,
 }
 
 EXPERIMENTS = [

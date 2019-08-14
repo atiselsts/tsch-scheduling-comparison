@@ -15,7 +15,7 @@ NUM_CORES = multiprocessing.cpu_count() * 7 // 8
 ENV = {
     "FIRMWARE_TYPE" : "1",
     "ORCHESTRA_CONF_UNICAST_PERIOD" : "11",
-    "ORCHESTRA_CONF_ROOT_RULE" : "1"
+    "ORCHESTRA_CONF_ROOT_RULE" : "0"
 }
 
 ########################################
