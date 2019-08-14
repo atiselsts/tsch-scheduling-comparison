@@ -211,9 +211,8 @@ class MoteStats:
 
         if self.associated_at_minutes >= 30:
             first_seqnum, last_seqnum = get_seqnums(send_interval)
-            pass
-        else:
-            expected = (last_seqnum - first_seqnum) + 1
+
+        expected = (last_seqnum - first_seqnum) + 1
         actual = len(self.seqnums)
 
         if expected:
