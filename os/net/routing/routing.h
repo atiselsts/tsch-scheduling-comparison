@@ -29,6 +29,13 @@
  * This file is part of the Contiki operating system.
  *
  */
+/**
+ * \addtogroup net-layer
+ * @{
+ *
+ * \defgroup routing An API for routing
+ * @{
+*/
 
 /**
  * \file
@@ -186,3 +193,7 @@ struct routing_driver {
 };
 
 #endif /* ROUTING_H_ */
+/**
+ * @}
+ * @}
+ */
