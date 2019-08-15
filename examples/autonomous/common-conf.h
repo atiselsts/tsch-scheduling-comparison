@@ -95,13 +95,13 @@
 #define FIRMWARE_TYPE_ORCHESTRA_RB_NS 3
 /* receiver based, nonstoring Orchestra, storing RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR 4
-/*  */
+/* link based */
 #define FIRMWARE_TYPE_LINK 5
-/*  */
+/* MSF (version 03) */
 #define FIRMWARE_TYPE_MSF 6
-/*  */
+/* extended MSF (modification of the version 03) */
 #define FIRMWARE_TYPE_EMSF 7
-/*  */
+/* ALICE as implemented by S.Kim */
 #define FIRMWARE_TYPE_ALICE 8
 
 /*******************************************************/
@@ -130,15 +130,17 @@
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR
 /* include the non-storing rule */
 #  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_ns
-#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
-/* include the alice rule */
-#  define FIRMWARE_UNICAST_RULE unicast_alice
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_LINK
+/* include the link rule */
+#  define FIRMWARE_UNICAST_RULE unicast_link
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
 /* include the msf rule */
 #  define FIRMWARE_UNICAST_RULE unicast_msf
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_EMSF
 /* include the emsf rule */
 #  define FIRMWARE_UNICAST_RULE unicast_emsf
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
+/* will define its own scheduler */
 #endif
 
 /* Enable multiple channels? */
