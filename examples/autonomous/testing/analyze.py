@@ -318,6 +318,7 @@ def process_file(filename, experiment, send_interval):
             continue
         m.calc(send_interval, first_seqnum, last_seqnum)
         if m.is_valid:
+            #print(" ", m.id, m.pdr, m.prr)
             r.append((m.pdr, m.prr, m.rdc))
 #        else:
 #            print("mote {} does not have valid PDR: packets={}".format(m.id, m.seqnums))
