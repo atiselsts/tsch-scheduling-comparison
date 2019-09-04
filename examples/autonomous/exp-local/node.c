@@ -3,8 +3,8 @@
  * Nodes periodically generate messages to their parents, the parents reply.
  */
 #include "contiki.h"
-#include "node-id.h"
-#include "random.h"
+#include "sys/node-id.h"
+#include "lib/random.h"
 #include "net/ipv6/uip-ds6.h"
 #include "net/ipv6/simple-udp.h"
 #include "net/routing/routing.h"
