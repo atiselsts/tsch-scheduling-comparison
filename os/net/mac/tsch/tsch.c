@@ -934,7 +934,6 @@ tsch_init(void)
 {
   radio_value_t radio_rx_mode;
   radio_value_t radio_tx_mode;
-  radio_value_t radio_max_payload_len;
 
   rtimer_clock_t t;
 
@@ -946,11 +945,14 @@ tsch_init(void)
     return;
   }
 
+#if 0
+  radio_value_t radio_max_payload_len;
   /* Check that the radio can correctly report its max supported payload */
   if(NETSTACK_RADIO.get_value(RADIO_CONST_MAX_PAYLOAD_LEN, &radio_max_payload_len) != RADIO_RESULT_OK) {
     LOG_ERR("! radio does not support getting RADIO_CONST_MAX_PAYLOAD_LEN. Abort init.\n");
     return;
   }
+#endif
 
   /* Radio Rx mode */
   if(NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode) != RADIO_RESULT_OK) {
@@ -1186,8 +1188,10 @@ max_payload(void)
                                  &max_radio_payload_len);
 
   if(res == RADIO_RESULT_NOT_SUPPORTED) {
-    LOG_ERR("Failed to retrieve max radio driver payload length\n");
-    return 0;
+//    LOG_ERR("Failed to retrieve max radio driver payload length\n");
+//    return 0;
+    /* use a sensible default */
+    res = 125;
   }
 
   /* Setup security... before. */
