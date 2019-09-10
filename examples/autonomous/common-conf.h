@@ -163,3 +163,8 @@
 #endif
 
 #define WARM_UP_PERIOD_SEC (60 * 30)
+
+#undef RF2XX_WITH_TSCH
+#define RF2XX_WITH_TSCH 1
+#undef RF2XX_SOFT_PREPARE
+#define RF2XX_SOFT_PREPARE 0
