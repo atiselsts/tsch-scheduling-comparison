@@ -248,7 +248,9 @@ void tsch_disassociate(void);
 
 extern uint8_t tsch_failed;
 
+#if BUILD_WITH_ORCHESTRA
 void orchestra_set_root_address(linkaddr_t *root);
+#endif
 
 #endif /* __TSCH_H__ */
 /** @} */

@@ -365,10 +365,12 @@ eb_input(struct input_packet *current_input)
       last_eb_nbr_jp = eb_ies.ie_join_priority;
     }
 
+#if BUILD_WITH_ORCHESTRA
     /* If from the root, let Orchestra know the root's address */
     if(eb_ies.ie_join_priority == 0) {
       orchestra_set_root_address((linkaddr_t *)&frame.src_addr);
     }
+#endif
 
 #if TSCH_AUTOSELECT_TIME_SOURCE
     if(!tsch_is_coordinator) {
@@ -555,10 +557,12 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
     return 0;
   }
 
+#if BUILD_WITH_ORCHESTRA
   /* If from the root, let Orchestra know the root's address */
   if(ies.ie_join_priority == 0) {
     orchestra_set_root_address((linkaddr_t *)&frame.src_addr);
   }
+#endif
 
   tsch_current_asn = ies.ie_asn;
   tsch_join_priority = ies.ie_join_priority + 1;
