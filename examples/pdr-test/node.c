@@ -80,7 +80,8 @@ schedule_packets(void)
 void
 app_eb_input(const linkaddr_t *src)
 {
-  uint8_t src_id = src->u8[7];
+  uint16_t src_node_id = (src->u8[6] << 8) + src->u8[7];
+  uint16_t src_id = get_schedule_id(src_node_id);
   /* printf(" packet from %u\n", src_id); */
 
   if(src_id <= NUM_NODES) {
@@ -112,6 +113,8 @@ PROCESS_THREAD(node_process, ev, data)
       ROUND_SEND_DURATION / CLOCK_SECOND);
 
   setup_addrs();
+
+  printf("schedule ID is %u\n", get_schedule_id(node_id));
 
   if(get_schedule_id(node_id) == SCHEDULE_ID_COORDINATOR) {
     is_coordinator = true;

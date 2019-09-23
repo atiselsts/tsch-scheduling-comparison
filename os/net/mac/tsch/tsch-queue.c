@@ -343,7 +343,6 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
       /* Drop packet */
-      printf("tx limit to %u\n", n->addr.u8[7]);
       tsch_queue_remove_packet_from_queue(n);
       in_queue = 0;
     }

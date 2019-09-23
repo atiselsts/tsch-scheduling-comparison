@@ -33,7 +33,7 @@
 
 #define APP_PDR_TEST 1
 
-#define NUM_PACKETS_TO_SEND  100
+#define NUM_PACKETS_TO_SEND  10
 #define QUEUEBUF_CONF_NUM    128 /* must be at least the number of packets to send + 1 */
 
 #define NUM_NODES            10 /* must be <=  TSCH_SCHEDULE_CONF_DEFAULT_LENGTH */
