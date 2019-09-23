@@ -344,6 +344,31 @@ tsch_schedule_keepalive_immediately(void)
   }
 }
 /*---------------------------------------------------------------------------*/
+int
+tsch_send_eb(void)
+{
+  uint8_t hdr_len = 0;
+  uint8_t tsch_sync_ie_offset;
+  /* Prepare the EB packet and schedule it to be sent */
+  if(tsch_packet_create_eb(&hdr_len, &tsch_sync_ie_offset) > 0) {
+    struct tsch_packet *p;
+    /* Enqueue EB packet, for a single transmission only */
+    if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
+      LOG_ERR("! could not enqueue EB packet\n");
+      return -1;
+    } else {
+      LOG_INFO("TSCH: enqueue EB packet %u %u\n",
+               packetbuf_totlen(), packetbuf_hdrlen());
+      p->tsch_sync_ie_offset = tsch_sync_ie_offset;
+      p->header_len = hdr_len;
+    }
+  } else {
+    return -1;
+  }
+
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
 static void
 eb_input(struct input_packet *current_input)
 {
@@ -364,6 +389,10 @@ eb_input(struct input_packet *current_input)
       linkaddr_copy(&last_eb_nbr_addr, (linkaddr_t *)&frame.src_addr);
       last_eb_nbr_jp = eb_ies.ie_join_priority;
     }
+
+#ifdef TSCH_EB_INPUT_CALLBACK
+    TSCH_EB_INPUT_CALLBACK((const linkaddr_t *)&frame.src_addr);
+#endif
 
 #if BUILD_WITH_ORCHESTRA
     /* If from the root, let Orchestra know the root's address */
@@ -866,7 +895,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
 
   /* Set an initial delay except for coordinator, which should send an EB asap */
   if(!tsch_is_coordinator) {
-    etimer_set(&eb_timer, random_rand() % TSCH_EB_PERIOD);
+    etimer_set(&eb_timer, TSCH_EB_PERIOD ? random_rand() % TSCH_EB_PERIOD : 0);
     PROCESS_WAIT_UNTIL(etimer_expired(&eb_timer));
   }
 
@@ -879,24 +908,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       && TSCH_RPL_CHECK_DODAG_JOINED()
 #endif /* TSCH_RPL_CHECK_DODAG_JOINED */
         ) {
-      /* Enqueue EB only if there isn't already one in queue */
-      if(tsch_queue_packet_count(&tsch_eb_address) == 0) {
-        uint8_t hdr_len = 0;
-        uint8_t tsch_sync_ie_offset;
-        /* Prepare the EB packet and schedule it to be sent */
-        if(tsch_packet_create_eb(&hdr_len, &tsch_sync_ie_offset) > 0) {
-          struct tsch_packet *p;
-          /* Enqueue EB packet, for a single transmission only */
-          if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
-            LOG_ERR("! could not enqueue EB packet\n");
-          } else {
-              LOG_INFO("TSCH: enqueue EB packet %u %u\n",
-                       packetbuf_totlen(), packetbuf_hdrlen());
-            p->tsch_sync_ie_offset = tsch_sync_ie_offset;
-            p->header_len = hdr_len;
-          }
-        }
-      }
+      tsch_send_eb();
     }
     if(tsch_current_eb_period > 0) {
       /* Next EB transmission with a random delay
@@ -1092,6 +1104,10 @@ send_packet(mac_callback_t sent, void *ptr)
     max_transmissions = TSCH_MAC_MAX_FRAME_RETRIES + 1;
   }
 
+#if APP_PDR_TEST
+  ret = MAC_TX_ERR;
+  (void)hdr_len;
+#else
   if((hdr_len = NETSTACK_FRAMER.create()) < 0) {
     LOG_ERR("! can't send packet due to framer error\n");
     ret = MAC_TX_ERR;
@@ -1115,6 +1131,7 @@ send_packet(mac_callback_t sent, void *ptr)
              p->header_len, queuebuf_datalen(p->qb));
     }
   }
+#endif /* APP_PDR_TEST */
   if(ret != MAC_TX_DEFERRED) {
     mac_call_sent_callback(sent, ptr, ret, 1);
   }

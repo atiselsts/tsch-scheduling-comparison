@@ -246,6 +246,12 @@ uint64_t tsch_get_network_uptime_ticks(void);
   */
 void tsch_disassociate(void);
 
+int tsch_send_eb(void);
+
+#ifdef TSCH_EB_INPUT_CALLBACK
+void TSCH_EB_INPUT_CALLBACK(const linkaddr_t *src);
+#endif
+
 extern uint8_t tsch_failed;
 
 #if BUILD_WITH_ORCHESTRA

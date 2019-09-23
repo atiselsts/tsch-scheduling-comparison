@@ -1,15 +1,10 @@
 #include "contiki.h"
 #include "sys/node-id.h"
 #include "sys/log.h"
-// #include "net/ipv6/uip-sr.h"
 #include "net/ipv6/uip.h"
 #include "net/ipv6/uiplib.h"
 #include "net/ipv6/uip-ds6.h"
 #include "net/mac/tsch/tsch.h"
-//#include "net/routing/routing.h"
-
-// #define DEBUG DEBUG_PRINT
-// #include "net/ipv6/uip-debug.h"
 
 #if CONTIKI_TARGET_COOJA
 #include "node-id-mapping-cooja.h"
@@ -18,7 +13,8 @@
 #endif
 
 /*---------------------------------------------------------------------------*/
-static uip_ipaddr_t mcast_addr;
+static uint16_t packets_rxed[NUM_NODES + 1];
+
 /*---------------------------------------------------------------------------*/
 PROCESS(node_process, "PDR test");
 AUTOSTART_PROCESSES(&node_process);
@@ -37,8 +33,6 @@ setup_addrs(void)
     printf("initialization failed: failed to add local address!\n");
     return false;
   }
-
-  uip_create_linklocal_allnodes_mcast(&mcast_addr);
 
   return true;
 }
@@ -59,18 +53,63 @@ my_tsch_schedule_init(bool is_coordinator)
   for(i = 0; i < TSCH_SCHEDULE_DEFAULT_LENGTH; i++) {
     tsch_schedule_add_link(sf,
         i == own_id ? LINK_OPTION_TX : LINK_OPTION_RX,
-        LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+        LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
         i, 0);
   }
 
   return true;
 }
 /*---------------------------------------------------------------------------*/
+static void
+schedule_packets(void)
+{
+  int i;
+
+  printf("schedule packets\n");
+
+  for(i = 0; i < NUM_PACKETS_TO_SEND; ++i) {
+    if(tsch_send_eb() == 0) {
+      /* printf("queue EB %u\n", i); */
+    } else {
+      printf("!failed to queue EB %u\n", i);
+      break;
+    }
+  }
+}
+/*---------------------------------------------------------------------------*/
+void
+app_eb_input(const linkaddr_t *src)
+{
+  uint8_t src_id = src->u8[7];
+  /* printf(" packet from %u\n", src_id); */
+
+  if(src_id <= NUM_NODES) {
+    packets_rxed[src_id]++;
+  }
+}
+/*---------------------------------------------------------------------------*/
+static void
+print_stats(void)
+{
+  int i;
+  printf("print stats\n");
+  for(i = 1; i <= NUM_NODES; ++i) {
+    printf("%u: %u\n", i, packets_rxed[i]);
+  }
+  memset(packets_rxed, 0, sizeof(packets_rxed));
+}
+/*---------------------------------------------------------------------------*/
 PROCESS_THREAD(node_process, ev, data)
 {
   bool is_coordinator;
+  static struct etimer full_et;
+  static struct etimer send_et;
 
   PROCESS_BEGIN();
+
+  printf("round full duration: %u sec, send duration: %u\n",
+      ROUND_FULL_DURATION / CLOCK_SECOND,
+      ROUND_SEND_DURATION / CLOCK_SECOND);
 
   setup_addrs();
 
@@ -85,6 +124,22 @@ PROCESS_THREAD(node_process, ev, data)
   tsch_set_coordinator(is_coordinator);
 
   NETSTACK_MAC.on();
+
+  schedule_packets();
+  etimer_set(&full_et, ROUND_FULL_DURATION);
+
+  while(1) {
+    PROCESS_YIELD_UNTIL(etimer_expired(&full_et));
+    etimer_reset(&full_et);
+
+    schedule_packets();
+    etimer_set(&send_et, ROUND_SEND_DURATION - CLOCK_SECOND);
+    PROCESS_YIELD_UNTIL(etimer_expired(&send_et));
+
+    etimer_set(&send_et, CLOCK_SECOND);
+    PROCESS_YIELD_UNTIL(etimer_expired(&send_et));
+    print_stats();
+  }
 
   PROCESS_END();
 }
