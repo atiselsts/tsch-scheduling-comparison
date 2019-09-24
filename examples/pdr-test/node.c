@@ -124,6 +124,9 @@ PROCESS_THREAD(node_process, ev, data)
 
   my_tsch_schedule_init(is_coordinator);
 
+  /* reduce Tx power */
+//  NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, PHY_POWER_m17dBm);
+
   tsch_set_coordinator(is_coordinator);
 
   NETSTACK_MAC.on();
@@ -136,10 +139,10 @@ PROCESS_THREAD(node_process, ev, data)
     etimer_reset(&full_et);
 
     schedule_packets();
-    etimer_set(&send_et, ROUND_SEND_DURATION - CLOCK_SECOND);
+    etimer_set(&send_et, ROUND_SEND_DURATION - 2 * CLOCK_SECOND);
     PROCESS_YIELD_UNTIL(etimer_expired(&send_et));
 
-    etimer_set(&send_et, CLOCK_SECOND);
+    etimer_set(&send_et, 2 * CLOCK_SECOND);
     PROCESS_YIELD_UNTIL(etimer_expired(&send_et));
     print_stats();
   }
