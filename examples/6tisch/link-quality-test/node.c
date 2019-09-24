@@ -20,7 +20,7 @@
 static uint16_t packets_rxed[NUM_NODES][NUM_CHANNELS];
 
 /*---------------------------------------------------------------------------*/
-PROCESS(node_process, "PDR test");
+PROCESS(node_process, "Link quality test");
 AUTOSTART_PROCESSES(&node_process);
 /*---------------------------------------------------------------------------*/
 static bool
@@ -42,7 +42,7 @@ setup_addrs(void)
 }
 /*---------------------------------------------------------------------------*/
 static bool
-my_tsch_schedule_init(bool is_coordinator)
+my_tsch_schedule_init(void)
 {
   struct tsch_slotframe *sf;
   int i;
@@ -116,29 +116,21 @@ print_stats(void)
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(node_process, ev, data)
 {
-  bool is_coordinator;
   static struct etimer full_et;
   static struct etimer send_et;
 
   PROCESS_BEGIN();
 
+  printf("schedule ID is %u\n", get_schedule_id(node_id));
   printf("round full duration: %u sec, send duration: %u\n",
-      ROUND_FULL_DURATION / CLOCK_SECOND,
-      ROUND_SEND_DURATION / CLOCK_SECOND);
+         ROUND_FULL_DURATION / CLOCK_SECOND,
+         ROUND_SEND_DURATION / CLOCK_SECOND);
 
   setup_addrs();
 
-  printf("schedule ID is %u\n", get_schedule_id(node_id));
+  my_tsch_schedule_init();
 
-  if(get_schedule_id(node_id) == SCHEDULE_ID_COORDINATOR) {
-    is_coordinator = true;
-  } else {
-    is_coordinator = false;
-  }
-
-  my_tsch_schedule_init(is_coordinator);
-
-  tsch_set_coordinator(is_coordinator);
+  tsch_set_coordinator(get_schedule_id(node_id) == SCHEDULE_ID_COORDINATOR);
 
   NETSTACK_MAC.on();
 

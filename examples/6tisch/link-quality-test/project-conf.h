@@ -4,10 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SICSLOWPAN_CONF_FRAG 0
-#define UIP_CONF_BUFFER_SIZE 160
-
-#define IEEE802154_CONF_PANID 0x81a5
+#define IEEE802154_CONF_PANID 0x1515
 #define TSCH_CONF_AUTOSTART 0
 #define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL 0
 #define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH 37  /* 71 */
@@ -51,7 +48,7 @@
 #define TSCH_CONF_KEEPALIVE_TIMEOUT (1000 * CLOCK_SECOND)
 #define TSCH_CONF_MAX_KEEPALIVE_TIMEOUT (1000 * CLOCK_SECOND)
 
-/* reduce tx power */
+/* reduce tx power in the IoT lab testbed */
 #define RF2XX_TX_POWER  PHY_POWER_m30dBm
 
 /* ------------------------------------------------------- */
