@@ -69,9 +69,9 @@ schedule_packets(void)
 {
   int i;
 
-  printf("schedule %u packets\n", NUM_PACKETS_TO_SEND * NUM_ACTIVE_CHANNELS);
+  printf("schedule %u packets...\n", NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS);
 
-  for(i = 0; i < NUM_PACKETS_TO_SEND * NUM_ACTIVE_CHANNELS; ++i) {
+  for(i = 0; i < NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS; ++i) {
     if(tsch_send_eb() == 0) {
       /* printf("queue EB %u\n", i); */
     } else {
@@ -79,6 +79,14 @@ schedule_packets(void)
       break;
     }
   }
+  printf("..done\n");
+}
+/*---------------------------------------------------------------------------*/
+int
+link_quality_test_packet_callback(void)
+{
+  /* allow EBs, drop all other packets */
+  return packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_BEACONFRAME ? 0 : -1;
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -99,10 +107,12 @@ static void
 print_stats(void)
 {
   int i, j;
-  printf("print stats\n");
+
+  printf("packet statistics: %u expected per node, %u per channel\n",
+         NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS, NUM_PACKETS_PER_CHANNEL);
   for(i = 0; i < NUM_NODES; ++i) {
     uint16_t total = 0;
-    printf("%u:\n", i + 1, total);
+    printf("%u:\n", i + 1);
     for(j = 0; j < NUM_CHANNELS; ++j) {
       if(packets_rxed[i][j]) {
         printf("  ch %u: %u\n", j + FIRST_CHANNEL, packets_rxed[i][j]);

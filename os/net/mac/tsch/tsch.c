@@ -1104,10 +1104,6 @@ send_packet(mac_callback_t sent, void *ptr)
     max_transmissions = TSCH_MAC_MAX_FRAME_RETRIES + 1;
   }
 
-#if APP_PDR_TEST
-  ret = MAC_TX_ERR;
-  (void)hdr_len;
-#else
   if((hdr_len = NETSTACK_FRAMER.create()) < 0) {
     LOG_ERR("! can't send packet due to framer error\n");
     ret = MAC_TX_ERR;
@@ -1131,7 +1127,6 @@ send_packet(mac_callback_t sent, void *ptr)
              p->header_len, queuebuf_datalen(p->qb));
     }
   }
-#endif /* APP_PDR_TEST */
   if(ret != MAC_TX_DEFERRED) {
     mac_call_sent_callback(sent, ptr, ret, 1);
   }

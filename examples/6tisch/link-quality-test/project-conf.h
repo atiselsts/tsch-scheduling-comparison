@@ -28,17 +28,17 @@
 /* Application config */
 /* ------------------------------------------------------- */
 
-#define APP_PDR_TEST 1
+#define APP_LINK_QUALITY_TEST   1
 
-#define NUM_ACTIVE_CHANNELS  4
+#define NUM_ACTIVE_CHANNELS     4
 
-#define NUM_PACKETS_TO_SEND  10
-#define QUEUEBUF_CONF_NUM    128 /* must be at least the number of packets to send + 1 */
+#define NUM_PACKETS_PER_CHANNEL 10
+#define QUEUEBUF_CONF_NUM       128 /* must be at least the number of packets to send + 1 */
 
 #define NUM_NODES            10  /* must be <=  TSCH_SCHEDULE_CONF_DEFAULT_LENGTH */
 #define SLOTS_PER_SECOND     100
 
-#define NODE_SEND_DURATION_SLOTS  (NUM_PACKETS_TO_SEND * NUM_ACTIVE_CHANNELS * TSCH_SCHEDULE_CONF_DEFAULT_LENGTH)
+#define NODE_SEND_DURATION_SLOTS  (NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS * TSCH_SCHEDULE_CONF_DEFAULT_LENGTH)
 #define ROUND_SEND_DURATION  ((NODE_SEND_DURATION_SLOTS * CLOCK_SECOND + SLOTS_PER_SECOND - 1) / SLOTS_PER_SECOND + 2 * CLOCK_SECOND)
 #define ROUND_FULL_DURATION  (ROUND_SEND_DURATION + 4 * CLOCK_SECOND)
 
@@ -50,6 +50,8 @@
 
 /* reduce tx power in the IoT lab testbed */
 #define RF2XX_TX_POWER  PHY_POWER_m30dBm
+
+#define TSCH_CALLBACK_PACKET_READY link_quality_test_packet_callback
 
 /* ------------------------------------------------------- */
 
