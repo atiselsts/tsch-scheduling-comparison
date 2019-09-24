@@ -13,7 +13,11 @@
 #endif
 
 /*---------------------------------------------------------------------------*/
-static uint16_t packets_rxed[NUM_NODES + 1];
+#define NUM_CHANNELS 16
+#define FIRST_CHANNEL 11
+
+/*---------------------------------------------------------------------------*/
+static uint16_t packets_rxed[NUM_NODES][NUM_CHANNELS];
 
 /*---------------------------------------------------------------------------*/
 PROCESS(node_process, "PDR test");
@@ -65,9 +69,9 @@ schedule_packets(void)
 {
   int i;
 
-  printf("schedule packets\n");
+  printf("schedule %u packets\n", NUM_PACKETS_TO_SEND * NUM_ACTIVE_CHANNELS);
 
-  for(i = 0; i < NUM_PACKETS_TO_SEND; ++i) {
+  for(i = 0; i < NUM_PACKETS_TO_SEND * NUM_ACTIVE_CHANNELS; ++i) {
     if(tsch_send_eb() == 0) {
       /* printf("queue EB %u\n", i); */
     } else {
@@ -78,24 +82,34 @@ schedule_packets(void)
 }
 /*---------------------------------------------------------------------------*/
 void
-app_eb_input(const linkaddr_t *src)
+app_eb_input(const linkaddr_t *src, uint8_t channel)
 {
   uint16_t src_node_id = (src->u8[6] << 8) + src->u8[7];
-  uint16_t src_id = get_schedule_id(src_node_id);
+  uint16_t src_id = get_schedule_id(src_node_id) - 1;
   /* printf(" packet from %u\n", src_id); */
 
-  if(src_id <= NUM_NODES) {
-    packets_rxed[src_id]++;
+  channel -= FIRST_CHANNEL;
+
+  if(src_id < NUM_NODES && channel < NUM_CHANNELS) {
+    packets_rxed[src_id][channel]++;
   }
 }
 /*---------------------------------------------------------------------------*/
 static void
 print_stats(void)
 {
-  int i;
+  int i, j;
   printf("print stats\n");
-  for(i = 1; i <= NUM_NODES; ++i) {
-    printf("%u: %u\n", i, packets_rxed[i]);
+  for(i = 0; i < NUM_NODES; ++i) {
+    uint16_t total = 0;
+    printf("%u:\n", i + 1, total);
+    for(j = 0; j < NUM_CHANNELS; ++j) {
+      if(packets_rxed[i][j]) {
+        printf("  ch %u: %u\n", j + FIRST_CHANNEL, packets_rxed[i][j]);
+        total += packets_rxed[i][j];
+      }
+    }
+    printf("  %u total\n", total);
   }
   memset(packets_rxed, 0, sizeof(packets_rxed));
 }
@@ -123,9 +137,6 @@ PROCESS_THREAD(node_process, ev, data)
   }
 
   my_tsch_schedule_init(is_coordinator);
-
-  /* reduce Tx power */
-//  NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, PHY_POWER_m17dBm);
 
   tsch_set_coordinator(is_coordinator);
 

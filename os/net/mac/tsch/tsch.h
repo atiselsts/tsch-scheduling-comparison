@@ -249,7 +249,7 @@ void tsch_disassociate(void);
 int tsch_send_eb(void);
 
 #ifdef TSCH_EB_INPUT_CALLBACK
-void TSCH_EB_INPUT_CALLBACK(const linkaddr_t *src);
+void TSCH_EB_INPUT_CALLBACK(const linkaddr_t *src, uint8_t channel);
 #endif
 
 extern uint8_t tsch_failed;

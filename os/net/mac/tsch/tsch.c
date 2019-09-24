@@ -391,7 +391,7 @@ eb_input(struct input_packet *current_input)
     }
 
 #ifdef TSCH_EB_INPUT_CALLBACK
-    TSCH_EB_INPUT_CALLBACK((const linkaddr_t *)&frame.src_addr);
+    TSCH_EB_INPUT_CALLBACK((const linkaddr_t *)&frame.src_addr, current_input->channel);
 #endif
 
 #if BUILD_WITH_ORCHESTRA
