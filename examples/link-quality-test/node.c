@@ -5,19 +5,20 @@
 #include "net/ipv6/uiplib.h"
 #include "net/ipv6/uip-ds6.h"
 #include "net/mac/tsch/tsch.h"
+#include <inttypes.h>
 
 #if CONTIKI_TARGET_COOJA
 #include "node-id-mapping-cooja.h"
 #else
-#include "node-id-mapping-iot-lab.h"
+#include "node-id-iot-lab-grenoble.h" /* Specify which testbed to use, in this case Grenoble */
 #endif
 
 /*---------------------------------------------------------------------------*/
-#define NUM_CHANNELS 16
+#define MAX_NUM_CHANNELS 16
 #define FIRST_CHANNEL 11
 
 /*---------------------------------------------------------------------------*/
-static uint16_t packets_rxed[NUM_NODES][NUM_CHANNELS];
+static uint16_t packets_rxed[MAX_NUM_NODES][MAX_NUM_CHANNELS];
 
 /*---------------------------------------------------------------------------*/
 PROCESS(node_process, "Link quality test");
@@ -68,8 +69,15 @@ static void
 schedule_packets(void)
 {
   int i;
+  const char *node_type;
 
-  printf("schedule %u packets...\n", NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS);
+  if(get_schedule_id(node_id) == SCHEDULE_ID_COORDINATOR) {
+    node_type = "coordinator";
+  } else {
+    node_type = "node";
+  }
+
+  printf("%s schedule %u packets...\n", node_type, NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS);
 
   for(i = 0; i < NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS; ++i) {
     if(tsch_send_eb() == 0) {
@@ -98,7 +106,7 @@ app_eb_input(const linkaddr_t *src, uint8_t channel)
 
   channel -= FIRST_CHANNEL;
 
-  if(src_id < NUM_NODES && channel < NUM_CHANNELS) {
+  if(src_id < MAX_NUM_NODES && channel < MAX_NUM_CHANNELS) {
     packets_rxed[src_id][channel]++;
   }
 }
@@ -110,16 +118,21 @@ print_stats(void)
 
   printf("packet statistics: %u expected per node, %u per channel\n",
          NUM_PACKETS_PER_CHANNEL * NUM_ACTIVE_CHANNELS, NUM_PACKETS_PER_CHANNEL);
-  for(i = 0; i < NUM_NODES; ++i) {
+  for(i = 0; i < MAX_NUM_NODES; ++i) {
     uint16_t total = 0;
-    printf("%u:\n", i + 1);
-    for(j = 0; j < NUM_CHANNELS; ++j) {
+    for(j = 0; j < MAX_NUM_CHANNELS; ++j) {
       if(packets_rxed[i][j]) {
-        printf("  ch %u: %u\n", j + FIRST_CHANNEL, packets_rxed[i][j]);
         total += packets_rxed[i][j];
       }
     }
-    printf("  %u total\n", total);
+    printf("%u: %u total\n", i + 1, total);
+    if(total) {
+      for(j = 0; j < MAX_NUM_CHANNELS; ++j) {
+        if(packets_rxed[i][j]) {
+          printf("  ch %u: %u\n", j + FIRST_CHANNEL, packets_rxed[i][j]);
+        }
+      }
+    }
   }
   memset(packets_rxed, 0, sizeof(packets_rxed));
 }
@@ -132,9 +145,9 @@ PROCESS_THREAD(node_process, ev, data)
   PROCESS_BEGIN();
 
   printf("schedule ID is %u\n", get_schedule_id(node_id));
-  printf("round full duration: %u sec, send duration: %u\n",
-         ROUND_FULL_DURATION / CLOCK_SECOND,
-         ROUND_SEND_DURATION / CLOCK_SECOND);
+  printf("round full duration: %" PRIu32 " sec, send duration: %" PRIu32 "\n",
+         (uint32_t)(ROUND_FULL_DURATION / CLOCK_SECOND),
+         (uint32_t)(ROUND_SEND_DURATION / CLOCK_SECOND));
 
   setup_addrs();
 

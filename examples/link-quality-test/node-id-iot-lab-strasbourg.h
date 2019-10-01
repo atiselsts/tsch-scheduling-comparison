@@ -1,23 +1,19 @@
 #ifndef NODE_ID_MAPPING_H_
 #define NODE_ID_MAPPING_H_
 
-/* For IoT lab in Strasbourgh */
+/* For the IoT lab testbed in Strasbourgh */
 static inline uint8_t
 get_schedule_id(uint16_t node_id)
 {
   int i;
   static const uint16_t table[] = {
     0,
-    42116,
-//    42629,
-    38791,
-//    37768,
-    39049,
-//    37511,
-    45444,
-//    43143,
-    47237,
-//    37767,
+
+    42116,  // 1
+    38791,  // 3
+    39049,  // 5
+    45444,  // 7
+    47237,  // 9
 
     0x8984, // 11
     0xb384, // 13
