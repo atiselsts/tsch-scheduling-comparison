@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 #INFILE = "file-sparse.log"
-#INFILE = "file-dense.log"
+INFILE = "file-dense.log"
 
 nodes_assoc = {}
 

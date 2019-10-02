@@ -9,7 +9,7 @@ get_schedule_id(uint16_t node_id)
   static const uint16_t table[] = {
     0,
 
-    /* sparse subset:
+    /* sparse subset: */
     0x3061, // x=0.4 y=1.85
     0x9168, // x=5.75 y=0.94
     0xa081, // x=0.4 y=7.23
@@ -42,9 +42,7 @@ get_schedule_id(uint16_t node_id)
     0xa579, // x=56.35 y=26.76
     0x9682, // x=61.75 y=26.76
 
-    */
-
-    /* dense subset: */
+    /* dense subset: 
     0x3061, // x=0.4 y=1.85
     0xa776, // x=2.75 y=0.94
     0xc076, // x=1.0 y=4.23
@@ -76,6 +74,7 @@ get_schedule_id(uint16_t node_id)
     0xa675, // x=28.22 y=0.94
     0xa575, // x=9.22 y=26.76
     0xa382, // x=12.22 y=26.76
+    */
 
     0xffff
   };
