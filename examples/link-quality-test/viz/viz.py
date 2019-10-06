@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-INDEX = 1
+INDEX = 3
 
 INFILES = [
     "file-3-neigh.log", # actually more like 2.5 with >80% link quality
@@ -9,16 +9,23 @@ INFILES = [
     "file-10-neigh.log",
 ]
 
+OUTFILES = [
+    "trace-3-neigh.txt",
+    "trace-4-neigh.txt",
+    "trace-6-neigh.txt",
+    "trace-10-neigh.txt",
+]
+
 nodes_assoc = {}
 
 # (from, to) -> number of packets
 packets_rxed = {}
+# (from, to) -> number of packets
+packets_rxed_last_round = {}
 # (from, to) -> number of rounds
 rounds_rxed = {}
 
 COORD_NODE_ID = "m3-177"
-
-is_valid_round = False
 
 order_3_neigh = {}
 order_4_neigh = {}
@@ -158,6 +165,8 @@ orders = [order_3_neigh, order_4_neigh, order_6_neigh, order_10_neigh]
 INFILE = INFILES[INDEX]
 order = orders[INDEX]
 
+num_nodes = len(order)
+
 NORMAL_PER_ROUND = None
 
 def process_packet_stats():
@@ -167,13 +176,13 @@ def process_packet_stats():
     for key in sorted(packets_rxed.keys()):
         (from_order, to_order) = key
         if prev_from != from_order:
-            print("")
+            #print("")
             prev_from = from_order
         received = packets_rxed[key]
         expected = NORMAL_PER_ROUND * rounds_rxed[key]
         if normal_expected is None:
             normal_expected = expected
-        print("{} -> {}: {} from {}".format(from_order, to_order, received, expected))
+        #print("{} -> {}: {} from {}".format(from_order, to_order, received, expected))
         if received:
             links[key] = received
 
@@ -204,17 +213,68 @@ def process_packet_stats():
     avg_neighbors = 2 * total_bidir_links / len(nodes_assoc)
     print("total links {}, neighbors per node {}".format(total_bidir_links, avg_neighbors))
 
+# output example:
+#0;addnode;123.0
+def start_trace_file(outf):
+    for i in range(num_nodes):
+        s = "0;addnode;{}.0\n".format(i + 1)
+        outf.write(s)
+
+# output example:
+#0;setedgex;105.0;122.0;80;-92;85;18
+def update_trace_file(packets_rxed, packets_rxed_prev, time_sec, outf):
+    approx_time_ms = int(time_sec * 1000)
+    LQI = 85
+    RSSI = -90
+    channel = 20
+    num_nodes = len(order)
+
+#    current_num_packets = {}
+#    for i in range(num_nodes):
+#        for j in range(num_nodes):
+#            if i == j:
+#                continue
+#            current_num_packets[(i, j)] = 0
+
+    for i in range(num_nodes):
+        for j in range(num_nodes):
+            if i == j:
+                continue
+            from_id = i + 1
+            to_id = j + 1
+            key = (from_id, to_id)
+            num_packets = packets_rxed.get(key, 0)
+            num_packets_prev = packets_rxed_prev.get(key, 0)
+            if num_packets != num_packets_prev:
+                pdr = 100.0 * num_packets / NORMAL_PER_ROUND
+                s = "{};setedgex;{}.0;{}.0;{:.1f};{};{}\n".format(
+                    approx_time_ms, from_id, to_id, pdr, RSSI, LQI, channel)
+                outf.write(s)
+        outf.write("\n")
+    outf.write("\n")
+  
 
 def main():
     global NORMAL_PER_ROUND
-    num_associated = 0
+    outfile = OUTFILES[INDEX]
+
+    first_round_start_time = None
+    round_start_time = None
+    packets_rxed_last_round = {}
+    packets_rxed_prev_round = {}
+    
+    nodes_assoc[COORD_NODE_ID] = 1
+    num_associated = 1 
     all_assoc = False
 
-    with open(INFILE, "rt") as f:
+    with open(outfile, "w") as outf:
+      start_trace_file(outf)
+      with open(INFILE, "rt") as f:
         for line in f:
             fields = line.strip().split(";")
             if len(fields) < 3:
                 continue
+            ts = float(fields[0])
             node = fields[1]
             text = fields[2]
             if node not in nodes_assoc:
@@ -222,7 +282,7 @@ def main():
             if "association done" in text:
                 if nodes_assoc[node] == False:
                     nodes_assoc[node] = True
-                    num_associated += 1                    
+                    num_associated += 1
                     if num_associated == len(nodes_assoc):
                         print("all associated")
                         all_assoc = True
@@ -234,24 +294,34 @@ def main():
                     NORMAL_PER_ROUND = int(subfields[2])
                 if "coordinator" in text or node == COORD_NODE_ID:
                     if all_assoc:
-                        print("starting a new round after assoc")
-                        if is_valid_round:
+                        #print("starting a new round after assoc")
+                        if round_start_time is not None:
                             # end previous round here, if needed
-                            pass
-                        is_valid_round = True
+                            start = round_start_time - first_round_start_time
+                            end = ts - first_round_start_time
+                            time_sec = (start + end) / 2.0
+                            update_trace_file(packets_rxed_last_round, packets_rxed_prev_round, time_sec, outf)
+                        # for the next round
+                        round_start_time = ts
+                        if first_round_start_time is None:
+                            first_round_start_time = ts
+                        packets_rxed_prev_round = dict(packets_rxed_last_round)
+                        packets_rxed_last_round = {}
                 continue
             #1569917003.937725;m3-239;8: 30 total
             if " total" in text:
                 subfields = text.split()
-                to_order = order[node]
                 from_order = int(subfields[0][:-1])
+                to_order = order[node]
                 #print("from=", subfields[0], from_order)
-                if to_order >= 32 or from_order >= 32:
+                if to_order > num_nodes or from_order > num_nodes:
+                    #print("ignoring bad node IDs at line " + line)
                     continue
                 if to_order != from_order:
                     num_packets = int(subfields[1])
                     key = (from_order,to_order)
                     packets_rxed[key] = packets_rxed.get(key, 0) + num_packets
+                    packets_rxed_last_round[key] = packets_rxed_last_round.get(key, 0) + num_packets
                     rounds_rxed[key] = rounds_rxed.get(key, 0) + 1
 
     process_packet_stats()
