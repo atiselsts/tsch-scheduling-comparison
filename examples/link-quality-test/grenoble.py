@@ -22,23 +22,32 @@ def printall(nodes, x, y, maxd):
             break
         print(xi, yi, nodeid)
 
-def print_only_subset(nodes, x, y, maxd, mindist):
+def print_only_subset(nodes, x, y, maxd, min_dist, min_dist_from_coord = 0):
     bydist = get_by_dist(nodes, x, y)
     # find the closest first
     (_, real_coordinator_x, real_coordinator_y, real_coordinator_id, _) = bydist[0]
     print("using coordinator ", real_coordinator_x, real_coordinator_y, real_coordinator_id)
 
-    selected = [bydist[0]]
+    coord = bydist[0]
+    selected = [coord]
     for node in bydist[1:]:
         d_to_coord, x, y, _, _ = node
         if d_to_coord >= maxd:
             break
         ok = True
-        for _, xi, yi, _, _ in selected:
+        if min_dist > 0:
+            # filter by minimal dist from all selected
+            for _, xi, yi, _, _ in selected:
+                d = ((xi - x) ** 2 + (yi - y) ** 2) ** 0.5
+                if d < min_dist:
+                    ok = False
+                    break
+        if min_dist_from_coord > 0:
+            _, xi, yi, _, _ = coord
             d = ((xi - x) ** 2 + (yi - y) ** 2) ** 0.5
-            if d < mindist:
+            if d < min_dist_from_coord:
                 ok = False
-                break
+            
         if ok:
             # far enough from all, add this one
             selected.append(node)
@@ -52,7 +61,7 @@ def print_only_subset(nodes, x, y, maxd, mindist):
         m3ids.append(m3id)
     # remove the "m3-" bit
     im3ids = [int(u[3:]) for u in m3ids]
-    print("+".join([str(u) for u in sorted(im3ids)]))
+    print("export nodes='" + "+".join([str(u) for u in sorted(im3ids)]) + "'")
 
     print("C code:")
     for d, xi, yi, nodeid, m3id in selected:
@@ -79,11 +88,17 @@ def main():
             y = float(fields[7])
             nodes.append((x, y, nodeid, m3id))
 
-    # sparse (3.1 neighbors per node)
+    # sparse (2.5-3 neighbors per node)
     #print_only_subset(nodes, coordinator_x, coordinator_y, 100, 5)
 
-    # dense
-    print_only_subset(nodes, coordinator_x, coordinator_y, 30, 2.45)
+    # sparse 
+    print_only_subset(nodes, coordinator_x, coordinator_y, 100, 3.5)
+
+    # dense (5-6 neighbors per node)
+    #print_only_subset(nodes, coordinator_x, coordinator_y, 30, 2.45)
+
+    # dense (10-11 neighbors per node)
+    #print_only_subset(nodes, coordinator_x, coordinator_y, 30, 1, 2.5)
 
 if __name__ == "__main__":
     main()
