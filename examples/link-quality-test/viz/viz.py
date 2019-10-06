@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import os
+
 INDEX = 3
 
 INFILES = [
@@ -15,6 +17,8 @@ OUTFILES = [
     "trace-6-neigh.txt",
     "trace-10-neigh.txt",
 ]
+
+OUTDIR = "../traces"
 
 nodes_assoc = {}
 
@@ -169,6 +173,9 @@ num_nodes = len(order)
 
 NORMAL_PER_ROUND = None
 
+# XXX: at the moment, the channel info from the trace file is not fully used
+DEFAULT_CHANNELS = [15, 20, 25, 26]
+
 def process_packet_stats():
     links = {}
     prev_from = -1
@@ -224,17 +231,14 @@ def start_trace_file(outf):
 #0;setedgex;105.0;122.0;80;-92;85;18
 def update_trace_file(packets_rxed, packets_rxed_prev, time_sec, outf):
     approx_time_ms = int(time_sec * 1000)
+    if approx_time_ms == 0:
+        # all nodes are added at time 0;
+        # to make sure that happens before the links are added, set this to 1 ms minimum
+        approx_time_ms = 1
     LQI = 85
     RSSI = -90
-    channel = 20
+#    channel = 20
     num_nodes = len(order)
-
-#    current_num_packets = {}
-#    for i in range(num_nodes):
-#        for j in range(num_nodes):
-#            if i == j:
-#                continue
-#            current_num_packets[(i, j)] = 0
 
     for i in range(num_nodes):
         for j in range(num_nodes):
@@ -247,9 +251,10 @@ def update_trace_file(packets_rxed, packets_rxed_prev, time_sec, outf):
             num_packets_prev = packets_rxed_prev.get(key, 0)
             if num_packets != num_packets_prev:
                 pdr = 100.0 * num_packets / NORMAL_PER_ROUND
-                s = "{};setedgex;{}.0;{}.0;{:.1f};{};{}\n".format(
-                    approx_time_ms, from_id, to_id, pdr, RSSI, LQI, channel)
-                outf.write(s)
+                for channel in DEFAULT_CHANNELS:
+                    s = "{};setedgex;{}.0;{}.0;{:.1f};{};{};{}\n".format(
+                        approx_time_ms, from_id, to_id, pdr, RSSI, LQI, channel)
+                    outf.write(s)
         outf.write("\n")
     outf.write("\n")
   
@@ -267,7 +272,7 @@ def main():
     num_associated = 1 
     all_assoc = False
 
-    with open(outfile, "w") as outf:
+    with open(os.path.join(OUTDIR, outfile), "w") as outf:
       start_trace_file(outf)
       with open(INFILE, "rt") as f:
         for line in f:
@@ -299,7 +304,12 @@ def main():
                             # end previous round here, if needed
                             start = round_start_time - first_round_start_time
                             end = ts - first_round_start_time
-                            time_sec = (start + end) / 2.0
+                            if 0:
+                                # use the midpoint
+                                time_sec = (start + end) / 2.0
+                            else:
+                                # use the starting time of the test - allows to get results sooner.
+                                time_sec = start
                             update_trace_file(packets_rxed_last_round, packets_rxed_prev_round, time_sec, outf)
                         # for the next round
                         round_start_time = ts
@@ -327,5 +337,9 @@ def main():
     process_packet_stats()
 
 if __name__ == "__main__":
+    try:
+        os.mkdir(OUTDIR)
+    except:
+        pass
     main()
     print("all done")
