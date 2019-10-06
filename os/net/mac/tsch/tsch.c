@@ -138,6 +138,8 @@ static clock_time_t tsch_current_ka_timeout;
 /* timer for sending keepalive messages */
 static struct ctimer keepalive_timer;
 
+static volatile uint8_t do_update_keepalive;
+
 /* Statistics on the current session */
 unsigned long tx_count;
 unsigned long rx_count;
@@ -183,11 +185,8 @@ void
 tsch_set_ka_timeout(uint32_t timeout)
 {
   tsch_current_ka_timeout = timeout;
-  if(timeout == 0) {
-    ctimer_stop(&keepalive_timer);
-  } else {
-    tsch_schedule_keepalive();
-  }
+  do_update_keepalive = 1;
+  process_poll(&tsch_pending_events_process);
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -332,6 +331,13 @@ tsch_schedule_keepalive(void)
       + random_rand() % (tsch_current_ka_timeout / 10);
     ctimer_set(&keepalive_timer, delay, keepalive_send, NULL);
   }
+}
+/*---------------------------------------------------------------------------*/
+void
+tsch_schedule_keepalive_async(void)
+{
+  do_update_keepalive = 1;
+  process_poll(&tsch_pending_events_process);
 }
 /*---------------------------------------------------------------------------*/
 /* Set ctimer to send a keepalive message immediately */
@@ -536,6 +542,19 @@ tsch_tx_process_pending(void)
     tsch_queue_free_unused_neighbors();
     /* Remove dequeued packet from ringbuf */
     ringbufindex_get(&dequeued_ringbuf);
+  }
+}
+/*---------------------------------------------------------------------------*/
+static void
+tsch_keepalive_process_pending(void)
+{
+  if(do_update_keepalive) {
+    do_update_keepalive = 0;
+    if(tsch_current_ka_timeout == 0) {
+      ctimer_stop(&keepalive_timer);
+    } else {
+      tsch_schedule_keepalive();
+    }
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -935,6 +954,7 @@ PROCESS_THREAD(tsch_pending_events_process, ev, data)
     tsch_rx_process_pending();
     tsch_tx_process_pending();
     tsch_log_process_pending();
+    tsch_keepalive_process_pending();
 #ifdef TSCH_CALLBACK_SELECT_CHANNELS
     TSCH_CALLBACK_SELECT_CHANNELS();
 #endif

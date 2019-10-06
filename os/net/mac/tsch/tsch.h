@@ -232,6 +232,12 @@ void tsch_set_pan_secured(int enable);
   */
 void tsch_schedule_keepalive(void);
 /**
+  * Interrupt safe-version of tsch_schedule_keepalive().
+  * Defers the actual scheduling until execution switches to process context.
+  * @see tsch_schedule_keepalive
+  */
+void tsch_schedule_keepalive_async(void);
+/**
   * Schedule a keep-alive immediately
   */
 void tsch_schedule_keepalive_immediately(void);
