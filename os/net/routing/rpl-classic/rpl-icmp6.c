@@ -467,6 +467,17 @@ dio_input(void)
 
   rpl_process_dio(&from, &dio);
 
+#if ORCHESTRA_ROOT_RULE
+  if(dio.rank == dio.dag_min_hoprankinc) {
+    /* The sender is a root; add it to TSCH roots to make sure we add TSCH links to it correctly */
+    const uip_lladdr_t *source;
+    source = uip_ds6_nbr_lladdr_from_ipaddr(&from);
+    if(source != NULL) {
+      orchestra_set_root_address((linkaddr_t *)source);
+    }
+  }
+#endif
+
 discard:
   uipbuf_clear();
 }
@@ -1334,7 +1345,7 @@ dao_ack_input(void)
   } else if(RPL_IS_STORING(instance)) {
     /* this DAO ACK should be forwarded to another recently registered route */
     uip_ds6_route_t *re;
-    uip_ipaddr_t *nexthop;
+    const uip_ipaddr_t *nexthop; //ksh.. attach const
     if((re = find_route_entry_by_dao_ack(sequence)) != NULL) {
       /* pick the recorded seq no from that node and forward DAO ACK - and
          clear the pending flag*/

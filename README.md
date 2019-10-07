@@ -1,3 +1,35 @@
+# ALICE on Contiki-NG
+
+ALICE supports both Contiki and Contiki-NG !
+In this version (Contiki-NG), ALICE runs even in the Cooja simulator.
+
+ALICE example code location: ./examples/6tisch/simple-node-ksh/
+
+ALICE source code location: ./os/services/alice/
+
+
+# ALICE
+
+ALICE is an autonomous link-based TSCH cell scheduling solution. ALICE uses Contiki Orchestra code as its skeleton code. ALICE uses three slotframes (EB, broadcast/default and unicast) as Orchestra does. The main difference is unicast slotframe schedule which implements time-varying scheduling and link-based scheduling.
+
+ALICE source code location: ./os/services/alice/ and ./core/net/mac/tsch/ 
+
+ALICE example code location: ./examples/6tisch/simple-node-ksh
+
+When using this source code, please cite the following paper:
+
+Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, ALICE: Autonomous Link-based Cell Scheduling for TSCH, In the 18th ACM/IEEE International Conference on Information Processing in Sensor Networks (IPSN'19), April 16-18, 2019, Montreal, Canada.
+
+
+
+
+
+
+
+
+
+# Contiki-NG: The OS for Next Generation IoT Devices
+
 <img src="https://github.com/contiki-ng/contiki-ng.github.io/blob/master/images/logo/Contiki_logo_2RGB.png" alt="Logo" width="256">
 
 # Contiki-NG: The OS for Next Generation IoT Devices

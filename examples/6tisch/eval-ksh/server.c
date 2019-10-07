@@ -27,55 +27,61 @@
  * SUCH DAMAGE.
  *
  */
-
 /**
+ * \file
+ *         A RPL+TSCH node able to act as either a simple node (6ln),
+ *         DAG Root (6dr) or DAG Root with security (6dr-sec)
+ *         Press use button at startup to configure.
+ *
  * \author Simon Duquennoy <simonduq@sics.se>
  */
 
-#ifndef PROJECT_CONF_H_
-#define PROJECT_CONF_H_
+#include "contiki.h"
+#include "sys/node-id.h"
+#include "sys/log.h"
+#include "net/ipv6/uip-ds6-route.h"
+#include "net/ipv6/uip-sr.h"
+#include "net/mac/tsch/tsch.h"
+#include "net/routing/routing.h"
 
-/* Set to enable TSCH security */
-#ifndef WITH_SECURITY
-#define WITH_SECURITY 0
-#endif /* WITH_SECURITY */
+#define DEBUG DEBUG_PRINT
+#include "net/ipv6/uip-debug.h"
 
-/* USB serial takes space, free more space elsewhere */
-#define SICSLOWPAN_CONF_FRAG 0
-#define UIP_CONF_BUFFER_SIZE 160
+/*---------------------------------------------------------------------------*/
+PROCESS(node_process, "RPL Node");
+AUTOSTART_PROCESSES(&node_process);
 
-/*******************************************************/
-/******************* Configure TSCH ********************/
-/*******************************************************/
+/*---------------------------------------------------------------------------*/
+PROCESS_THREAD(node_process, ev, data)
+{
 
-/* IEEE802.15.4 PANID */
-#define IEEE802154_CONF_PANID 0x81a5
 
-/* Do not start TSCH at init, wait for NETSTACK_MAC.on() */
-#define TSCH_CONF_AUTOSTART 0
+  PROCESS_BEGIN();
 
-/* 6TiSCH minimal schedule length.
- * Larger values result in less frequent active slots: reduces capacity and saves energy. */
-#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH 3
 
-#if WITH_SECURITY
+    NETSTACK_ROUTING.root_start();
 
-/* Enable security */
-#define LLSEC802154_CONF_ENABLED 1
+  NETSTACK_MAC.on();
 
-#endif /* WITH_SECURITY */
+#if WITH_PERIODIC_ROUTES_PRINT
+  {
+    static struct etimer et;
+    /* Print out routing tables every minute */
+    etimer_set(&et, CLOCK_SECOND * 60);
+    while(1) {
+      /* Used for non-regression testing */
+      #if (UIP_MAX_ROUTES != 0)
+        PRINTF("Routing entries: %u\n", uip_ds6_route_num_routes());
+      #endif
+      #if (UIP_SR_LINK_NUM != 0)
+        PRINTF("Routing links: %u\n", uip_sr_num_nodes());
+      #endif
+      PROCESS_YIELD_UNTIL(etimer_expired(&et));
+      etimer_reset(&et);
+    }
+  }
+#endif /* WITH_PERIODIC_ROUTES_PRINT */
 
-/*******************************************************/
-/************* Other system configuration **************/
-/*******************************************************/
-
-/* Logging */
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_TCPIP                     0//  LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_IPV6                      0//  LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_6LOWPAN                   0//  LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_MAC                       0//  LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_FRAMER                    0//  LOG_LEVEL_DBG
-#define TSCH_LOG_CONF_PER_SLOT                   0//  1
-
-#endif /* PROJECT_CONF_H_ */
+  PROCESS_END();
+}
+/*---------------------------------------------------------------------------*/

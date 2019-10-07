@@ -111,6 +111,17 @@ const linkaddr_t tsch_broadcast_address = { { 0xff, 0xff } };
 const linkaddr_t tsch_eb_address = { { 0, 0 } };
 #endif /* LINKADDR_SIZE == 8 */
 
+
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START//ksh..
+uint16_t currSFID=0;
+uint16_t nextSFID=0;
+uint16_t limitSFID=0;
+#endif
+
+
+
+
+
 /* Is TSCH started? */
 int tsch_is_started = 0;
 /* Has TSCH initialization failed? */
@@ -156,6 +167,19 @@ PROCESS(tsch_pending_events_process, "pending events process");
 /* Other function prototypes */
 static void packet_input(void);
 
+
+/*---------------------------------------------------------------------------*///ksh..
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+//returns the current SFID for ALICE
+uint16_t alice_tsch_schedule_get_current_sfid(struct tsch_slotframe *sf){
+  uint16_t mod=TSCH_ASN_MOD(tsch_current_asn, sf->size);
+  struct tsch_asn_t newasn;
+  TSCH_ASN_COPY(newasn, tsch_current_asn);
+  TSCH_ASN_DEC(newasn, mod);
+  return TSCH_ASN_DEVISION(newasn, sf->size);
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* Getters and setters */
 
 /*---------------------------------------------------------------------------*/

@@ -95,12 +95,14 @@
 #define FIRMWARE_TYPE_ORCHESTRA_RB_NS 3
 /* receiver based, nonstoring Orchestra, storing RPL */
 #define FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR 4
-/* in the future - when implemented */
-#define FIRMWARE_TYPE_ALICE 5
-/* in the future - when implemented */
+/* link based */
+#define FIRMWARE_TYPE_LINK 5
+/* MSF (version 03) */
 #define FIRMWARE_TYPE_MSF 6
-/* in the future - when implemented */
+/* extended MSF (modification of the version 03) */
 #define FIRMWARE_TYPE_EMSF 7
+/* ALICE as implemented by S.Kim */
+#define FIRMWARE_TYPE_ALICE 8
 
 /*******************************************************/
 /******************* Configure Orchestra ***************/
@@ -115,7 +117,7 @@
 
 /* Enable special rule for root? */
 #ifndef ORCHESTRA_CONF_ROOT_RULE
-#define ORCHESTRA_CONF_ROOT_RULE 1
+#define ORCHESTRA_CONF_ROOT_RULE 0
 #endif
 
 /* Select Orchestra rules depending on the schedule type */
@@ -128,15 +130,17 @@
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS || FIRMWARE_TYPE == FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR
 /* include the non-storing rule */
 #  define FIRMWARE_UNICAST_RULE unicast_per_neighbor_rpl_ns
-#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
-/* include the alice rule */
-#  define FIRMWARE_UNICAST_RULE unicast_alice
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_LINK
+/* include the link rule */
+#  define FIRMWARE_UNICAST_RULE unicast_link
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_MSF
 /* include the msf rule */
 #  define FIRMWARE_UNICAST_RULE unicast_msf
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_EMSF
 /* include the emsf rule */
 #  define FIRMWARE_UNICAST_RULE unicast_emsf
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE
+/* will define its own scheduler */
 #endif
 
 /* Enable multiple channels? */
@@ -149,10 +153,29 @@
 #define TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO 1
 #endif
 
+#if FIRMWARE_TYPE != FIRMWARE_TYPE_ALICE
 /* For root: the root rule (Rx) comes last */
-#define ORCHESTRA_CONF_RULES_ROOT { &eb_per_time_source, &FIRMWARE_UNICAST_RULE, &default_common, &special_for_root }
+# define ORCHESTRA_CONF_RULES_ROOT { &eb_per_time_source, &FIRMWARE_UNICAST_RULE, &default_common, &special_for_root }
 /* For other nodes: root rule (Tx) comes before the unicast neigbhor rules and the default rule */
-#define ORCHESTRA_CONF_RULES_NONROOT { &eb_per_time_source, &special_for_root, &FIRMWARE_UNICAST_RULE, &default_common }
+# define ORCHESTRA_CONF_RULES_NONROOT { &eb_per_time_source, &special_for_root, &FIRMWARE_UNICAST_RULE, &default_common }
+
+#else /* FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE */
+
+/* KSH: alice implementation */
+# define WITH_ALICE   1
+# undef ORCHESTRA_CONF_UNICAST_SENDER_BASED
+# define ORCHESTRA_CONF_UNICAST_SENDER_BASED 1
+# define ALICE_CALLBACK_PACKET_SELECTION alice_callback_packet_selection
+# define ALICE_TSCH_CALLBACK_SLOTFRAME_START alice_callback_slotframe_start
+
+# define ORCHESTRA_CONF_RULES { &eb_per_time_source, &default_common , &unicast_per_neighbor_rpl_storing}
+# define ALICE_UNICAST_SF_ID 2 //slotframe handle of unicast slotframe
+# define ALICE_BROADCAST_SF_ID 1 //slotframe handle of broadcast/default slotframe
+# ifndef MULTIPLE_CHANNEL_OFFSETS
+#  define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. allow multiple channel offsets.
+# endif
+
+#endif /* FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE */
 
 /*******************************************************/
 /*************** Configure other settings **************/

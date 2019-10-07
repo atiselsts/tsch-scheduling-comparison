@@ -70,12 +70,12 @@
 /*******************************************************/
 
 /* Logging */
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_TCPIP                     0//  LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_IPV6                      0//  LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_6LOWPAN                   0//  LOG_LEVEL_WARN
-#define LOG_CONF_LEVEL_MAC                       0//  LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_FRAMER                    0//  LOG_LEVEL_DBG
-#define TSCH_LOG_CONF_PER_SLOT                   0//  1
+#define LOG_CONF_LEVEL_RPL                       0//  LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_TCPIP                     0//    LOG_LEVEL_WARN
+#define LOG_CONF_LEVEL_IPV6                      0//    LOG_LEVEL_WARN
+#define LOG_CONF_LEVEL_6LOWPAN                   0//    LOG_LEVEL_WARN
+#define LOG_CONF_LEVEL_MAC                       0//    LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_FRAMER                    0//    LOG_LEVEL_DBG
+#define TSCH_LOG_CONF_PER_SLOT                   0//    1
 
 #endif /* PROJECT_CONF_H_ */

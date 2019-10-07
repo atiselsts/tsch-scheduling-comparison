@@ -19,11 +19,13 @@ FIRMWARE_TYPE_ORCHESTRA_RB_NS=3
 # receiver based, nonstoring Orchestra, storing RPL
 FIRMWARE_TYPE_ORCHESTRA_RB_NS_SR=4
 # needs storing routing
-FIRMWARE_TYPE_ALICE=5
+FIRMWARE_TYPE_LINK=5
 # needs storing routing
 FIRMWARE_TYPE_MSF=6
 # needs storing routing
 FIRMWARE_TYPE_EMSF=7
+# needs storing routing
+FIRMWARE_TYPE_ALICE=8
 
 # Other things that can be turned on or off for the experiments:
 # - the burst bit
@@ -33,7 +35,8 @@ FIRMWARE_TYPE_EMSF=7
 # - "ideal rule" - performance when there's an oracle that tells the nodes when to allocate / deallocate cells. need to think how to implement this (perhaps always listen, but hack the energest module somehow?). or estimate this via the number of empty cells or similarly (e.g. collisions based on logs that include the ASN)
 
 ifndef FIRMWARE_TYPE
-  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ORCHESTRA_SB)
+#  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ORCHESTRA_SB)
+  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ALICE)
 endif
 
 ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ORCHESTRA_RB_NS))
@@ -55,9 +58,10 @@ CONTIKI=../../..
 MAKE_MAC = MAKE_MAC_TSCH
 MAKE_ROUTING = MAKE_ROUTING_RPL_CLASSIC
 
-# Orchestra? (Always enabled)
-MAKE_WITH_ORCHESTRA ?= 1
-ifeq ($(MAKE_WITH_ORCHESTRA),1)
+# Orchestra or ALICE?
+ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ALICE))
+MODULES += os/services/alice
+else
 MODULES += os/services/orchestra
 endif
 
