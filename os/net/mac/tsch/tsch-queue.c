@@ -233,6 +233,14 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   struct tsch_neighbor *n = NULL;
   int16_t put_index = -1;
   struct tsch_packet *p = NULL;
+
+#ifdef TSCH_CALLBACK_PACKET_READY
+  if(TSCH_CALLBACK_PACKET_READY() < 0) {
+    LOG_DBG("tsch_queue_add_packet(): rejected\n");
+    return NULL;
+  }
+#endif
+
   if(!tsch_is_locked()) {
     n = tsch_queue_add_nbr(addr);
     if(n != NULL) {
@@ -241,9 +249,6 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
         p = memb_alloc(&packet_memb);
         if(p != NULL) {
           /* Enqueue packet */
-#ifdef TSCH_CALLBACK_PACKET_READY
-          TSCH_CALLBACK_PACKET_READY();
-#endif
           p->qb = queuebuf_new_from_packetbuf();
           if(p->qb != NULL) {
             p->sent = sent;
@@ -255,7 +260,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             n->tx_array[put_index] = p;
             ringbufindex_put(&n->tx_ringbuf);
             LOG_DBG("packet is added put_index %u, packet %p\n",
-                   put_index, p);
+                put_index, p);
             return p;
           } else {
             memb_free(&packet_memb, p);
@@ -265,7 +270,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     }
   }
   LOG_ERR("! add packet failed: %u %p %d %p %p\n", tsch_is_locked(), n, put_index, p, p ? p->qb : NULL);
-  return 0;
+  return NULL;
 }
 /*---------------------------------------------------------------------------*/
 /* Returns the number of packets currently in any TSCH queue */
@@ -343,7 +348,6 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
       /* Drop packet */
-      printf("tx limit to %u\n", n->addr.u8[7]);
       tsch_queue_remove_packet_from_queue(n);
       in_queue = 0;
     }

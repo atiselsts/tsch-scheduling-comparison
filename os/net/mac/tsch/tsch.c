@@ -138,6 +138,8 @@ static clock_time_t tsch_current_ka_timeout;
 /* timer for sending keepalive messages */
 static struct ctimer keepalive_timer;
 
+static volatile uint8_t do_update_keepalive;
+
 /* Statistics on the current session */
 unsigned long tx_count;
 unsigned long rx_count;
@@ -183,11 +185,8 @@ void
 tsch_set_ka_timeout(uint32_t timeout)
 {
   tsch_current_ka_timeout = timeout;
-  if(timeout == 0) {
-    ctimer_stop(&keepalive_timer);
-  } else {
-    tsch_schedule_keepalive();
-  }
+  do_update_keepalive = 1;
+  process_poll(&tsch_pending_events_process);
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -334,6 +333,13 @@ tsch_schedule_keepalive(void)
   }
 }
 /*---------------------------------------------------------------------------*/
+void
+tsch_schedule_keepalive_async(void)
+{
+  do_update_keepalive = 1;
+  process_poll(&tsch_pending_events_process);
+}
+/*---------------------------------------------------------------------------*/
 /* Set ctimer to send a keepalive message immediately */
 void
 tsch_schedule_keepalive_immediately(void)
@@ -342,6 +348,31 @@ tsch_schedule_keepalive_immediately(void)
   if(!tsch_is_coordinator && tsch_is_associated) {
     ctimer_set(&keepalive_timer, 0, keepalive_send, NULL);
   }
+}
+/*---------------------------------------------------------------------------*/
+int
+tsch_send_eb(void)
+{
+  uint8_t hdr_len = 0;
+  uint8_t tsch_sync_ie_offset;
+  /* Prepare the EB packet and schedule it to be sent */
+  if(tsch_packet_create_eb(&hdr_len, &tsch_sync_ie_offset) > 0) {
+    struct tsch_packet *p;
+    /* Enqueue EB packet, for a single transmission only */
+    if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
+      LOG_ERR("! could not enqueue EB packet\n");
+      return -1;
+    } else {
+      LOG_INFO("TSCH: enqueue EB packet %u %u\n",
+               packetbuf_totlen(), packetbuf_hdrlen());
+      p->tsch_sync_ie_offset = tsch_sync_ie_offset;
+      p->header_len = hdr_len;
+    }
+  } else {
+    return -1;
+  }
+
+  return 0;
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -365,10 +396,16 @@ eb_input(struct input_packet *current_input)
       last_eb_nbr_jp = eb_ies.ie_join_priority;
     }
 
+#ifdef TSCH_EB_INPUT_CALLBACK
+    TSCH_EB_INPUT_CALLBACK((const linkaddr_t *)&frame.src_addr, current_input->channel);
+#endif
+
+#if BUILD_WITH_ORCHESTRA
     /* If from the root, let Orchestra know the root's address */
     if(eb_ies.ie_join_priority == 0) {
       orchestra_set_root_address((linkaddr_t *)&frame.src_addr);
     }
+#endif
 
 #if TSCH_AUTOSELECT_TIME_SOURCE
     if(!tsch_is_coordinator) {
@@ -508,6 +545,19 @@ tsch_tx_process_pending(void)
   }
 }
 /*---------------------------------------------------------------------------*/
+static void
+tsch_keepalive_process_pending(void)
+{
+  if(do_update_keepalive) {
+    do_update_keepalive = 0;
+    if(tsch_current_ka_timeout == 0) {
+      ctimer_stop(&keepalive_timer);
+    } else {
+      tsch_schedule_keepalive();
+    }
+  }
+}
+/*---------------------------------------------------------------------------*/
 /* Setup TSCH as a coordinator */
 static void
 tsch_start_coordinator(void)
@@ -555,10 +605,12 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
     return 0;
   }
 
+#if BUILD_WITH_ORCHESTRA
   /* If from the root, let Orchestra know the root's address */
   if(ies.ie_join_priority == 0) {
     orchestra_set_root_address((linkaddr_t *)&frame.src_addr);
   }
+#endif
 
   tsch_current_asn = ies.ie_asn;
   tsch_join_priority = ies.ie_join_priority + 1;
@@ -862,7 +914,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
 
   /* Set an initial delay except for coordinator, which should send an EB asap */
   if(!tsch_is_coordinator) {
-    etimer_set(&eb_timer, random_rand() % TSCH_EB_PERIOD);
+    etimer_set(&eb_timer, TSCH_EB_PERIOD ? random_rand() % TSCH_EB_PERIOD : 0);
     PROCESS_WAIT_UNTIL(etimer_expired(&eb_timer));
   }
 
@@ -875,24 +927,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       && TSCH_RPL_CHECK_DODAG_JOINED()
 #endif /* TSCH_RPL_CHECK_DODAG_JOINED */
         ) {
-      /* Enqueue EB only if there isn't already one in queue */
-      if(tsch_queue_packet_count(&tsch_eb_address) == 0) {
-        uint8_t hdr_len = 0;
-        uint8_t tsch_sync_ie_offset;
-        /* Prepare the EB packet and schedule it to be sent */
-        if(tsch_packet_create_eb(&hdr_len, &tsch_sync_ie_offset) > 0) {
-          struct tsch_packet *p;
-          /* Enqueue EB packet, for a single transmission only */
-          if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
-            LOG_ERR("! could not enqueue EB packet\n");
-          } else {
-              LOG_INFO("TSCH: enqueue EB packet %u %u\n",
-                       packetbuf_totlen(), packetbuf_hdrlen());
-            p->tsch_sync_ie_offset = tsch_sync_ie_offset;
-            p->header_len = hdr_len;
-          }
-        }
-      }
+      tsch_send_eb();
     }
     if(tsch_current_eb_period > 0) {
       /* Next EB transmission with a random delay
@@ -919,6 +954,7 @@ PROCESS_THREAD(tsch_pending_events_process, ev, data)
     tsch_rx_process_pending();
     tsch_tx_process_pending();
     tsch_log_process_pending();
+    tsch_keepalive_process_pending();
 #ifdef TSCH_CALLBACK_SELECT_CHANNELS
     TSCH_CALLBACK_SELECT_CHANNELS();
 #endif

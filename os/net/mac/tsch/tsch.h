@@ -140,7 +140,7 @@ void TSCH_CALLBACK_NEW_TIME_SOURCE(const struct tsch_neighbor *old, const struct
 
 /* Called by TSCH every time a packet is ready to be added to the send queue */
 #ifdef TSCH_CALLBACK_PACKET_READY
-void TSCH_CALLBACK_PACKET_READY(void);
+int TSCH_CALLBACK_PACKET_READY(void);
 #endif
 
 /***** External Variables *****/
@@ -232,6 +232,12 @@ void tsch_set_pan_secured(int enable);
   */
 void tsch_schedule_keepalive(void);
 /**
+  * Interrupt safe-version of tsch_schedule_keepalive().
+  * Defers the actual scheduling until execution switches to process context.
+  * @see tsch_schedule_keepalive
+  */
+void tsch_schedule_keepalive_async(void);
+/**
   * Schedule a keep-alive immediately
   */
 void tsch_schedule_keepalive_immediately(void);
@@ -246,9 +252,17 @@ uint64_t tsch_get_network_uptime_ticks(void);
   */
 void tsch_disassociate(void);
 
+int tsch_send_eb(void);
+
+#ifdef TSCH_EB_INPUT_CALLBACK
+void TSCH_EB_INPUT_CALLBACK(const linkaddr_t *src, uint8_t channel);
+#endif
+
 extern uint8_t tsch_failed;
 
+#if BUILD_WITH_ORCHESTRA
 void orchestra_set_root_address(linkaddr_t *root);
+#endif
 
 #endif /* __TSCH_H__ */
 /** @} */
