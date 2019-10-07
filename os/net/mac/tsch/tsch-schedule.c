@@ -446,12 +446,14 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
         }
         linkaddr_copy(&l->addr, address);
 
-        LOG_INFO("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
+        /*
+        LOG_DBG("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                  slotframe->handle,
                  print_link_options(link_options),
                  print_link_type(link_type), timeslot, channel_offset);
-        LOG_INFO_LLADDR(address);
-        LOG_INFO_("\n");
+        LOG_DBG_LLADDR(address);
+        LOG_DBG_("\n");
+        */
         /* Release the lock before we update the neighbor (will take the lock) */
         tsch_release_lock();
 
@@ -496,12 +498,14 @@ tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
       if(l == current_link) {
         current_link = NULL;
       }
+#ifndef BUILD_WITH_ALICE
       LOG_INFO("remove_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                slotframe->handle,
                print_link_options(l->link_options),
                print_link_type(l->link_type), l->timeslot, l->channel_offset);
       LOG_INFO_LLADDR(&l->addr);
       LOG_INFO_("\n");
+#endif
 
       list_remove(slotframe->links_list, l);
       memb_free(&link_memb, l);

@@ -2,7 +2,7 @@
 <simconf>
   <simulation>
     <title>Example</title>
-    <randomseed>9</randomseed>
+    <randomseed>1</randomseed>
     <motedelay_us>0</motedelay_us>
     <radiomedium>se.sics.cooja.radiomediums.DirectedGraphMedium</radiomedium>
     <events>
@@ -100,6 +100,13 @@
     <location_y>4</location_y>
   </plugin>
   <plugin>
+    org.contikios.cooja.plugins.RealSimFile
+    <plugin_config>
+      <Filename>[CONTIKI_DIR]/examples/link-quality-test/traces/trace-4-neigh.txt</Filename>
+      <Load>true</Load>
+    </plugin_config>
+  </plugin>
+  <plugin>
     org.contikios.cooja.plugins.ScriptRunner
     <plugin_config>
       <scriptfile>[CONTIKI_DIR]/examples/autonomous/coojalogger.js</scriptfile>
@@ -110,13 +117,6 @@
     <height>427</height>
     <location_x>3</location_x>
     <location_y>404</location_y>
-  </plugin>
-  <plugin>
-    org.contikios.cooja.plugins.RealSimFile
-    <plugin_config>
-      <Filename>[CONTIKI_DIR]/../examples/link-quality-test/traces/trace-4-neigh.txt</Filename>
-      <Load>true</Load>
-    </plugin_config>
   </plugin>
 </simconf>
 

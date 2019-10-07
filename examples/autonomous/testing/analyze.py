@@ -449,7 +449,7 @@ def load_all(data_directory):
                                             "si_{}".format(si),
                                             "sf_{}".format(sf),
                                             exp,
-                                            "sim-{}-neigh-new-*".format(nn))
+                                            "sim-{}-neigh-realsim-*".format(nn))
 
                         for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
                             resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
@@ -600,12 +600,12 @@ def main():
         pass
 
     data1 = ensure_loaded(DATA_FILE, DATA_DIRECTORY)
-    data2 = ensure_loaded(DATA_FILE2, DATA_DIRECTORY2)
+#    data2 = ensure_loaded(DATA_FILE2, DATA_DIRECTORY2)
 
     for exp in EXPERIMENTS:
-#        plot_all(data1, exp)
+        plot_all(data1, exp)
 #        plot_best_per_send_frequency(data1, exp)
-        plot_comparative_runs(data1, data2, exp)
+#        plot_comparative_runs(data1, data2, exp)
 
 ###########################################
 

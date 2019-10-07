@@ -95,7 +95,7 @@ def main():
     # sparse, medium, and dense networks - depending on the neighbor count
     wildcards = []
     for nn in NUM_NEIGHBORS:
-        wildcards.append("sim-{}-neigh*.csc".format(nn))
+        wildcards.append("sim-{}-neigh-realsim-*.csc".format(nn))
 
     all_directories = []
     dirname1 = OUT_DIRECTORY

@@ -5,12 +5,12 @@ SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ALGORITHMS = [
     "orchestra_sb", # 1
-    "orchestra_rb_s", # 2
+#    "orchestra_rb_s", # 2
     "orchestra_rb_ns", # 3
     #"orchestra_rb_ns_sr", # 4
     "link", # 5
-    "msf", # 6
-    "emsf", # 7
+ #   "msf", # 6
+#    "emsf", # 7
     "alice", # 8
 ]
 
@@ -68,17 +68,17 @@ FIRMWARE_TYPES = {
 
 EXPERIMENTS = [
     "exp-collection",
-    "exp-query",
-    "exp-local"
+#    "exp-query",
+#    "exp-local"
 ]
 
 SLOTFRAME_SIZES_A =[
-    7,  # initial
-    11, # =7+4
+#    7,  # initial
+#    11, # =7+4
     19, # =11+8
-    35, # =19+16
-    67, # =35+32
-    101 # =67+34
+ #   35, # =19+16
+#    67, # =35+32
+#    101 # =67+34
 ]
 
 SLOTFRAME_SIZES_B =[
@@ -93,11 +93,11 @@ SLOTFRAME_SIZES = SLOTFRAME_SIZES_A
 
 SEND_INTERVALS = [
     6,   # 10 packets per minute  (6x5^0)
-    30,  # 2 packets per minute   (6x5^1)
-    150  # packet per 2.5 minutes (6x5^2)
+#    30,  # 2 packets per minute   (6x5^1)
+#    150  # packet per 2.5 minutes (6x5^2)
 ]
 
 NUM_NEIGHBORS = [
-    3, # sparse
+    4, # sparse
     10 # dense
 ]
