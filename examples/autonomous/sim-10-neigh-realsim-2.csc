@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simconf>
+  <simulation>
+    <title>Example</title>
+    <randomseed>2</randomseed>
+    <motedelay_us>0</motedelay_us>
+    <radiomedium>se.sics.cooja.radiomediums.DirectedGraphMedium</radiomedium>
+    <events>
+      <logoutput>40000</logoutput>
+    </events>
+    <motetype>
+      org.contikios.cooja.contikimote.ContikiMoteType
+      <identifier>mtype965</identifier>
+      <description>Node</description>
+      <source>[CONFIG_DIR]/node/node.c</source>
+      <commands>make node.cooja -j TARGET=cooja</commands>
+      <moteinterface>org.contikios.cooja.interfaces.Position</moteinterface>
+      <moteinterface>org.contikios.cooja.interfaces.Battery</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiVib</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiMoteID</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRS232</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiBeeper</moteinterface>
+      <moteinterface>org.contikios.cooja.interfaces.RimeAddress</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiIPAddress</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiRadio</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiButton</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiPIR</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiClock</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiLED</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiCFS</moteinterface>
+      <moteinterface>org.contikios.cooja.contikimote.interfaces.ContikiEEPROM</moteinterface>
+      <moteinterface>org.contikios.cooja.interfaces.Mote2MoteRelations</moteinterface>
+      <moteinterface>org.contikios.cooja.interfaces.MoteAttributes</moteinterface>
+      <symbols>false</symbols>
+    </motetype>
+  </simulation>
+  <plugin>
+    org.contikios.cooja.plugins.SimControl
+    <width>229</width>
+    <z>1</z>
+    <height>157</height>
+    <location_x>11</location_x>
+    <location_y>6</location_y>
+  </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.Visualizer
+    <plugin_config>
+      <moterelations>true</moterelations>
+      <skin>org.contikios.cooja.plugins.skins.IDVisualizerSkin</skin>
+      <skin>org.contikios.cooja.plugins.skins.LogisticLossVisualizerSkin</skin>
+      <skin>org.contikios.cooja.plugins.skins.GridVisualizerSkin</skin>
+      <skin>org.contikios.cooja.plugins.skins.TrafficVisualizerSkin</skin>
+      <viewport>1.6246295339393422 0.0 0.0 1.6246295339393422 4.4548165625654566 33.04604345620397</viewport>
+    </plugin_config>
+    <width>234</width>
+    <z>0</z>
+    <height>257</height>
+    <location_x>10</location_x>
+    <location_y>170</location_y>
+  </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.LogListener
+    <plugin_config>
+      <filter />
+      <formatted_time />
+      <coloring />
+    </plugin_config>
+    <width>1074</width>
+    <z>4</z>
+    <height>713</height>
+    <location_x>844</location_x>
+    <location_y>3</location_y>
+  </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.TimeLine
+    <plugin_config>
+      <showRadioRXTX />
+      <showRadioChannels />
+      <showRadioHW />
+      <zoomfactor>140.4158108891898</zoomfactor>
+    </plugin_config>
+    <width>1000</width>
+    <z>3</z>
+    <height>384</height>
+    <location_x>1</location_x>
+    <location_y>716</location_y>
+  </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.RadioLogger
+    <plugin_config>
+      <split>407</split>
+      <formatted_time />
+      <showdups>false</showdups>
+      <hidenodests>false</hidenodests>
+    </plugin_config>
+    <width>595</width>
+    <z>5</z>
+    <height>706</height>
+    <location_x>245</location_x>
+    <location_y>4</location_y>
+  </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.RealSimFile
+    <plugin_config>
+      <Filename>[CONTIKI_DIR]/examples/link-quality-test/traces/trace-10-neigh.txt</Filename>
+      <Load>true</Load>
+    </plugin_config>
+  </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.ScriptRunner
+    <plugin_config>
+      <scriptfile>[CONTIKI_DIR]/examples/autonomous/coojalogger.js</scriptfile>
+      <active>true</active>
+    </plugin_config>
+    <width>457</width>
+    <z>2</z>
+    <height>427</height>
+    <location_x>3</location_x>
+    <location_y>404</location_y>
+  </plugin>
+</simconf>
+
