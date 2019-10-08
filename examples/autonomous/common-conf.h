@@ -16,7 +16,7 @@
 #if CONTIKI_TARGET_COOJA
 #define MAIN_GW_ID 1
 #else
-#define MAIN_GW_ID 33906
+#define MAIN_GW_ID 12385 /* IoT lab in Grenoble, node m3-177 */
 #endif
 #endif
 
@@ -182,12 +182,7 @@
 /*******************************************************/
 
 #ifndef SEND_INTERVAL_SEC
-#define SEND_INTERVAL_SEC 60
+#define SEND_INTERVAL_SEC 6
 #endif
 
 #define WARM_UP_PERIOD_SEC (60 * 30)
-
-#undef RF2XX_WITH_TSCH
-#define RF2XX_WITH_TSCH 1
-#undef RF2XX_SOFT_PREPARE
-#define RF2XX_SOFT_PREPARE 0
