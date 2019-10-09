@@ -43,7 +43,8 @@ def generate_source_dirs(dirname, env, experiments):
     for key in env:
         makefile = makefile.replace("@" + key + "@", str(env[key]))
 
-    makefile = makefile.replace("CONTIKI=../../../../../../../../..", "CONTIKI=../../../../../../../..")
+    contiki = os.path.dirname(os.path.dirname(SELF_PATH))
+    makefile = makefile.replace("CONTIKI=../../../../../../../../..", "CONTIKI=" + contiki)
 
     print("dirname=", dirname)
 
@@ -61,8 +62,9 @@ def generate_source_dirs(dirname, env, experiments):
         # all files go into "node"
         create_out_dir(exp_dirname + "/node")
         subprocess.call("cp ../" + exp + "/project-conf.h " + exp_dirname + "/node", shell=True)
-        subprocess.call("cp ../" + exp + "/Makefile " + exp_dirname + "/node", shell=True)
         subprocess.call("cp ../" + exp + "/node.c " + exp_dirname + "/node", shell=True)
+        with open(exp_dirname + "/node/Makefile", "w") as f:
+            f.write("include " + exp_dirname + "/Makefile.common\n")
     return all_directories
 
 ########################################
@@ -87,14 +89,16 @@ def generate_builder(description, all_directories, do_overwrite):
     with open("compile-" + description + ".sh", open_as) as f:
         if do_overwrite:
             f.write("#!/bin/bash\n")
-        f.write("export BOARD=\n")
+        f.write("export TARGET=iotlab\n")
+        f.write("export BOARD=m3\n")
         f.write("export ARCH_PATH=/home/atis.elsts/work/iot-lab/parts/iot-lab-contiki-ng/arch/\n")
-        f.write("mkdir -p iot-lab\n")
+        f.write("mkdir -p iot-lab-firmwares\n")
         for i, dirname in enumerate(all_directories):
-            f.write("make -c " + dirname + "/node TARGET=iotlab -j || exit -1\n")
             sim_desc = dirname.split("/")[-4:]
             sim_desc = "_".join(sim_desc)
-            f.write("cp " + dirname + "/node/node.iotlab iot-lab/" + sim_desc + ".iotlab\n")
+            f.write("echo building " + sim_desc + "\n")
+            f.write("make -C " + dirname + "/node TARGET=iotlab -j >/dev/null || exit -1\n")
+            f.write("cp " + dirname + "/node/node.iotlab iot-lab-firmwares/" + sim_desc + ".iotlab\n")
         f.write("echo 'all done!'\n")
 
     os.chmod("compile-" + description + ".sh", 0o755)
