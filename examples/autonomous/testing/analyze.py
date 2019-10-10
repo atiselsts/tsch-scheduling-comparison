@@ -36,6 +36,12 @@ OUT_DIR = "../plots"
 DATA_DIRECTORY="../simulations"
 DATA_DIRECTORY2="../simulations-all-enabled"
 
+TESTBED_FILES = [
+    "../iot-lab/alice_sf101_si6.log",
+    "../iot-lab/orchestra_sb_sf101_si6.log",
+    "../iot-lab/orchestra_rb_ns_sf101_si6.log",
+]
+
 DATA_FILE = "cached_data.json"
 DATA_FILE2 = "cached_data2.json"
 
@@ -43,7 +49,8 @@ START_TIME_MINUTES = 30
 END_TIME_MINUTES = 60
 
 # The root node is ignored in the calculations (XXX: maybe should not ignore its PRR?)
-ROOT_ID = 1
+ROOT_ID_SIM = 1
+ROOT_ID_TESTBED = 177
 
 # confidence interval
 CI = 0.9
@@ -226,28 +233,53 @@ class MoteStats:
             print("warning: no radio duty cycle for {}".format(self.id))
             self.rdc = 0.0
 
-def process_file(filename, experiment, send_interval):
+###########################################
+
+def process_file(filename, experiment, send_interval, is_testbed=False):
     motes = {}
     has_assoc = set()
+    node_id_to_mote_id = {}
     print(filename)
 
     in_initialization = True
 
     first_seqnum, last_seqnum = get_seqnums(send_interval)
+    start_ts_unix = None
+
+    ROOT_ID = ROOT_ID_TESTBED if is_testbed else ROOT_ID_SIM
 
     with open(filename, "r") as f:
         for line in f:
-            fields = line.strip().split()
+            if is_testbed:
+                fields1 = line.strip().split(";")
+                fields2 = fields1[2].split()
+                fields = fields1[:2] + fields2
+            else:
+                fields = line.strip().split()
+
             try:
                 # in milliseconds
-                ts = int(fields[0]) // 1000
-                node = int(fields[1]) 
+                if is_testbed:
+                    ts_unix = float(fields[0])
+                    if start_ts_unix is None:
+                        start_ts_unix = ts_unix
+                    ts_unix -= start_ts_unix
+                    ts = int(float(ts_unix) * 1000)
+                    node = int(fields[1][3:])
+                else:
+                    ts = int(fields[0]) // 1000
+                    node = int(fields[1]) 
             except:
                 # failed to extract timestamp
                 continue
 
             if node not in motes:
                 motes[node] = MoteStats(node)
+
+            if is_testbed and "Node ID:" in line:
+                # 1570531244.735377;m3-197;[INFO: Main      ] Node ID: 43378
+                node_id = int(fields[7])
+                node_id_to_mote_id[node_id] = node
 
             if "association done (1" in line:
                 #print(line)
@@ -276,7 +308,9 @@ def process_file(filename, experiment, send_interval):
                     # this is needed to distinguish between "from" and "to" in the query example
                     if fromtext == "from":
                         fromnode = int(fromaddr.split(":")[-1], 16)
-                        if fromnode in has_assoc :
+                        if is_testbed:
+                            fromnode = node_id_to_mote_id.get(fromnode, 0)
+                        if fromnode in has_assoc:
                             # account for the seqnum
                             motes[fromnode].seqnums.add(sn)
                             # print("add sn={} fromnode={}".format(sn, fromnode))
@@ -472,6 +506,7 @@ def load_all(data_directory):
                         if ONLY_MEDIAN:
                             if len(a_pdr_results):
                                 midpoint = len(a_pdr_results) // 2
+                                print("pdr=", sorted(a_pdr_results))
                                 pdr_metric = sorted(a_pdr_results)[midpoint]
                                 prr_metric = sorted(a_prr_results)[midpoint]
                                 rdc_metric = sorted(a_rdc_results)[midpoint]
@@ -593,6 +628,27 @@ def ensure_loaded(data_file, data_directory):
 
 ###########################################
 
+def load_testbed():
+    si = 6
+    exp = "exp-collection"
+    for tf in TESTBED_FILES:
+        r = process_file(tf, exp, si, True)
+
+        t_pdr_results = []
+        t_prr_results = []
+        t_rdc_results = []
+
+        for pdr, prr, rdc in r:
+            t_pdr_results.append(pdr)
+            t_prr_results.append(prr)
+            t_rdc_results.append(rdc)
+
+        pdr = np.mean(t_pdr_results)
+        print(tf, "PDR=", pdr)
+        print("  ", sorted(t_pdr_results))
+
+###########################################
+
 def main():
     try:
         os.mkdir(OUT_DIR)
@@ -600,7 +656,9 @@ def main():
         pass
 
     data1 = ensure_loaded(DATA_FILE, DATA_DIRECTORY)
-#    data2 = ensure_loaded(DATA_FILE2, DATA_DIRECTORY2)
+    # data2 = ensure_loaded(DATA_FILE2, DATA_DIRECTORY2)
+
+    load_testbed()
 
     for exp in EXPERIMENTS:
         plot_all(data1, exp)
