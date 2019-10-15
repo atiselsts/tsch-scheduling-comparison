@@ -31,6 +31,10 @@
 #undef UIP_CONF_MAX_ROUTES
 #define UIP_CONF_MAX_ROUTES                 50
 
+/* max routes on the root for the non-storing mode */
+#undef UIP_SR_CONF_LINK_NUM
+#define UIP_SR_CONF_LINK_NUM                UIP_CONF_MAX_ROUTES
+
 /* Enable printing of packet counters */
 #define LINK_STATS_CONF_PACKET_COUNTERS          1
 
