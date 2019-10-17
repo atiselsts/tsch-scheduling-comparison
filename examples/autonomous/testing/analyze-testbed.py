@@ -595,10 +595,10 @@ def load_testbed(data_directory, data, a, si, sf, exp, nn):
         prr_metric = np.mean(t_prr_results)
         rdc_metric = np.mean(t_rdc_results)
 
-    if prr_metric == 0.0:
-        rdc_metric = 0.0
-    else:
-        rdc_metric = 1.0 + 0.2 * (100 / sf) # XXX - some sort of sense
+#    if prr_metric == 0.0:
+#        rdc_metric = 0.0
+#    else:
+#        rdc_metric = 1.0 + 0.2 * (100 / sf) # XXX - some sort of sense
 
     data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = pdr_metric
     data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = prr_metric
