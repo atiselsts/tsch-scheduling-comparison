@@ -208,6 +208,9 @@ class MoteStats:
             #return
 
         self.is_valid = True
+	# XXX: hack for the sparse test - disable node 259, too bad connectivity
+        if self.id == 259:
+            self.is_valid = False
 
         if self.packets_tx:
             self.prr = 100.0 * self.packets_ack / self.packets_tx
@@ -333,7 +336,7 @@ def process_file(filename, experiment, send_interval, is_testbed):
                 motes[node].packets_tx += tx
                 motes[node].packets_ack += ack
                 continue
-          
+
             # 600073000:8 [INFO: Energest  ] Radio total :    1669748/  60000000 (27 permil)
             if "Radio total" in line:
                 # only account for the period when data packets are sent
@@ -470,7 +473,7 @@ def load_simulations(data_directory, data, a, si, sf, exp, nn):
     a_pdr_results = []
     a_prr_results = []
     a_rdc_results = []
-    
+
     path = os.path.join(data_directory,
                         a,
                         "si_{}".format(si),
@@ -524,7 +527,7 @@ def exec_remote_cmd(cmd):
 
 def exec_local_cmd(cmd):
     subprocess.call(cmd, shell=True)
-        
+
 ###########################################
 
 def load_testbed(data_directory, data, a, si, sf, exp, nn):
@@ -637,7 +640,7 @@ def plot_all(data, exp):
         for si in SEND_INTERVALS:
             pdr_results = [[] for _ in ALGORITHMS]
             rdc_results = [[] for _ in ALGORITHMS]
-            pointlabels = [[] for _ in ALGORITHMS]    
+            pointlabels = [[] for _ in ALGORITHMS]
             for sf in SLOTFRAME_SIZES:
                 sfs = "sf={}".format(sf)
                 print(sfs)
@@ -679,7 +682,7 @@ def plot_comparative_runs(data1, data2, exp):
                            filename)
 
 ###########################################
-            
+
 def plot_best_per_send_frequency(data, exp):
 
     # plot comparison of the best
