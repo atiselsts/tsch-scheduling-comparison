@@ -38,8 +38,11 @@ DATA_DIRECTORY2="../simulations-all-enabled"
 
 TESTBED_HOST = "elsts@grenoble.iot-lab.fr"
 
-TESTBED_LOCAL_DIR = "../iot-lab/"
-TESTBED_REMOTE_DIR = "iot-lab-firmwares"
+# (local, remote)
+TESTBED_DIRS = [
+    ("../iot-lab-all1/", "iot-lab-firmwares-all1"),
+    ("../iot-lab-all2/", "iot-lab-firmwares-all2"),
+]
 
 DATA_FILE = "cached_data.json"
 DATA_FILE2 = "cached_data2.json"
@@ -55,6 +58,8 @@ ROOT_ID_TESTBED = 177
 CI = 0.9
 
 ONLY_MEDIAN = True
+
+node_id_to_mote_id = {}
 
 ###########################################
 
@@ -226,6 +231,8 @@ class MoteStats:
         expected = (last_seqnum - first_seqnum) + 1
         actual = len(self.seqnums)
 
+        #print("node={} associated={}, seqnums={}".format(
+        #        self.id, self.associated_at_minutes, self.seqnums))
         if expected:
             self.pdr = 100.0 * actual / expected
         else:
@@ -242,7 +249,6 @@ class MoteStats:
 def process_file(filename, experiment, send_interval, is_testbed):
     motes = {}
     has_assoc = set()
-    node_id_to_mote_id = {}
     print(filename)
 
     in_initialization = True
@@ -254,6 +260,7 @@ def process_file(filename, experiment, send_interval, is_testbed):
 
     with open(filename, "r") as f:
         for line in f:
+            #print(line)
             if is_testbed:
                 fields1 = line.strip().split(";")
                 if len(fields1) < 3:
@@ -304,9 +311,10 @@ def process_file(filename, experiment, send_interval, is_testbed):
             if node == ROOT_ID or "local" in experiment:
                 # 314937392 1 [INFO: Node      ] seqnum=6 from=fd00::205:5:5:5
                 if "seqnum=" in line:
-                    #print(line)
                     sn = int(fields[5].split("=")[1])
                     if not (first_seqnum <= sn <= last_seqnum):
+                        if sn > last_seqnum:
+                            break
                         continue
                     if "=" not in fields[6]:
                         continue
@@ -358,7 +366,7 @@ def process_file(filename, experiment, send_interval, is_testbed):
             continue
         m.calc(send_interval, first_seqnum, last_seqnum)
         if m.is_valid:
-            #print(" ", m.id, m.pdr, m.prr)
+            # print(" ", m.id, m.pdr, m.prr)
             r.append((m.pdr, m.prr, m.rdc))
 #        else:
 #            print("mote {} does not have valid PDR: packets={}".format(m.id, m.seqnums))
@@ -530,29 +538,9 @@ def exec_local_cmd(cmd):
 
 ###########################################
 
-def load_testbed(data_directory, data, a, si, sf, exp, nn):
-    data[a][str(si)][str(sf)][exp][str(nn)] = {}
-
-    filename = os.path.join(data_directory,
-                        a,
-                        "si_{}".format(si),
-                        "sf_{}".format(sf),
-                        exp,
-                        "sim-{}-neigh-realsim-*".format(nn))
-
-    filename = ""
-    if nn == 10:
-        filename = "dense-"
-    else:
-        filename = "sparse-"
-    filename += a + "_"
-    filename += "si_{}_".format(si)
-    filename += "sf_{}_".format(sf)
-    filename += exp
-    filename += ".log"
-
-    local_file = os.path.join(TESTBED_LOCAL_DIR, filename)
-    remote_file = os.path.join(TESTBED_REMOTE_DIR, filename)
+def load_single_testbed(local, remote, filename, exp, si):
+    local_file = os.path.join(local, filename)
+    remote_file = os.path.join(remote, filename)
     local_file_tgz = local_file + ".tgz"
     remote_file_tgz = remote_file + ".tgz"
 
@@ -566,10 +554,7 @@ def load_testbed(data_directory, data, a, si, sf, exp, nn):
         exec_local_cmd("rm " + local_file_tgz)
         if not os.access(local_file, os.R_OK):
             print("failed to read file " + local_file)
-            data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = 0.0
-            data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = 0.0
-            data[a][str(si)][str(sf)][exp][str(nn)]["rdc"] = 0.0
-            return
+            return (0.0, 0.0, 0.0)
 
     r = process_file(local_file, exp, si, True)
 
@@ -597,15 +582,44 @@ def load_testbed(data_directory, data, a, si, sf, exp, nn):
         pdr_metric = np.mean(t_pdr_results)
         prr_metric = np.mean(t_prr_results)
         rdc_metric = np.mean(t_rdc_results)
+    return (pdr_metric, prr_metric, rdc_metric)
 
-#    if prr_metric == 0.0:
-#        rdc_metric = 0.0
-#    else:
-#        rdc_metric = 1.0 + 0.2 * (100 / sf) # XXX - some sort of sense
+###########################################
+
+def load_testbed(data_directory, data, a, si, sf, exp, nn):
+    data[a][str(si)][str(sf)][exp][str(nn)] = {}
+
+    filename = os.path.join(data_directory,
+                        a,
+                        "si_{}".format(si),
+                        "sf_{}".format(sf),
+                        exp,
+                        "sim-{}-neigh-realsim-*".format(nn))
+
+    filename = ""
+    if nn == 10:
+        filename = "dense-"
+    else:
+        filename = "sparse-"
+    filename += a + "_"
+    filename += "si_{}_".format(si)
+    filename += "sf_{}_".format(sf)
+    filename += exp
+    filename += ".log"
+
+    metrics = []
+    for local, remote in TESTBED_DIRS:
+        metrics.append(load_single_testbed(local, remote, filename, exp, si))
+
+    midpoint = len(metrics) // 2
+    pdr_metric = sorted([u[0] for u in metrics])[midpoint]
+    prr_metric = sorted([u[1] for u in metrics])[midpoint]
+    rdc_metric = sorted([u[2] for u in metrics])[midpoint]
 
     data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = pdr_metric
     data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = prr_metric
     data[a][str(si)][str(sf)][exp][str(nn)]["rdc"] = rdc_metric
+    print("")
 
 ###########################################
 
@@ -741,8 +755,9 @@ def safe_mkdir(dirname):
 
 def main():
     safe_mkdir(OUT_DIR)
-    safe_mkdir(TESTBED_LOCAL_DIR)
-    safe_mkdir(TESTBED_REMOTE_DIR)
+    for local, remote in TESTBED_DIRS:
+        safe_mkdir(local)
+        safe_mkdir(remote)
 
     data = ensure_loaded(DATA_FILE, DATA_DIRECTORY, True)
 
