@@ -123,10 +123,8 @@ def graph_ci(data, ylabel, filename):
 
 ###########################################
 
-def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
+def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.figure(figsize=(6, 3.5))
-
-    width = 0.15
 
     if len(xdata) == len(ALGORITHMS):
         algos = ALGORITHMS
@@ -174,6 +172,40 @@ def graph_line(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     else:
         pl.savefig(OUT_DIR + "/" + filename, format='pdf',
                    bbox_inches='tight')
+    pl.close()
+
+###########################################
+
+def graph_line(xdata, ydata, xlabel, ylabel, filename):
+    pl.figure(figsize=(6, 3.5))
+
+    if len(xdata) == len(ALGORITHMS):
+        algos = ALGORITHMS
+    elif len(xdata) == len(BEST_ALGORITHMS):
+        algos = BEST_ALGORITHMS
+    elif len(xdata) == 2:
+        algos = COMPARATIVE_ALGORITHMS
+    else:
+        raise "Unknown data dimensions"
+
+    for i, a in enumerate(algos):
+        algo_ydata = ydata[i]
+
+        to_plot_y = algo_ydata #[np.mean(d) for d in algo_ydata]
+
+        pl.plot(xdata, to_plot_y, label=ALGONAMES[a], color=COLORS[a], marker="o")
+
+    pl.ylim(bottom=0, top=105)
+    pl.xlabel(xlabel)
+    pl.ylabel(ylabel)
+    pl.xticks(xdata, [str(u) for u in xdata])
+
+    pl.gca().axhline(y=100, color="black", lw=1)
+
+    legend = pl.legend()
+    pl.savefig(OUT_DIR + "/" + filename, format='pdf',
+               bbox_extra_artists=(legend,),
+               bbox_inches='tight')
     pl.close()
 
 ###########################################
@@ -457,7 +489,7 @@ def compare_per_duty_cycle(filenames, experiment, description):
 
         # plot the results
         pdffile = "sim_pdr_per_duty_cycle_" + fs.replace("*", "").replace("-", "") + "_" + outfilename
-        graph_line(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %",
+        graph_scatter(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %",
                    pdffile)
 
 ###########################################
@@ -648,7 +680,7 @@ def aggregate(data, a, si, sf, exp, nn, metric):
 
 ###########################################
 
-def plot_all(data, exp):
+def plot_all_pdr(data, exp):
     # plot all per duty cycle
     for nn in NUM_NEIGHBORS:
         for si in SEND_INTERVALS:
@@ -665,8 +697,23 @@ def plot_all(data, exp):
                     pointlabels[i].append(sfs)
 
             filename = "sim_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
-            graph_line(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
-                       filename)
+            graph_scatter(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+                          filename)
+###########################################
+
+def plot_all_par(data, exp):
+    # plot all per duty cycle
+    for nn in NUM_NEIGHBORS:
+        for si in SEND_INTERVALS:
+            par_results = [[] for _ in ALGORITHMS]
+            for i, a in enumerate(ALGORITHMS):
+                print("Algorithm {}".format(ALGONAMES[a]))
+                for j, sf in enumerate(SLOTFRAME_SIZES):
+                    par_results[i].append(aggregate(data, a, si, sf, exp, nn, "prr"))
+
+            filename = "sim_{}_par_per_slotframe_allsf_nn{}_si{}.pdf".format(exp, nn, si)
+            print(par_results)
+            graph_line(SLOTFRAME_SIZES, par_results, "Slotframe size, slots", "Packet ACK Rate, %", filename)
 
 ###########################################
 
@@ -692,8 +739,8 @@ def plot_comparative_runs(data1, data2, exp):
                     pointlabels[1].append(sfs)
 
                 filename = "sim_comparative_{}_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, a, nn, si)
-                graph_line(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
-                           filename)
+                graph_scatter(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+                              filename)
 
 ###########################################
 
@@ -726,8 +773,8 @@ def plot_best_per_send_frequency(data, exp):
                     pointlabels[i].append("rdc={:.1f}%".format(rdc_results[i][-1])) # the PDR
 
             filename = "sim_{}_pdr_per_sfr_sf{}_nn{}.pdf".format(exp, sf, nn)
-            graph_line(si_results, pdr_results, "Send frequency, packets / minute", "End-to-end PDR, %", pointlabels,
-                       filename)
+            graph_scatter(si_results, pdr_results, "Send frequency, packets / minute", "End-to-end PDR, %", pointlabels,
+                          filename)
 
 ###########################################
 
@@ -762,7 +809,8 @@ def main():
     data = ensure_loaded(DATA_FILE, DATA_DIRECTORY, True)
 
     for exp in EXPERIMENTS:
-        plot_all(data, exp)
+        plot_all_pdr(data, exp)
+        plot_all_par(data, exp)
 
 ###########################################
 
