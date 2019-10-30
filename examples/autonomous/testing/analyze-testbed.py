@@ -275,6 +275,12 @@ def process_file(filename, experiment, send_interval, is_testbed):
                 else:
                     continue
 
+            # both for root and normal nodes
+            if "add packet failed" in line:
+                # account for queue drops
+                motes[node].queue_losses += 1
+                continue
+
             if node == ROOT_ID or "local" in experiment:
                 # 314937392 1 [INFO: Node      ] seqnum=6 from=fd00::205:5:5:5
                 if "seqnum=" in line:
@@ -322,15 +328,12 @@ def process_file(filename, experiment, send_interval, is_testbed):
                     motes[node].radio_total += total
                     continue
 
-            if "add packet failed" in line:
-                # account for queue drops
-                motes[node].queue_losses += 1
-                continue
-
     r = []
+    root_queue_losses = 0
     for k in motes:
         m = motes[k]
         if m.id == ROOT_ID:
+            root_queue_losses = m.queue_losses
             continue
         m.calc(send_interval, first_seqnum, last_seqnum)
         if m.is_valid:
@@ -338,7 +341,7 @@ def process_file(filename, experiment, send_interval, is_testbed):
             r.append((m.pdr, m.prr, m.rdc, m.queue_losses))
 #        else:
 #            print("mote {} does not have valid PDR: packets={}".format(m.id, m.seqnums))
-    return r
+    return r, root_queue_losses
 
 ###########################################
 
@@ -370,7 +373,7 @@ def load_single_testbed(local, remote, filename, exp, si):
             print("failed to read file " + local_file)
             return (0.0, 0.0, 0.0, 0.0)
 
-    r = process_file(local_file, exp, si, True)
+    r, root_queue_losses = process_file(local_file, exp, si, True)
 
     t_pdr_results = []
     t_prr_results = []
@@ -382,7 +385,7 @@ def load_single_testbed(local, remote, filename, exp, si):
         t_prr_results.append(prr)
         t_rdc_results.append(rdc)
         t_queue_losses.append(queue_losses)
-
+    t_queue_losses.append(root_queue_losses)
 
     if ONLY_MEDIAN:
         if len(t_pdr_results):
