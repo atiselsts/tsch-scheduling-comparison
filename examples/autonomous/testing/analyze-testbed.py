@@ -10,8 +10,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as pl
 import matplotlib.legend_handler as lh
-from scipy import stats
-from scipy.stats.stats import pearsonr
 import numpy as np
 
 from parameters import *
@@ -33,8 +31,7 @@ matplotlib.rcParams['pdf.fonttype'] = 42
 
 OUT_DIR = "../plots"
 
-DATA_DIRECTORY="../simulations"
-DATA_DIRECTORY2="../simulations-all-enabled"
+DATA_DIRECTORY = "../simulations"
 
 TESTBED_HOST = "elsts@grenoble.iot-lab.fr"
 
@@ -57,7 +54,7 @@ ROOT_ID_TESTBED = 177
 # confidence interval
 CI = 0.9
 
-ONLY_MEDIAN = True
+ONLY_MEDIAN = False
 
 node_id_to_mote_id = {}
 
@@ -68,72 +65,10 @@ BASIC_MARKERS = ["o", "s", "X", "X", "X", "X"]
 
 ###########################################
 
-def graph_ci(data, ylabel, filename):
-    pl.figure(figsize=(6, 3.5))
-
-    width = 0.15
-
-#   print(filename)
-    for i, a in enumerate(ALGORITHMS):
-        algo_data = data[i]
-#       print(ALGONAMES[i])
-
-        to_plot = []
-        yerr = []
-        for d in algo_data:
-#           if "pdr" in filename:
-#               print("d=", d)
-            mean, sigma = np.mean(d), np.std(d)
-            stderr = 1.0 * sigma / (len(d) ** 0.5)
-            ci = stats.norm.interval(CI, loc=mean, scale=stderr) - mean
-
-            to_plot.append(mean)
-            yerr.append(ci[0])
-
-        x = np.arange(len(to_plot)) + (1.0 - width * 2) + width * i
-        if 0:
-            pl.errorbar(x, to_plot, width, yerr=yerr, marker=MARKERS[i], label=ALGONAMES[a])
-        else:
-            pl.bar(x, to_plot, width, yerr=yerr, label=ALGONAMES[a], color=COLORS[a])
-#        print("plot ", ylabel)
-#        print(to_plot)
-
-    pl.ylim(ymin=0)
-    pl.xlabel("Experiment type")
-    pl.ylabel(ylabel)
-
-#    pl.xticks([1, 2, 3, 4], ["sparse", "e. sparse", "dense", "e. dense"])
-    pl.xticks([1, 2], ["sparse", "dense"])
-
-    bbox = (1.0, 1.4)
-    loc = "upper right"
-    # pl.ylim([0, 700])
-
-    if "pdr" in filename:
-        legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=1,
-                           prop={"size":11},
-                           handler_map={lh.Line2D: lh.HandlerLine2D(numpoints=1)})
-
-        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
-                   bbox_extra_artists=(legend,),
-                   bbox_inches='tight')
-    else:
-        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
-                   bbox_inches='tight')
-
-###########################################
-
 def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.figure(figsize=(6, 3.5))
 
-    if len(xdata) == len(ALGORITHMS):
-        algos = ALGORITHMS
-    elif len(xdata) == len(BEST_ALGORITHMS):
-        algos = BEST_ALGORITHMS
-    elif len(xdata) == 2:
-        algos = COMPARATIVE_ALGORITHMS
-    else:
-        raise "Unknown data dimensions"
+    algos = ALGORITHMS
 
     for i, a in enumerate(algos):
         algo_xdata = xdata[i]
@@ -156,15 +91,16 @@ def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     else: # send frequency
         pl.xscale("log")
 
-    pl.gca().axhline(y=100)
+    pl.gca().axhline(y=100, color="black", lw=1)
 
-    bbox = (1.0, 1.3)
-    loc = "upper right"
+#    bbox = (1.0, 1.3)
+#    loc = "upper right"
 
     if "pdr" in filename:
-        legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=2,
-                           prop={"size":11},
-                           handler_map={lh.Line2D: lh.HandlerLine2D(numpoints=1)})
+        legend = pl.legend()
+#        legend = pl.legend(bbox_to_anchor=bbox, loc=loc, ncol=2,
+#                           prop={"size":11},
+#                           handler_map={lh.Line2D: lh.HandlerLine2D(numpoints=1)})
 
         pl.savefig(OUT_DIR + "/" + filename, format='pdf',
                    bbox_extra_artists=(legend,),
@@ -179,14 +115,7 @@ def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
 def graph_line(xdata, ydata, xlabel, ylabel, filename):
     pl.figure(figsize=(6, 3.5))
 
-    if len(xdata) == len(ALGORITHMS):
-        algos = ALGORITHMS
-    elif len(xdata) == len(BEST_ALGORITHMS):
-        algos = BEST_ALGORITHMS
-    elif len(xdata) == 2:
-        algos = COMPARATIVE_ALGORITHMS
-    else:
-        raise "Unknown data dimensions"
+    algos = ALGORITHMS
 
     for i, a in enumerate(algos):
         algo_ydata = ydata[i]
@@ -195,12 +124,17 @@ def graph_line(xdata, ydata, xlabel, ylabel, filename):
 
         pl.plot(xdata, to_plot_y, label=ALGONAMES[a], color=COLORS[a], marker="o")
 
-    pl.ylim(bottom=0, top=105)
+    if "queue" in filename:
+        # for the queue losses graph
+        pl.ylim(bottom=0)
+    else:
+        # PDR and PAR
+        pl.ylim(bottom=0, top=105)
+        pl.gca().axhline(y=100, color="black", lw=1)
+
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
     pl.xticks(xdata, [str(u) for u in xdata])
-
-    pl.gca().axhline(y=100, color="black", lw=1)
 
     legend = pl.legend()
     pl.savefig(OUT_DIR + "/" + filename, format='pdf',
@@ -232,6 +166,7 @@ class MoteStats:
         self.radio_on = 0
         self.radio_total = 0
         self.is_valid = False
+        self.queue_losses = 0
 
     def calc(self, send_interval, first_seqnum, last_seqnum):
         if self.associated_at_minutes is None:
@@ -388,7 +323,8 @@ def process_file(filename, experiment, send_interval, is_testbed):
                     continue
 
             if "add packet failed" in line:
-                # TODO: account for queue drops!
+                # account for queue drops
+                motes[node].queue_losses += 1
                 continue
 
     r = []
@@ -399,164 +335,10 @@ def process_file(filename, experiment, send_interval, is_testbed):
         m.calc(send_interval, first_seqnum, last_seqnum)
         if m.is_valid:
             # print(" ", m.id, m.pdr, m.prr)
-            r.append((m.pdr, m.prr, m.rdc))
+            r.append((m.pdr, m.prr, m.rdc, m.queue_losses))
 #        else:
 #            print("mote {} does not have valid PDR: packets={}".format(m.id, m.seqnums))
     return r
-
-###########################################
-
-def compare_basic_metrics(filenames, experiment, description, ss):
-    print(description)
-
-    pdr_results = [[] for _ in ALGORITHMS]
-    prr_results = [[] for _ in ALGORITHMS]
-    rdc_results = [[] for _ in ALGORITHMS]
-
-    outfilename = experiment + ".pdf"
-
-    for a in ALGORITHMS:
-        print("Algorithm {}_{}".format(ALGONAMES[a], ss))
-        for j, fs in enumerate(filenames):
-            t_pdr_results = []
-            t_prr_results = []
-            t_rdc_results = []
-
-            path = os.path.join(DATA_DIRECTORY, "{}_{}".format(a, ss), "exp-" + experiment, fs)
-
-            for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
-                resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
-
-                if not os.access(resultsfile, os.R_OK):
-                    continue
-
-                r = process_file(resultsfile, experiment)
-                for pdr, prr, rdc in r:
-                    t_pdr_results.append(pdr)
-                    t_prr_results.append(prr)
-                    t_rdc_results.append(rdc)
-
-            pdr_results[i].append(t_pdr_results)
-            prr_results[i].append(t_prr_results)
-            rdc_results[i].append(t_rdc_results)
-
-    # plot the results
-    graph_ci(pdr_results, "End-to-end PDR, %", "sim_pdr_" + outfilename)
-    graph_ci(prr_results, "Link-layer PRR, %", "sim_prr_" + outfilename)
-    graph_ci(rdc_results, "Radio duty cycle, %", "sim_rdc_" + outfilename)
-
-    print("")
-
-###########################################
-
-def compare_per_duty_cycle(filenames, experiment, description):
-    print("per duty cycle", description)
-
-    outfilename = experiment + ".pdf"
-
-    for j, fs in enumerate(filenames):
-#        t_pdr_results = []
-#        t_prr_results = []
-#        t_rdc_results = []
-
-        pdr_results = [[] for _ in ALGORITHMS]
-        rdc_results = [[] for _ in ALGORITHMS]
-
-        for a in ALGORITHMS:
-
-            print("Algorithm {}".format(ALGONAMES[a]))
-
-            for ss in SLOTFRAME_SIZES:
-
-                t_pdr_results = []
-                t_rdc_results = []
-
-                path = os.path.join(DATA_DIRECTORY, "{}_{}".format(a, ss), "exp-" + experiment, fs)
-
-                for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
-                    resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
-
-                    if not os.access(resultsfile, os.R_OK):
-                        continue
-
-                    r = process_file(resultsfile, experiment)
-                    for pdr, _, rdc in r:
-                        t_pdr_results.append(pdr)
-                        t_rdc_results.append(rdc)
-
-                pdr_results[i].append(np.mean(t_pdr_results))
-                rdc_results[i].append(np.mean(t_rdc_results))
-
-        # plot the results
-        pdffile = "sim_pdr_per_duty_cycle_" + fs.replace("*", "").replace("-", "") + "_" + outfilename
-        graph_scatter(rdc_results, pdr_results, "Duty cycle, %", "End-to-end PDR, %",
-                   pdffile)
-
-###########################################
-
-def test_groups(filenames, experiment, description):
-    print(description)
-
-#    compare_basic_metrics(filenames, experiment, description, ss=11)
-
-    compare_per_duty_cycle(filenames, experiment, description)
-
-###########################################
-
-def load_simulations(data_directory, data, a, si, sf, exp, nn):
-    data[a][str(si)][str(sf)][exp][str(nn)] = {}
-
-    t_pdr_results = []
-    t_prr_results = []
-    t_rdc_results = []
-
-    a_pdr_results = []
-    a_prr_results = []
-    a_rdc_results = []
-
-    path = os.path.join(data_directory,
-                        a,
-                        "si_{}".format(si),
-                        "sf_{}".format(sf),
-                        exp,
-                        "sim-{}-neigh-realsim-*".format(nn))
-
-    for dirname in subprocess.check_output("ls -d " + path, shell=True).split():
-        resultsfile = os.path.join(dirname.decode("ascii"), "COOJA.testlog")
-
-        if not os.access(resultsfile, os.R_OK):
-            continue
-
-        r = process_file(resultsfile, exp, si, False)
-        pdr = [x[0] for x in r]
-        prr = [x[1] for x in r]
-        rdc = [x[2] for x in r]
-        t_pdr_results += pdr
-        t_prr_results += prr
-        t_rdc_results += rdc
-        a_pdr_results.append(np.mean(pdr))
-        a_prr_results.append(np.mean(prr))
-        a_rdc_results.append(np.mean(rdc))
-
-    if ONLY_MEDIAN:
-        if len(a_pdr_results):
-            midpoint = len(a_pdr_results) // 2
-            print("pdr=", sorted(a_pdr_results))
-            pdr_metric = sorted(a_pdr_results)[midpoint]
-            prr_metric = sorted(a_prr_results)[midpoint]
-            rdc_metric = sorted(a_rdc_results)[midpoint]
-        else:
-            pdr_metric = 0
-            prr_metric = 0
-            rdc_metric = 0
-    else:
-        pdr_metric = np.mean(t_pdr_results)
-        prr_metric = np.mean(t_prr_results)
-        rdc_metric = np.mean(t_rdc_results)
-
-    data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = pdr_metric
-    data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = prr_metric
-    data[a][str(si)][str(sf)][exp][str(nn)]["rdc"] = rdc_metric
 
 ###########################################
 
@@ -586,18 +368,21 @@ def load_single_testbed(local, remote, filename, exp, si):
         exec_local_cmd("rm " + local_file_tgz)
         if not os.access(local_file, os.R_OK):
             print("failed to read file " + local_file)
-            return (0.0, 0.0, 0.0)
+            return (0.0, 0.0, 0.0, 0.0)
 
     r = process_file(local_file, exp, si, True)
 
     t_pdr_results = []
     t_prr_results = []
     t_rdc_results = []
+    t_queue_losses = []
 
-    for pdr, prr, rdc in r:
+    for pdr, prr, rdc, queue_losses in r:
         t_pdr_results.append(pdr)
         t_prr_results.append(prr)
         t_rdc_results.append(rdc)
+        t_queue_losses.append(queue_losses)
+
 
     if ONLY_MEDIAN:
         if len(t_pdr_results):
@@ -606,15 +391,18 @@ def load_single_testbed(local, remote, filename, exp, si):
             pdr_metric = sorted(t_pdr_results)[midpoint]
             prr_metric = sorted(t_prr_results)[midpoint]
             rdc_metric = sorted(t_rdc_results)[midpoint]
+            queue_losses = sorted(t_queue_losses)[midpoint]
         else:
             pdr_metric = 0.0
             prr_metric = 0.0
             rdc_metric = 0.0
+            queue_losses = 0.0
     else:
         pdr_metric = np.mean(t_pdr_results)
         prr_metric = np.mean(t_prr_results)
         rdc_metric = np.mean(t_rdc_results)
-    return (pdr_metric, prr_metric, rdc_metric)
+        queue_losses = np.mean(t_queue_losses)
+    return (pdr_metric, prr_metric, rdc_metric, queue_losses)
 
 ###########################################
 
@@ -644,18 +432,21 @@ def load_testbed(data_directory, data, a, si, sf, exp, nn):
         metrics.append(load_single_testbed(local, remote, filename, exp, si))
 
     midpoint = len(metrics) // 2
-    pdr_metric = sorted([u[0] for u in metrics])[midpoint]
-    prr_metric = sorted([u[1] for u in metrics])[midpoint]
-    rdc_metric = sorted([u[2] for u in metrics])[midpoint]
+    metrics.sort(key = lambda u: u[0]) # srt by PDR
+    pdr_metric = metrics[midpoint][0]
+    prr_metric = metrics[midpoint][1]
+    rdc_metric = metrics[midpoint][2]
+    queue_losses = metrics[midpoint][3]
 
     data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = pdr_metric
     data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = prr_metric
     data[a][str(si)][str(sf)][exp][str(nn)]["rdc"] = rdc_metric
+    data[a][str(si)][str(sf)][exp][str(nn)]["queue_losses"] = queue_losses
     print("")
 
 ###########################################
 
-def load_all(data_directory, is_testbed):
+def load_all(data_directory):
     data = {}
     for a in ALGORITHMS:
         data[a] = {}
@@ -666,10 +457,7 @@ def load_all(data_directory, is_testbed):
                 for exp in EXPERIMENTS:
                     data[a][str(si)][str(sf)][exp] = {}
                     for nn in NUM_NEIGHBORS:
-                        if is_testbed:
-                            load_testbed(data_directory, data, a, si, sf, exp, nn)
-                        else:
-                            load_simulations(data_directory, data, a, si, sf, exp, nn)
+                        load_testbed(data_directory, data, a, si, sf, exp, nn)
 
     return data
 
@@ -699,6 +487,7 @@ def plot_all_pdr(data, exp):
             filename = "sim_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
             graph_scatter(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
                           filename)
+
 ###########################################
 
 def plot_all_par(data, exp):
@@ -714,6 +503,22 @@ def plot_all_par(data, exp):
             filename = "sim_{}_par_per_slotframe_allsf_nn{}_si{}.pdf".format(exp, nn, si)
             print(par_results)
             graph_line(SLOTFRAME_SIZES, par_results, "Slotframe size, slots", "Packet ACK Rate, %", filename)
+
+###########################################
+
+def plot_all_queue_losses(data, exp):
+    # plot all per duty cycle
+    for nn in NUM_NEIGHBORS:
+        for si in SEND_INTERVALS:
+            results = [[] for _ in ALGORITHMS]
+            for i, a in enumerate(ALGORITHMS):
+                print("Algorithm {}".format(ALGONAMES[a]))
+                for j, sf in enumerate(SLOTFRAME_SIZES):
+                    results[i].append(aggregate(data, a, si, sf, exp, nn, "queue_losses"))
+
+            filename = "sim_{}_queue_losses_per_slotframe_allsf_nn{}_si{}.pdf".format(exp, nn, si)
+            graph_line(SLOTFRAME_SIZES, results, "Slotframe size, slots", "Num queue losses", filename)
+
 
 ###########################################
 
@@ -778,14 +583,14 @@ def plot_best_per_send_frequency(data, exp):
 
 ###########################################
 
-def ensure_loaded(data_file, data_directory, is_testbed):
+def ensure_loaded(data_file, data_directory):
     if os.access(data_file, os.R_OK):
         print("Cached file found, using it directly")
         with open(data_file, "r") as f:
             data = json.load(f)
     else:
         print("Cached file not found, parsing log files...")
-        data = load_all(data_directory, is_testbed)
+        data = load_all(data_directory)
         with open(data_file, "w") as f:
             json.dump(data, f)
     return data
@@ -806,11 +611,12 @@ def main():
         safe_mkdir(local)
         safe_mkdir(remote)
 
-    data = ensure_loaded(DATA_FILE, DATA_DIRECTORY, True)
+    data = ensure_loaded(DATA_FILE, DATA_DIRECTORY)
 
     for exp in EXPERIMENTS:
         plot_all_pdr(data, exp)
         plot_all_par(data, exp)
+        plot_all_queue_losses(data, exp)
 
 ###########################################
 

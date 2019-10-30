@@ -105,6 +105,6 @@ SEND_INTERVALS = [
 ]
 
 NUM_NEIGHBORS = [
-    4, # sparse
+#    4, # sparse
     10 # dense
 ]
