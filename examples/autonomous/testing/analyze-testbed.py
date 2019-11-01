@@ -39,6 +39,7 @@ TESTBED_HOST = "elsts@grenoble.iot-lab.fr"
 TESTBED_DIRS = [
     ("../iot-lab-all1/", "iot-lab-firmwares-all1"),
     ("../iot-lab-all2/", "iot-lab-firmwares-all2"),
+    ("../iot-lab-all3/", "iot-lab-firmwares"),
 ]
 
 DATA_FILE = "cached_data.json"
@@ -113,7 +114,7 @@ def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
 ###########################################
 
 def graph_line(xdata, ydata, xlabel, ylabel, filename):
-    pl.figure(figsize=(6, 3.5))
+    pl.figure(figsize=(4, 2))
 
     algos = ALGORITHMS
 
@@ -136,9 +137,9 @@ def graph_line(xdata, ydata, xlabel, ylabel, filename):
     pl.ylabel(ylabel)
     pl.xticks(xdata, [str(u) for u in xdata])
 
-    legend = pl.legend()
+#    legend = pl.legend()
     pl.savefig(OUT_DIR + "/" + filename, format='pdf',
-               bbox_extra_artists=(legend,),
+#              bbox_extra_artists=(legend,),
                bbox_inches='tight')
     pl.close()
 
