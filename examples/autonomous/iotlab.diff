@@ -1,0 +1,110 @@
+diff --git a/arch/platform/iotlab/platform.c b/arch/platform/iotlab/platform.c
+index ac4c261..c4d30a6 100644
+--- a/arch/platform/iotlab/platform.c
++++ b/arch/platform/iotlab/platform.c
+@@ -40,6 +40,7 @@
+ #include "dev/uart1.h"
+ #include "dev/watchdog.h"
+ #include "drivers/unique_id.h"
++#include "sys/energest.h"
+ 
+ #if SLIP_ARCH_CONF_ENABLED
+ #include "dev/slip.h"
+@@ -103,6 +104,7 @@ platform_init_stage_one(void)
+ {
+   /* Initialize OpenLab */
+   platform_init();
++  ENERGEST_ON(ENERGEST_TYPE_CPU);
+ }
+ /*---------------------------------------------------------------------------*/
+ void
+@@ -131,5 +133,7 @@ platform_init_stage_three(void)
+ void
+ platform_idle(void)
+ {
++  ENERGEST_SWITCH(ENERGEST_TYPE_CPU, ENERGEST_TYPE_LPM);
+   /* Not implemented yet */
++  ENERGEST_SWITCH(ENERGEST_TYPE_LPM, ENERGEST_TYPE_CPU);
+ }
+diff --git a/arch/platform/iotlab/radio-rf2xx.c b/arch/platform/iotlab/radio-rf2xx.c
+index effeb10..3ad2a87 100644
+--- a/arch/platform/iotlab/radio-rf2xx.c
++++ b/arch/platform/iotlab/radio-rf2xx.c
+@@ -41,6 +41,7 @@
+ #include "net/packetbuf.h"
+ #include "sys/rtimer.h"
+ #include "dev/leds.h"
++#include "sys/energest.h"
+ 
+ /*---------------------------------------------------------------------------*/
+ 
+@@ -63,16 +64,14 @@ extern rf2xx_t RF2XX_DEVICE;
+  * rf2xx_wr_transmit will copy from tx_buf to the FIFO and then send.
+  * - When RF2XX_SOFT_PREPARE is unset, rf2xx_wr_prepare actually copies to the FIFO, and rf2xx_wr_transmit
+  * only will only trigger the transmission. */
+-#define RF2XX_SOFT_PREPARE 1
++#define RF2XX_SOFT_PREPARE (MAC_CONF_WITH_TSCH ? 0 : 1)
+ #endif
+ 
+ /* TSCH requires sending and receiving from interrupt, which requires not to rely on the interrupt-driven state only.
+  * Instead, we use rf2xx_reg_write and rf2xx_reg_read in the sending and receiving routines. This, however breaks
+  * should the driver be interrupted by an ISR. In TSCH, this never happens as transmissions and receptions are
+  * done from rtimer interrupt. Keep this disabled for ContikiMAC and NullRDC. */
+-#ifndef RF2XX_WITH_TSCH
+-#define RF2XX_WITH_TSCH 0
+-#endif
++#define RF2XX_WITH_TSCH MAC_CONF_WITH_TSCH
+ 
+ #define RF2XX_MAX_PAYLOAD 125
+ #if RF2XX_SOFT_PREPARE
+@@ -165,6 +164,13 @@ rf2xx_wr_hard_prepare(const void *payload, unsigned short payload_le, int async)
+ 			platform_exit_critical();
+ 			return RADIO_TX_COLLISION;
+ 	}
++
++  if(rf2xx_on) {
++    ENERGEST_SWITCH(ENERGEST_TYPE_LISTEN, ENERGEST_TYPE_TRANSMIT);
++  } else {
++    ENERGEST_ON(ENERGEST_TYPE_TRANSMIT);
++  }
++
+ 	platform_exit_critical();
+ 
+ 	if (flag)
+@@ -259,6 +265,7 @@ rf2xx_wr_transmit(unsigned short transmit_len)
+     /* Asynchronous copy to the FIFO and before starting to transmit */
+     ret = rf2xx_wr_hard_prepare(tx_buf, tx_len, 1);
+     if(ret != 0) {
++      ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
+       return ret;
+     }
+ #endif /* RF2XX_SOFT_PREPARE */
+@@ -291,6 +298,12 @@ rf2xx_wr_transmit(unsigned short transmit_len)
+     leds_off(LEDS_RED);
+ #endif
+ 
++    if(rf2xx_on) {
++      ENERGEST_SWITCH(ENERGEST_TYPE_TRANSMIT, ENERGEST_TYPE_LISTEN);
++    } else {
++      ENERGEST_OFF(ENERGEST_TYPE_TRANSMIT);
++    }
++
+     restart();
+     return ret;
+ }
+@@ -434,6 +447,7 @@ rf2xx_wr_on(void)
+             flag = 1;
+             rf2xx_state = RF_BUSY;
+         }
++        ENERGEST_ON(ENERGEST_TYPE_LISTEN);
+     }
+     platform_exit_critical();
+ 
+@@ -462,6 +476,7 @@ rf2xx_wr_off(void)
+             flag = 1;
+             rf2xx_state = RF_BUSY;
+         }
++        ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
+     }
+     platform_exit_critical();
+ 
