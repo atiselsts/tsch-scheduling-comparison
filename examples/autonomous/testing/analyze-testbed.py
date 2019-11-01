@@ -39,7 +39,7 @@ TESTBED_HOST = "elsts@grenoble.iot-lab.fr"
 TESTBED_DIRS = [
     ("../iot-lab-all1/", "iot-lab-firmwares-all1"),
     ("../iot-lab-all2/", "iot-lab-firmwares-all2"),
-    ("../iot-lab-all3/", "iot-lab-firmwares"),
+    ("../iot-lab-all3/", "iot-lab-firmwares-all3"),
 ]
 
 DATA_FILE = "cached_data.json"
@@ -67,7 +67,7 @@ BASIC_MARKERS = ["o", "s", "X", "X", "X", "X"]
 ###########################################
 
 def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
-    pl.figure(figsize=(6, 3.5))
+    pl.figure(figsize=(5, 4.5))
 
     algos = ALGORITHMS
 
@@ -127,7 +127,7 @@ def graph_line(xdata, ydata, xlabel, ylabel, filename):
 
     if "queue" in filename:
         # for the queue losses graph
-        pl.ylim(bottom=0)
+        pl.ylim(bottom=0, top=300)
     else:
         # PDR and PAR
         pl.ylim(bottom=0, top=105)
@@ -413,13 +413,6 @@ def load_single_testbed(local, remote, filename, exp, si):
 def load_testbed(data_directory, data, a, si, sf, exp, nn):
     data[a][str(si)][str(sf)][exp][str(nn)] = {}
 
-    filename = os.path.join(data_directory,
-                        a,
-                        "si_{}".format(si),
-                        "sf_{}".format(sf),
-                        exp,
-                        "sim-{}-neigh-realsim-*".format(nn))
-
     filename = ""
     if nn == 10:
         filename = "dense-"
@@ -435,8 +428,11 @@ def load_testbed(data_directory, data, a, si, sf, exp, nn):
     for local, remote in TESTBED_DIRS:
         metrics.append(load_single_testbed(local, remote, filename, exp, si))
 
+    # use the median result
     midpoint = len(metrics) // 2
-    metrics.sort(key = lambda u: u[0]) # srt by PDR
+    if "sparse" in filename:
+        midpoint = -1 # XXX hack for now while not all runs are completed
+    metrics.sort(key = lambda u: u[0]) # sort by PDR
     pdr_metric = metrics[midpoint][0]
     prr_metric = metrics[midpoint][1]
     rdc_metric = metrics[midpoint][2]

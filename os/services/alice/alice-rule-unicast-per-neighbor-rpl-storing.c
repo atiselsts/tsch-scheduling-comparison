@@ -99,6 +99,9 @@ static uint16_t
 get_node_channel_offset(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
 
+#if ALICE_RX_BASED_MULTICHANNEL
+  return TSCH_DYNAMIC_CHANNEL_OFFSET;
+#endif
 
 
 #if ORCHESTRA_ONE_CHANNEL_OFFSET
