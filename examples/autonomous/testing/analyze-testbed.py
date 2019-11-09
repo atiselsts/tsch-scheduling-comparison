@@ -46,7 +46,7 @@ DATA_FILE = "cached_data.json"
 DATA_FILE2 = "cached_data2.json"
 
 START_TIME_MINUTES = 30
-END_TIME_MINUTES = 60
+END_TIME_MINUTES = 58
 
 # The root node is ignored in the calculations (XXX: maybe should not ignore its PRR?)
 ROOT_ID_SIM = 1
@@ -78,7 +78,8 @@ def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
         to_plot_x = algo_xdata #[np.mean(d) for d in algo_xdata]
         to_plot_y = algo_ydata #[np.mean(d) for d in algo_ydata]
 
-        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[a])
+        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[a],
+                   marker="o" if "Orchestra" in ALGONAMES[a] else "v")
 
         if pointlabels is not None:
             for j, sf in enumerate(pointlabels[i]):
@@ -123,7 +124,8 @@ def graph_line(xdata, ydata, xlabel, ylabel, filename):
 
         to_plot_y = algo_ydata #[np.mean(d) for d in algo_ydata]
 
-        pl.plot(xdata, to_plot_y, label=ALGONAMES[a], color=COLORS[a], marker="o")
+        pl.plot(xdata, to_plot_y, label=ALGONAMES[a], color=COLORS[a],
+                marker="o" if "Orchestra" in ALGONAMES[a] else "v")
 
     if "queue" in filename:
         # for the queue losses graph
@@ -430,8 +432,6 @@ def load_testbed(data_directory, data, a, si, sf, exp, nn):
 
     # use the median result
     midpoint = len(metrics) // 2
-    if "sparse" in filename:
-        midpoint = -1 # XXX hack for now while not all runs are completed
     metrics.sort(key = lambda u: u[0]) # sort by PDR
     pdr_metric = metrics[midpoint][0]
     prr_metric = metrics[midpoint][1]
