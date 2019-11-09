@@ -4,15 +4,16 @@ import os
 SELF_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ALGORITHMS = [
-    "orchestra_sb", # 1
-    "orchestra_rb_s", # 2
-    "orchestra_rb_ns", # 3
+#    "orchestra_sb", # 1
+#    "orchestra_rb_s", # 2
+#    "orchestra_rb_ns", # 3
     #"orchestra_rb_ns_sr", # 4
 #   "link", # 5
 #   "msf", # 6
 #   "emsf", # 7
     "alice", # 8
-    "alice_rx", # 9
+#    "alice_rx", # 9
+    "alice_static", # 9
 ]
 
 BEST_ALGORITHMS = [
@@ -37,6 +38,7 @@ ALGONAMES = {
     "emsf" : "Extended MSF",
     "alice" : "ALICE",
     "alice_rx" : "ALICE, node based channel offsets",
+    "alice_static" : "ALICE, no reallocation",
 
     # generic names
     "dataset1" : "Dataset 1",
@@ -53,6 +55,7 @@ COLORS = {
     "emsf" : "brown",
     "alice" : "blue",
     "alice_rx" : "#ff4444",
+    "alice_static" : "#333333",
 
     "dataset1" : "red",
     "dataset2" : "green",
@@ -68,12 +71,13 @@ FIRMWARE_TYPES = {
     "emsf" : 7,
     "alice" : 8,
     "alice_rx" : 9,
+    "alice_static" : 10,
 }
 
 EXPERIMENTS = [
     "exp-collection",
-    "exp-query",
-    "exp-local"
+#    "exp-query",
+#    "exp-local"
 ]
 
 SLOTFRAME_SIZES_A =[
@@ -109,6 +113,6 @@ SEND_INTERVALS = [
 ]
 
 NUM_NEIGHBORS = [
-    4, # sparse
+#   4, # sparse
     10 # dense
 ]

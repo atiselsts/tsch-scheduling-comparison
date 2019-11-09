@@ -109,6 +109,8 @@
 #define FIRMWARE_TYPE_ALICE 8
 /* ALICE with the new multichannel approach  */
 #define FIRMWARE_TYPE_ALICE_RX_MULTICHANNNEL 9
+/* ALICE with slot reallocation */
+#define FIRMWARE_TYPE_ALICE_STATIC 10
 
 /*******************************************************/
 /******************* Configure Orchestra ***************/
@@ -145,7 +147,7 @@
 #elif FIRMWARE_TYPE == FIRMWARE_TYPE_EMSF
 /* include the emsf rule */
 #  define FIRMWARE_UNICAST_RULE unicast_emsf
-#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE || FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE_RX_MULTICHANNNEL
+#elif FIRMWARE_TYPE >= FIRMWARE_TYPE_ALICE
 /* will define its own scheduler */
 #endif
 
@@ -159,13 +161,13 @@
 #define TSCH_CONF_PRIORITIZE_SLOTFRAME_ZERO 1
 #endif
 
-#if FIRMWARE_TYPE != FIRMWARE_TYPE_ALICE && FIRMWARE_TYPE != FIRMWARE_TYPE_ALICE_RX_MULTICHANNNEL
+#if FIRMWARE_TYPE < FIRMWARE_TYPE_ALICE
 /* For root: the root rule (Rx) comes last */
 # define ORCHESTRA_CONF_RULES_ROOT { &eb_per_time_source, &FIRMWARE_UNICAST_RULE, &default_common, &special_for_root }
 /* For other nodes: root rule (Tx) comes before the unicast neigbhor rules and the default rule */
 # define ORCHESTRA_CONF_RULES_NONROOT { &eb_per_time_source, &special_for_root, &FIRMWARE_UNICAST_RULE, &default_common }
 
-#else /* FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE || FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE_RX_MULTICHANNNEL */
+#else /* FIRMWARE_TYPE >= FIRMWARE_TYPE_ALICE */
 
 /* KSH: alice implementation */
 # define WITH_ALICE   1
@@ -183,9 +185,11 @@
 
 #if FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE_RX_MULTICHANNNEL
 #define ALICE_RX_BASED_MULTICHANNEL 1
+#elif FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE_STATIC
+#define ALICE_STATIC_SLOTS 1
 #endif
 
-#endif /* FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE || FIRMWARE_TYPE == FIRMWARE_TYPE_ALICE_RX_MULTICHANNNEL */
+#endif /* FIRMWARE_TYPE >= FIRMWARE_TYPE_ALICE */
 
 /*******************************************************/
 /*************** Configure other settings **************/

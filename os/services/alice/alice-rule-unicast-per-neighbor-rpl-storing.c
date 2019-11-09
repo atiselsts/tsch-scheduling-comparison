@@ -87,7 +87,12 @@ get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
 
   if(addr1 != NULL && addr2 != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
+#if ALICE_STATIC_SLOTS
+
+ return real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)), (ORCHESTRA_UNICAST_PERIOD)); //link-based
+#else
  return real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)+(uint32_t)sfid_schedule), (ORCHESTRA_UNICAST_PERIOD)); //link-based
+#endif
   } else {
     return 0xffff;
   }
@@ -110,7 +115,11 @@ get_node_channel_offset(const linkaddr_t *addr1, const linkaddr_t *addr2)
 
   int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE)/sizeof(uint8_t))-1; //ksh.
   if(addr1 != NULL && addr2 != NULL  && num_ch > 0) { //ksh.   
+#if ALICE_STATIC_SLOTS
+       return 1+real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)),num_ch); //link-based
+#else
        return 1+real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)+(uint32_t)sfid_schedule),num_ch); //link-based
+#endif
   } else {
     return 1+0; 
   }
