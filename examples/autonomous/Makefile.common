@@ -40,7 +40,8 @@ FIRMWARE_TYPE_ALICE_STATIC=10
 
 ifndef FIRMWARE_TYPE
 #  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ORCHESTRA_SB)
-  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ALICE)
+#  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ALICE)
+  FIRMWARE_TYPE := $(FIRMWARE_TYPE_ALICE_STATIC)
 endif
 
 ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ORCHESTRA_RB_NS))
@@ -66,7 +67,15 @@ MAKE_ROUTING = MAKE_ROUTING_RPL_CLASSIC
 ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ALICE))
 MODULES += os/services/alice
 else
+ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ALICE_RX_MULTICHANNEL))
+MODULES += os/services/alice
+else
+ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ALICE_STATIC))
+MODULES += os/services/alice
+else
 MODULES += os/services/orchestra
+endif
+endif
 endif
 
 # enable energest (for tests only, not for simulations)

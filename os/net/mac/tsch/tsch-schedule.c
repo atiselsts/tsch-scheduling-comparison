@@ -450,12 +450,14 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
         }
         linkaddr_copy(&l->alice_neighbor, neighbor);
 
+        /*
         LOG_ERR("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                  slotframe->handle,
                  print_link_options(link_options),
                  print_link_type(link_type), timeslot, channel_offset);
         LOG_ERR_LLADDR(address);
         LOG_ERR_("\n");
+        */
 
         /* Release the lock before we update the neighbor (will take the lock) */
         tsch_release_lock();
@@ -617,6 +619,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 
   uint16_t time_to_curr_best = 0;
   struct tsch_link *curr_best = NULL;
+  struct tsch_neighbor *curr_best_nbr = NULL;
   struct tsch_link *curr_backup = NULL; /* Keep a back link in case the current link
   turns out useless when the time comes. For instance, for a Tx-only link, if there is
   no outgoing packet in queue. In that case, run the backup link instead. The backup link
@@ -663,6 +666,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           time_to_curr_best = time_to_timeslot;
           curr_best = l;
           curr_backup = NULL;
+          curr_best_nbr = tsch_queue_get_nbr(&curr_best->alice_neighbor);
         } else if(time_to_timeslot == time_to_curr_best) {
           struct tsch_link *new_best = NULL;
           /* Two links are overlapping, we need to select one of them.
@@ -673,10 +677,11 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
               if(l->slotframe_handle < curr_best->slotframe_handle) {
                 new_best = l;
               }
-            } else if(curr_best->link_options & LINK_OPTION_TX) {
+            } else if(l->link_options & LINK_OPTION_TX) {
               /* two tx links at the same slotframe; check the packet count */
-              int count_curr = tsch_queue_packet_count(&curr_best->alice_neighbor);
-              int count_l = tsch_queue_packet_count(&l->alice_neighbor);
+              struct tsch_neighbor *n = tsch_queue_get_nbr(&l->alice_neighbor);
+              int count_curr = curr_best_nbr ? ringbufindex_elements(&curr_best_nbr->tx_ringbuf) : 0;
+              int count_l = n ? ringbufindex_elements(&n->tx_ringbuf) : 0;
               if (count_curr < count_l) {
                 /* printf("reselect: %d vs %d packets\n", count_curr, count_l); */
                 new_best = l;
@@ -717,6 +722,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           /* Maintain curr_best */
           if(new_best != NULL) {
             curr_best = new_best;
+            curr_best_nbr = tsch_queue_get_nbr(&curr_best->alice_neighbor);
           }
         }
 
