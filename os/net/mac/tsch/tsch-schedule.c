@@ -445,15 +445,18 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
           address = &linkaddr_null;
         }
         linkaddr_copy(&l->addr, address);
+        if(neighbor == NULL) {
+          neighbor = &linkaddr_null;
+        }
+        linkaddr_copy(&l->alice_neighbor, neighbor);
 
-        /*
-        LOG_DBG("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
+        LOG_ERR("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                  slotframe->handle,
                  print_link_options(link_options),
                  print_link_type(link_type), timeslot, channel_offset);
-        LOG_DBG_LLADDR(address);
-        LOG_DBG_("\n");
-        */
+        LOG_ERR_LLADDR(address);
+        LOG_ERR_("\n");
+
         /* Release the lock before we update the neighbor (will take the lock) */
         tsch_release_lock();
 
@@ -666,8 +669,18 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
            * By standard: prioritize Tx links first, second by lowest handle */
           if((curr_best->link_options & LINK_OPTION_TX) == (l->link_options & LINK_OPTION_TX)) {
             /* Both or neither links have Tx, select the one with lowest handle */
-            if(l->slotframe_handle < curr_best->slotframe_handle) {
-              new_best = l;
+            if(l->slotframe_handle != curr_best->slotframe_handle) {
+              if(l->slotframe_handle < curr_best->slotframe_handle) {
+                new_best = l;
+              }
+            } else if(curr_best->link_options & LINK_OPTION_TX) {
+              /* two tx links at the same slotframe; check the packet count */
+              int count_curr = tsch_queue_packet_count(&curr_best->alice_neighbor);
+              int count_l = tsch_queue_packet_count(&l->alice_neighbor);
+              if (count_curr < count_l) {
+                /* printf("reselect: %d vs %d packets\n", count_curr, count_l); */
+                new_best = l;
+              }
             }
 
 

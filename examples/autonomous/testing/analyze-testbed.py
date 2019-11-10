@@ -37,9 +37,9 @@ TESTBED_HOST = "elsts@grenoble.iot-lab.fr"
 
 # (local, remote)
 TESTBED_DIRS = [
-    ("../iot-lab-all1/", "iot-lab-firmwares-all1"),
-    ("../iot-lab-all2/", "iot-lab-firmwares-all2"),
-    ("../iot-lab-all3/", "iot-lab-firmwares-all3"),
+    ("../iot-lab-realloc1/", "iot-lab-firmwares-realloc1"),
+    ("../iot-lab-realloc2/", "iot-lab-firmwares-realloc2"),
+    ("../iot-lab-realloc3/", "iot-lab-firmwares-realloc3"),
 ]
 
 DATA_FILE = "cached_data.json"
@@ -340,10 +340,10 @@ def process_file(filename, experiment, send_interval, is_testbed):
             continue
         m.calc(send_interval, first_seqnum, last_seqnum)
         if m.is_valid:
-            # print(" ", m.id, m.pdr, m.prr)
-            r.append((m.pdr, m.prr, m.rdc, m.queue_losses))
-#        else:
-#            print("mote {} does not have valid PDR: packets={}".format(m.id, m.seqnums))
+            #print(" {} {:.1f} {:.1f} {} {}".format(m.id, m.pdr, m.prr, m.packets_ack, m.packets_tx))
+            r.append((m.pdr, m.prr, m.packets_ack, m.packets_tx, m.rdc, m.queue_losses))
+        else:
+            print("mote {} does not have valid PDR: packets={}".format(m.id, m.seqnums))
     return r, root_queue_losses
 
 ###########################################
@@ -383,8 +383,13 @@ def load_single_testbed(local, remote, filename, exp, si):
     t_rdc_results = []
     t_queue_losses = []
 
-    for pdr, prr, rdc, queue_losses in r:
+    all_packets_ack = 0
+    all_packets_tx = 0
+
+    for pdr, prr, packets_ack, packets_tx, rdc, queue_losses in r:
         t_pdr_results.append(pdr)
+        all_packets_ack += packets_ack
+        all_packets_tx += packets_tx
         t_prr_results.append(prr)
         t_rdc_results.append(rdc)
         t_queue_losses.append(queue_losses)
@@ -405,9 +410,12 @@ def load_single_testbed(local, remote, filename, exp, si):
             queue_losses = 0.0
     else:
         pdr_metric = np.mean(t_pdr_results)
-        prr_metric = np.mean(t_prr_results)
+        prr_metric = 100.0 * all_packets_ack / all_packets_tx
         rdc_metric = np.mean(t_rdc_results)
         queue_losses = np.mean(t_queue_losses)
+#        print("pdr=", pdr_metric, "all=", sorted(t_pdr_results))
+        #print("prr=", prr_metric, "all=", ", ".join(["{:.1f}".format(u) for u in sorted(t_prr_results)]))
+        
     return (pdr_metric, prr_metric, rdc_metric, queue_losses)
 
 ###########################################
@@ -430,13 +438,19 @@ def load_testbed(data_directory, data, a, si, sf, exp, nn):
     for local, remote in TESTBED_DIRS:
         metrics.append(load_single_testbed(local, remote, filename, exp, si))
 
-    # use the median result
-    midpoint = len(metrics) // 2
-    metrics.sort(key = lambda u: u[0]) # sort by PDR
-    pdr_metric = metrics[midpoint][0]
-    prr_metric = metrics[midpoint][1]
-    rdc_metric = metrics[midpoint][2]
-    queue_losses = metrics[midpoint][3]
+    if 0:
+        # use the median result
+        midpoint = len(metrics) // 2
+        metrics.sort(key = lambda u: u[0]) # sort by PDR
+        pdr_metric = metrics[midpoint][0]
+        prr_metric = metrics[midpoint][1]
+        rdc_metric = metrics[midpoint][2]
+        queue_losses = metrics[midpoint][3]
+    else:
+        pdr_metric = np.mean([u[0] for u in metrics])
+        prr_metric = np.mean([u[1] for u in metrics])
+        rdc_metric = np.mean([u[2] for u in metrics])
+        queue_losses = np.mean([u[3] for u in metrics])
 
     data[a][str(si)][str(sf)][exp][str(nn)]["pdr"] = pdr_metric
     data[a][str(si)][str(sf)][exp][str(nn)]["prr"] = prr_metric
@@ -484,7 +498,7 @@ def plot_all_pdr(data, exp):
                     pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
                     pointlabels[i].append(sfs)
 
-            filename = "sim_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
+            filename = "realloc_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
             graph_scatter(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
                           filename)
 
@@ -500,7 +514,7 @@ def plot_all_par(data, exp):
                 for j, sf in enumerate(SLOTFRAME_SIZES):
                     par_results[i].append(aggregate(data, a, si, sf, exp, nn, "prr"))
 
-            filename = "sim_{}_par_per_slotframe_allsf_nn{}_si{}.pdf".format(exp, nn, si)
+            filename = "realloc_{}_par_per_slotframe_allsf_nn{}_si{}.pdf".format(exp, nn, si)
             print(par_results)
             graph_line(SLOTFRAME_SIZES, par_results, "Slotframe size, slots", "Packet ACK Rate, %", filename)
 
@@ -516,70 +530,9 @@ def plot_all_queue_losses(data, exp):
                 for j, sf in enumerate(SLOTFRAME_SIZES):
                     results[i].append(aggregate(data, a, si, sf, exp, nn, "queue_losses"))
 
-            filename = "sim_{}_queue_losses_per_slotframe_allsf_nn{}_si{}.pdf".format(exp, nn, si)
+            filename = "realloc_{}_queue_losses_per_slotframe_allsf_nn{}_si{}.pdf".format(exp, nn, si)
             graph_line(SLOTFRAME_SIZES, results, "Slotframe size, slots", "Num queue losses", filename)
 
-
-###########################################
-
-def plot_comparative_runs(data1, data2, exp):
-    # plot all per duty cycle
-    for nn in NUM_NEIGHBORS:
-        for si in SEND_INTERVALS:
-            for i, a in enumerate(ALGORITHMS):
-                print("Algorithm {}".format(ALGONAMES[a]))
-                pdr_results = [[], []]
-                rdc_results = [[], []]
-                pointlabels = [[], []]
-
-                for sf in SLOTFRAME_SIZES:
-                    sfs = "sf={}".format(sf)
-                    print(sfs)
-                    rdc_results[0].append(aggregate(data1, a, si, sf, exp, nn, "rdc"))
-                    pdr_results[0].append(aggregate(data1, a, si, sf, exp, nn, "pdr"))
-                    pointlabels[0].append(sfs)
-
-                    rdc_results[1].append(aggregate(data2, a, si, sf, exp, nn, "rdc"))
-                    pdr_results[1].append(aggregate(data2, a, si, sf, exp, nn, "pdr"))
-                    pointlabels[1].append(sfs)
-
-                filename = "sim_comparative_{}_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, a, nn, si)
-                graph_scatter(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
-                              filename)
-
-###########################################
-
-def plot_best_per_send_frequency(data, exp):
-
-    # plot comparison of the best
-    for sfi in range(3):
-        for nn in NUM_NEIGHBORS:
-            pdr_results = [[] for _ in BEST_ALGORITHMS]
-            rdc_results = [[] for _ in BEST_ALGORITHMS]
-            si_results  = [[] for _ in BEST_ALGORITHMS]
-            pointlabels = [[] for _ in BEST_ALGORITHMS]
-
-            for si in SEND_INTERVALS:
-                #print("si={}".format(si))
-                fr = 60.0 / si
-
-                for i, a in enumerate(BEST_ALGORITHMS):
-                    print("Algorithm {}".format(ALGONAMES[a]))
-                    if sfi == 0:
-                        sf = 11
-                    elif sfi == 1:
-                        sf = 19
-                    else:
-                        sf = 101
-
-                    rdc_results[i].append(aggregate(data, a, si, sf, exp, nn, "rdc"))
-                    pdr_results[i].append(aggregate(data, a, si, sf, exp, nn, "pdr"))
-                    si_results[i].append(fr)
-                    pointlabels[i].append("rdc={:.1f}%".format(rdc_results[i][-1])) # the PDR
-
-            filename = "sim_{}_pdr_per_sfr_sf{}_nn{}.pdf".format(exp, sf, nn)
-            graph_scatter(si_results, pdr_results, "Send frequency, packets / minute", "End-to-end PDR, %", pointlabels,
-                          filename)
 
 ###########################################
 

@@ -11,7 +11,7 @@ ALGORITHMS = [
 #   "link", # 5
 #   "msf", # 6
 #   "emsf", # 7
-    "alice", # 8
+#    "alice", # 8
 #    "alice_rx", # 9
     "alice_static", # 9
 ]

@@ -62,7 +62,7 @@ struct tsch_link {
   /* MAC address of neighbor */
   linkaddr_t addr;
 #if WITH_ALICE == 1 //KSH
-  linkaddr_t neighbor;//ksh added.
+  linkaddr_t alice_neighbor;//ksh added.
 #endif
   /* Slotframe identifier */
   uint16_t slotframe_handle;
