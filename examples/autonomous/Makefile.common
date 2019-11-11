@@ -26,6 +26,8 @@ FIRMWARE_TYPE_MSF=6
 FIRMWARE_TYPE_EMSF=7
 # needs storing routing
 FIRMWARE_TYPE_ALICE=8
+# needs storing routing
+FIRMWARE_TYPE_ALICE_RX_MULTICHANNEL=9
 
 # Other things that can be turned on or off for the experiments:
 # - the burst bit

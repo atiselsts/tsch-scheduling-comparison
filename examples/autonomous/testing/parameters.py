@@ -12,6 +12,7 @@ ALGORITHMS = [
 #   "msf", # 6
 #   "emsf", # 7
     "alice", # 8
+    "alice_rx", # 9
 ]
 
 BEST_ALGORITHMS = [
@@ -35,6 +36,7 @@ ALGONAMES = {
     "msf" : "MSF",
     "emsf" : "Extended MSF",
     "alice" : "ALICE",
+    "alice_rx" : "ALICE, node based channel offsets",
 
     # generic names
     "dataset1" : "Dataset 1",
@@ -50,6 +52,7 @@ COLORS = {
     "msf" : "red",
     "emsf" : "brown",
     "alice" : "blue",
+    "alice_rx" : "#ff4444",
 
     "dataset1" : "red",
     "dataset2" : "green",
@@ -64,6 +67,7 @@ FIRMWARE_TYPES = {
     "msf" : 6,
     "emsf" : 7,
     "alice" : 8,
+    "alice_rx" : 9,
 }
 
 EXPERIMENTS = [
@@ -100,8 +104,8 @@ SLOTFRAME_SIZES = SLOTFRAME_SIZES_C
 
 SEND_INTERVALS = [
     6,   # 10 packets per minute  (6x5^0)
-    30,  # 2 packets per minute   (6x5^1)
-    150  # packet per 2.5 minutes (6x5^2)
+#    30,  # 2 packets per minute   (6x5^1)
+#    150  # packet per 2.5 minutes (6x5^2)
 ]
 
 NUM_NEIGHBORS = [

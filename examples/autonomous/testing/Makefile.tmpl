@@ -28,6 +28,8 @@ FIRMWARE_TYPE_MSF=6
 FIRMWARE_TYPE_EMSF=7
 # needs storing routing
 FIRMWARE_TYPE_ALICE=8
+# needs storing routing
+FIRMWARE_TYPE_ALICE_RX_MULTICHANNEL=9
 
 # Other things that can be turned on or off for the experiments:
 # - the burst bit
@@ -67,7 +69,11 @@ MAKE_ROUTING = MAKE_ROUTING_RPL_CLASSIC
 ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ALICE))
 MODULES += os/services/alice
 else
+ifeq ($(FIRMWARE_TYPE),$(FIRMWARE_TYPE_ALICE_RX_MULTICHANNEL))
+MODULES += os/services/alice
+else
 MODULES += os/services/orchestra
+endif
 endif
 
 # enable energest (for tests only, not for simulations)
