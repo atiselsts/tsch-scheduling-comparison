@@ -1,8 +1,6 @@
-# ALICE on Contiki-NG
+# Autonomous scheduling tests
 
-# Autonomous schedluing tests
-
-The autonmous scheduling test application is available under `examples/autonomous/`.
+The autonomous scheduling test application is available under `examples/autonomous/`.
 
 There are three applications that simulate three traffic patters:
 
