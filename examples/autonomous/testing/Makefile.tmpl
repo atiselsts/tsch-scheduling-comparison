@@ -9,8 +9,7 @@ FIRMWARE_TYPE=@FIRMWARE_TYPE@
 # Note: the default in contiki-ng is the nonstoring Orchestra rule,
 # but with RPL lite routing (non-storing mode).
 # We use RPL classic, for which the storing mode is the default.
-# According to Orchestra comments and code, the non-storing rule
-# can be used with RPL storing mode!
+# The non-storing rule can also be used with the RPL storing mode!
 
 # sender based, storing Orchestra + RPL
 FIRMWARE_TYPE_ORCHESTRA_SB=1
@@ -30,13 +29,6 @@ FIRMWARE_TYPE_EMSF=7
 FIRMWARE_TYPE_ALICE=8
 # needs storing routing
 FIRMWARE_TYPE_ALICE_RX_MULTICHANNEL=9
-
-# Other things that can be turned on or off for the experiments:
-# - the burst bit
-# - the root rule in the orchestra rules
-# - multiple TSCH links per single timeslot (to avoid problems when there are collisions in the Orchestra schedule)
-# - whether to add node-based links to alt parents (to enable probing) 
-# - "ideal rule" - performance when there's an oracle that tells the nodes when to allocate / deallocate cells. need to think how to implement this (perhaps always listen, but hack the energest module somehow?). or estimate this via the number of empty cells or similarly (e.g. collisions based on logs that include the ASN)
 
 ifndef FIRMWARE_TYPE
   FIRMWARE_TYPE := $(FIRMWARE_TYPE_ORCHESTRA_SB)
