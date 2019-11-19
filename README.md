@@ -44,5 +44,5 @@ When using this source code, please cite the following paper:
 
 This work is mostly based on the ALICE and Orchestra schedulers:
 
-* *Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, ALICE: Autonomous Link-based Cell Scheduling for TSCH, In the 18th ACM/IEEE International Conference on Information Processing in Sensor Networks (IPSN'19).
-* Simon Duquennoy, Beshr Al Nahas, Olaf Landsiedel, and Thomas Watteyne, Orchestra: Robust Mesh Networks Through Autonomously Scheduled TSCH, ACM SenSys'15*
+* *Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, ALICE: Autonomous Link-based Cell Scheduling for TSCH, In the 18th ACM/IEEE International Conference on Information Processing in Sensor Networks (IPSN'19).*
+* *Simon Duquennoy, Beshr Al Nahas, Olaf Landsiedel, and Thomas Watteyne, Orchestra: Robust Mesh Networks Through Autonomously Scheduled TSCH, ACM SenSys'15*
