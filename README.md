@@ -1,19 +1,48 @@
 # Autonomous scheduling tests
 
-The autonomous scheduling test application is available under `examples/autonomous/`.
+We did experiments experiments compare different options of the ALICE and Orchestra schedulers.
+Change the `FIRMWARE_TYPE` variable in the makefile to select a different protocol option to test.
 
+Our experiments used the FIT IoT-LAB infrastructure.
+Alternative simulation-only experiment setup is possible using Cooja motes
+and either trace-based or randomly-generated simulation scripts.
+
+## Applications
+
+The autonomous scheduling test applications are available under `examples/autonomous/`.
 There are three applications that simulate three traffic patters:
 
 * `exp-collection` - data collection from nodes to root
 * `exp-query` - data query, root to nodes and back to root
 * `exp-local` - local traffic between parent and child nodes
 
+## The testing infrastructure
+
 The testing infrastructure, in form of both simulation generator and testbed executable generator,
 is available under `examples/autonomous/testing`.
 
-The experiments compare different options of the ALICE and Orchestra schedulers.
-Change the `FIRMWARE_TYPE` variable in the makefile to select a different protocol option to test.
+* `generate_firmwares.py` will generate source folders with different settings and a script called
+`compile-all.sh` that can be used to build the firmwares for IoT-LAB
+* `generate_sims.py` will generate simulation files and source folders with different settings and
+a script called `run-all.sh` that can be used to run Cooja on all of the different settings.
+
+You may need to change some paths before using the scripts!
+
+## Implementation
+
+The implementation of the different approaches can be found in:
+
+* `os/services/orchestra`
+* `os/services/alice`
+* `os/net/mac/tsch`
+
+## Request for an acknowledgement
 
 When using this source code, please cite the following paper:
 
-*/To be done/*.
+* *Atis Elsts, Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, An Experimental Survey of Autonomous Scheduling Methods for TSCH, submitted to IEEE Access.*
+
+This work is mostly based on the ALICE and Orchestra schedulers:
+
+* *Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, ALICE: Autonomous Link-based Cell Scheduling for TSCH, In the 18th ACM/IEEE International Conference on Information Processing in Sensor Networks (IPSN'19).
+* Simon Duquennoy, Beshr Al Nahas, Olaf Landsiedel, and Thomas Watteyne, Orchestra: Robust Mesh Networks Through Autonomously Scheduled TSCH, ACM SenSys'15*
