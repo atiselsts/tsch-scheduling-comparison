@@ -37,9 +37,9 @@ TESTBED_HOST = "elsts@grenoble.iot-lab.fr"
 
 # (local, remote)
 TESTBED_DIRS = [
-    ("../iot-lab-all1/", "iot-lab-firmwares-all1"),
-    ("../iot-lab-all2/", "iot-lab-firmwares-all2"),
-    ("../iot-lab-all3/", "iot-lab-firmwares-all3"),
+    ("../iot-lab-all1/", "iot-lab-firmwares"),
+    ("../iot-lab-all2/", "iot-lab-firmwares2"),
+    ("../iot-lab-all3/", "iot-lab-firmwares3"),
 ]
 
 DATA_FILE = "cached_data.json"
@@ -261,7 +261,11 @@ def process_file(filename, experiment, send_interval, is_testbed):
 
             if is_testbed and "Node ID:" in line:
                 # 1570531244.735377;m3-197;[INFO: Main      ] Node ID: 43378
-                node_id = int(fields[7])
+                try:
+                    node_id = int(line[line.index("Node ID:") + 9:])
+                except:
+                    print("   failed to get node id:", line)
+                    continue
                 node_id_to_mote_id[node_id] = node
 
             if "association done (1" in line:

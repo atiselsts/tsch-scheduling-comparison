@@ -6,9 +6,6 @@ import subprocess
 
 from parameters import *
 
-# reduce the send intervals to the most interesting ones
-SEND_INTERVALS = [6]
-
 OUT_DIRECTORY = os.path.join(SELF_PATH, "simulations")
 
 # tailor the workload depending on the number of cores;

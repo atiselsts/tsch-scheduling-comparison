@@ -71,8 +71,8 @@ FIRMWARE_TYPES = {
 }
 
 EXPERIMENTS = [
-    "exp-collection",
-    "exp-query",
+#    "exp-collection",
+#    "exp-query",
     "exp-local"
 ]
 
@@ -103,7 +103,8 @@ SLOTFRAME_SIZES_C =[
 SLOTFRAME_SIZES = SLOTFRAME_SIZES_C
 
 SEND_INTERVALS = [
-    6,   # 10 packets per minute  (6x5^0)
+    3,
+#    6,   # 10 packets per minute  (6x5^0)
 #    30,  # 2 packets per minute   (6x5^1)
 #    150  # packet per 2.5 minutes (6x5^2)
 ]
