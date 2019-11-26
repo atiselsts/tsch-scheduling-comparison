@@ -89,7 +89,7 @@ def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.xlabel(xlabel)
     pl.ylabel(ylabel)
     if "duty" in filename:
-        pl.xlim([0, 13])
+        pl.xlim([0, 10])
     else: # send frequency
         pl.xscale("log")
 
