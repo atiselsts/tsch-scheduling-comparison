@@ -73,7 +73,7 @@ FIRMWARE_TYPES = {
 EXPERIMENTS = [
     "exp-collection",
     "exp-query",
-    "exp-local"
+#    "exp-local"
 ]
 
 SLOTFRAME_SIZES_A =[
