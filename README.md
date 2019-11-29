@@ -1,22 +1,38 @@
+# What is this?
+
+This is the source code behind the paper:
+
+* *Atis Elsts, Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, An Experimental Survey of Autonomous Scheduling Methods for TSCH, submitted to IEEE Access.*
+
 # Autonomous scheduling tests
 
-We did experiments experiments compare different options of the ALICE and Orchestra schedulers.
-Change the `FIRMWARE_TYPE` variable in the makefile to select a different protocol option to test.
+The paper experimentally evaluate the ALICE and Orchestra schedulers.
 
 Our experiments used the FIT IoT-LAB infrastructure.
 Alternative simulation-only experiment setup is possible using Cooja motes
 and either trace-based or randomly-generated simulation scripts.
 
-## Applications
+## Quick start
 
 The autonomous scheduling test applications are available under `examples/autonomous/`.
+
+For a quick start, open one of the simulation files provided there in Cooja and run it.
+The data packet generation starts after an 30 min warm-up period. Search for "seqnum=" in the logs to
+see packets being received.
+
+### Tweaking the setup
+
+* Change the `FIRMWARE_TYPE` variable in the makefile to select a different protocol option to test.
+* The file `common-conf.h` contains the configuration options common to all applications.
+
+### Applications
 There are three applications that simulate three traffic patters:
 
 * `exp-collection` - data collection from nodes to root
 * `exp-query` - data query, root to nodes and back to root
 * `exp-local` - local traffic between parent and child nodes
 
-## The testing infrastructure
+## Automated testing infrastructure
 
 The testing infrastructure, in form of both simulation generator and testbed executable generator,
 is available under `examples/autonomous/testing`.
@@ -34,7 +50,7 @@ The implementation of the different approaches can be found in:
 
 * `os/services/orchestra`
 * `os/services/alice`
-* `os/net/mac/tsch`
+* `os/net/mac/tsch` (some parts of it)
 
 ## Request for an acknowledgement
 
