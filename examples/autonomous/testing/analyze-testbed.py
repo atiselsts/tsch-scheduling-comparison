@@ -78,8 +78,12 @@ def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
         to_plot_x = algo_xdata #[np.mean(d) for d in algo_xdata]
         to_plot_y = algo_ydata #[np.mean(d) for d in algo_ydata]
 
-        pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[a],
-                   marker="o" if "Orchestra" in ALGONAMES[a] else "v")
+        if 0:
+            pl.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[a],
+                       marker="o" if "Orchestra" in ALGONAMES[a] else "v")
+        else:
+            pl.plot(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[a],
+                       marker="o" if "Orchestra" in ALGONAMES[a] else "v", markersize=8, lw=1)
 
         if pointlabels is not None:
             for j, sf in enumerate(pointlabels[i]):
