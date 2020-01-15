@@ -125,8 +125,8 @@ def graph_scatter_sub(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     algos = ALGORITHMS
 
     for subplot in range(4):
-        sub_x = (3 - subplot) % 2
-        sub_y = (3 - subplot) // 2
+        sub_x = (3 - subplot) // 2
+        sub_y = (3 - subplot) % 2
 
         ax = axs[sub_x,sub_y]
 
