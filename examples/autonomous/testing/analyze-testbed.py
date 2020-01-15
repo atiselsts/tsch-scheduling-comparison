@@ -117,6 +117,50 @@ def graph_scatter(xdata, ydata, xlabel, ylabel, pointlabels, filename):
     pl.close()
 
 ###########################################
+def graph_scatter_sub(xdata, ydata, xlabel, ylabel, pointlabels, filename):
+    fig, axs = pl.subplots(2, 2)
+    fig.set_size_inches((5, 4.5))
+
+    algos = ALGORITHMS
+
+    for subplot in range(4):
+        sub_x = (3 - subplot) % 2
+        sub_y = (3 - subplot) // 2
+
+        ax = axs[sub_x,sub_y]
+
+        for i, a in enumerate(algos):
+            algo_xdata = xdata[i]
+            algo_ydata = ydata[i]
+
+            to_plot_x = [algo_xdata[subplot]] #[np.mean(d) for d in algo_xdata]
+            to_plot_y = [algo_ydata[subplot]] #[np.mean(d) for d in algo_ydata]
+
+            ax.scatter(to_plot_x, to_plot_y, label=ALGONAMES[a], color=COLORS[a],
+                       marker="o" if "Orchestra" in ALGONAMES[a] else "v")
+            ax.annotate("{:.2f}".format(algo_ydata[subplot]), (algo_xdata[subplot] + 0.1, algo_ydata[subplot] + 1), fontsize=6)
+
+        ax.set_ylim(bottom=0, top=105)
+        ax.set_xlim([0, 10])
+        if sub_y == 0:
+            ax.set_ylabel(ylabel)
+        if sub_x > 0:
+            ax.set_xlabel(xlabel)
+        ax.axhline(y=100, color="black", lw=1)
+        sf = pointlabels[i][subplot]
+        ax.annotate("{}".format(sf), (3.5, 45), fontsize=12)
+
+    if "pdr" in filename:
+        legend = pl.legend(prop={'size':9})
+        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
+                   bbox_extra_artists=(legend,),
+                   bbox_inches='tight')
+    else:
+        pl.savefig(OUT_DIR + "/" + filename, format='pdf',
+                   bbox_inches='tight')
+    pl.close()
+
+###########################################
 
 def graph_line(xdata, ydata, xlabel, ylabel, filename):
     pl.figure(figsize=(4, 2))
@@ -493,8 +537,8 @@ def plot_all_pdr(data, exp):
                     pointlabels[i].append(sfs)
 
             filename = "sim_{}_pdr_per_duty_cycle_allsf_nn{}_si{}.pdf".format(exp, nn, si)
-            graph_scatter(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
-                          filename)
+            graph_scatter_sub(rdc_results,  pdr_results, "Duty cycle, %", "End-to-end PDR, %", pointlabels,
+                              filename)
 
 ###########################################
 
