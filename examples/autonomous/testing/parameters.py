@@ -36,7 +36,7 @@ ALGONAMES = {
     "msf" : "MSF",
     "emsf" : "Extended MSF",
     "alice" : "ALICE",
-    "alice_rx" : "ALICE, node based channel offsets",
+    "alice_rx" : "ALICE, node based\nchannel offsets",
 
     # generic names
     "dataset1" : "Dataset 1",
