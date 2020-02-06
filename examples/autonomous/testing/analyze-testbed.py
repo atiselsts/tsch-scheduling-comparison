@@ -141,7 +141,7 @@ def graph_scatter_sub(xdata, ydata, xlabel, ylabel, pointlabels, filename):
             ax.annotate("{:.2f}".format(algo_ydata[subplot]), (algo_xdata[subplot] + 0.1, algo_ydata[subplot] + 1), fontsize=6)
 
         ax.set_ylim(bottom=0, top=105)
-        ax.set_xlim([0, 10])
+        ax.set_xlim([0, 8])
         if sub_y == 0:
             ax.set_ylabel(ylabel)
         if sub_x > 0:
@@ -163,7 +163,7 @@ def graph_scatter_sub(xdata, ydata, xlabel, ylabel, pointlabels, filename):
 ###########################################
 
 def graph_line(xdata, ydata, xlabel, ylabel, filename):
-    pl.figure(figsize=(4, 2))
+    pl.figure(figsize=(3, 2))
 
     algos = ALGORITHMS
 
