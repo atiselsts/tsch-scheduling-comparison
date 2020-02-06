@@ -2,7 +2,7 @@
 
 This is the source code behind the paper:
 
-* *Atis Elsts, Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, An Experimental Survey of Autonomous Scheduling Methods for TSCH, submitted to IEEE Access.*
+* *Atis Elsts, Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, An Empirical Survey of Autonomous Scheduling Methods for TSCH, submitted to IEEE Access.*
 
 # Autonomous scheduling tests
 
@@ -56,7 +56,7 @@ The implementation of the different approaches can be found in:
 
 When using this source code, please cite the following paper:
 
-* *Atis Elsts, Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, An Experimental Survey of Autonomous Scheduling Methods for TSCH, submitted to IEEE Access.*
+* *Atis Elsts, Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, An Empirical Survey of Autonomous Scheduling Methods for TSCH, submitted to IEEE Access.*
 
 This work is mostly based on the ALICE and Orchestra schedulers:
 
