@@ -2,7 +2,7 @@
 
 This is the source code behind the paper:
 
-* *Atis Elsts, Seohyang Kim, Hyung-Sin Kim, and Chongkwon Kim, An Empirical Survey of Autonomous Scheduling Methods for TSCH, submitted to IEEE Access.*
+* *A. Elsts, S. Kim, H. Kim, C. Kim. An Empirical Survey of Autonomous Scheduling Methods for TSCH, IEEE Access, 2020.* https://doi.org/10.1109/ACCESS.2020.2980119
 
 # Autonomous scheduling tests
 
